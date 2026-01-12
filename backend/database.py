@@ -13,4 +13,4 @@ def init_db(app):
     with app.app_context():
         from models import ElectoralRoll, VoterRecord
         db.create_all()
-        print("✅ Database tables created successfully")
+        print("Database tables created successfully")

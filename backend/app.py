@@ -18,7 +18,8 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://localhost/electoral_roll_db')
+# Use SQLite for local development if DATABASE_URL is not set
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///electoral_roll_db.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_UPLOAD_SIZE', 52428800))
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
@@ -80,7 +81,7 @@ if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     host = os.getenv('HOST', '0.0.0.0')
     
-    print(f"🚀 Electoral Roll Tracker API starting on {host}:{port}")
-    print(f"📊 Environment: {os.getenv('FLASK_ENV', 'development')}")
+    print(f"Electoral Roll Tracker API starting on {host}:{port}")
+    print(f"Environment: {os.getenv('FLASK_ENV', 'development')}")
     
     app.run(host=host, port=port, debug=os.getenv('FLASK_DEBUG', 'True') == 'True')
