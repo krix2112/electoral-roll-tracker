@@ -6,104 +6,116 @@ export default function DiffViewer() {
   const [changeType, setChangeType] = useState('All');
   const [selectedConstituency, setSelectedConstituency] = useState(null);
 
-  const sampleRollData = [
-    { constituencyId: 'AC-101', constituencyName: 'Assembly Constituency 101 - North District', changeType: 'Addition', date: '2024-01-05', count: 23, riskLevel: 'Low' },
-    { constituencyId: 'AC-101', changeType: 'Modification', date: '2024-01-05', count: 12, riskLevel: 'Low' },
-    { constituencyId: 'AC-101', changeType: 'Deletion', date: '2024-01-11', count: 45, riskLevel: 'Medium' },
-    { constituencyId: 'AC-101', changeType: 'Addition', date: '2024-01-15', count: 34, riskLevel: 'Low' },
-    { constituencyId: 'AC-101', changeType: 'Modification', date: '2024-01-20', count: 31, riskLevel: 'Medium' },
-    { constituencyId: 'AC-102', changeType: 'Addition', date: '2024-01-06', count: 18, riskLevel: 'Low' },
-    { constituencyId: 'AC-102', changeType: 'Modification', date: '2024-01-09', count: 25, riskLevel: 'Low' },
-    { constituencyId: 'AC-102', changeType: 'Addition', date: '2024-01-13', count: 24, riskLevel: 'Low' },
-    { constituencyId: 'AC-103', changeType: 'Addition', date: '2024-01-07', count: 45, riskLevel: 'Medium' },
-    { constituencyId: 'AC-103', changeType: 'Deletion', date: '2024-01-11', count: 89, riskLevel: 'High' },
-    { constituencyId: 'AC-103', changeType: 'Deletion', date: '2024-01-12', count: 100, riskLevel: 'High' },
-    { constituencyId: 'AC-103', changeType: 'Modification', date: '2024-01-17', count: 0, riskLevel: 'Low' },
-    { constituencyId: 'AC-104', changeType: 'Addition', date: '2024-01-08', count: 32, riskLevel: 'Low' },
-    { constituencyId: 'AC-104', changeType: 'Modification', date: '2024-01-14', count: 28, riskLevel: 'Low' },
-    { constituencyId: 'AC-104', changeType: 'Addition', date: '2024-01-18', count: 29, riskLevel: 'Low' },
-    { constituencyId: 'AC-105', changeType: 'Addition', date: '2024-01-10', count: 67, riskLevel: 'Medium' },
-    { constituencyId: 'AC-105', changeType: 'Deletion', date: '2024-01-21', count: 78, riskLevel: 'High' },
-    { constituencyId: 'AC-105', changeType: 'Modification', date: '2024-01-23', count: 33, riskLevel: 'Medium' },
-    { constituencyId: 'AC-106', changeType: 'Addition', date: '2024-01-05', count: 15, riskLevel: 'Low' },
-    { constituencyId: 'AC-106', changeType: 'Modification', date: '2024-01-16', count: 20, riskLevel: 'Low' },
-    { constituencyId: 'AC-106', changeType: 'Addition', date: '2024-01-19', count: 10, riskLevel: 'Low' },
-    { constituencyId: 'AC-107', changeType: 'Addition', date: '2024-01-07', count: 56, riskLevel: 'Medium' },
-    { constituencyId: 'AC-107', changeType: 'Deletion', date: '2024-01-11', count: 98, riskLevel: 'High' },
-    { constituencyId: 'AC-107', changeType: 'Deletion', date: '2024-01-12', count: 49, riskLevel: 'High' },
-    { constituencyId: 'AC-107', changeType: 'Modification', date: '2024-01-20', count: 0, riskLevel: 'Low' },
-    { constituencyId: 'AC-108', changeType: 'Addition', date: '2024-01-09', count: 48, riskLevel: 'Medium' },
-    { constituencyId: 'AC-108', changeType: 'Modification', date: '2024-01-14', count: 39, riskLevel: 'Medium' },
-    { constituencyId: 'AC-108', changeType: 'Addition', date: '2024-01-22', count: 35, riskLevel: 'Medium' },
-    { constituencyId: 'Ward-12', changeType: 'Addition', date: '2024-01-06', count: 22, riskLevel: 'Low' },
-    { constituencyId: 'Ward-12', changeType: 'Modification', date: '2024-01-10', count: 18, riskLevel: 'Low' },
-    { constituencyId: 'Ward-12', changeType: 'Addition', date: '2024-01-15', count: 16, riskLevel: 'Low' },
-    { constituencyId: 'Ward-13', changeType: 'Addition', date: '2024-01-08', count: 52, riskLevel: 'Medium' },
-    { constituencyId: 'Ward-13', changeType: 'Deletion', date: '2024-01-11', count: 68, riskLevel: 'High' },
-    { constituencyId: 'Ward-13', changeType: 'Deletion', date: '2024-01-12', count: 69, riskLevel: 'High' },
-    { constituencyId: 'Ward-13', changeType: 'Modification', date: '2024-01-17', count: 0, riskLevel: 'Low' },
-    { constituencyId: 'Ward-14', changeType: 'Addition', date: '2024-01-09', count: 41, riskLevel: 'Medium' },
-    { constituencyId: 'Ward-14', changeType: 'Modification', date: '2024-01-14', count: 32, riskLevel: 'Medium' },
-    { constituencyId: 'Ward-14', changeType: 'Addition', date: '2024-01-18', count: 25, riskLevel: 'Low' },
-    { constituencyId: 'Ward-15', changeType: 'Addition', date: '2024-01-10', count: 58, riskLevel: 'Medium' },
-    { constituencyId: 'Ward-15', changeType: 'Deletion', date: '2024-01-21', count: 72, riskLevel: 'High' },
-    { constituencyId: 'Ward-15', changeType: 'Modification', date: '2024-01-23', count: 37, riskLevel: 'Medium' },
-    { constituencyId: 'Booth-B45', changeType: 'Addition', date: '2024-01-05', count: 12, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B45', changeType: 'Modification', date: '2024-01-16', count: 14, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B45', changeType: 'Addition', date: '2024-01-19', count: 8, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B46', changeType: 'Addition', date: '2024-01-07', count: 78, riskLevel: 'Medium' },
-    { constituencyId: 'Booth-B46', changeType: 'Deletion', date: '2024-01-11', count: 65, riskLevel: 'High' },
-    { constituencyId: 'Booth-B46', changeType: 'Deletion', date: '2024-01-12', count: 67, riskLevel: 'High' },
-    { constituencyId: 'Booth-B47', changeType: 'Addition', date: '2024-01-08', count: 28, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B47', changeType: 'Modification', date: '2024-01-14', count: 26, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B47', changeType: 'Addition', date: '2024-01-18', count: 22, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B48', changeType: 'Addition', date: '2024-01-09', count: 62, riskLevel: 'Medium' },
-    { constituencyId: 'Booth-B48', changeType: 'Deletion', date: '2024-01-21', count: 48, riskLevel: 'Medium' },
-    { constituencyId: 'Booth-B48', changeType: 'Modification', date: '2024-01-23', count: 35, riskLevel: 'Medium' },
-    { constituencyId: 'Booth-B49', changeType: 'Addition', date: '2024-01-06', count: 20, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B49', changeType: 'Modification', date: '2024-01-10', count: 18, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B49', changeType: 'Addition', date: '2024-01-15', count: 14, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B50', changeType: 'Addition', date: '2024-01-07', count: 89, riskLevel: 'Medium' },
-    { constituencyId: 'Booth-B50', changeType: 'Deletion', date: '2024-01-11', count: 54, riskLevel: 'High' },
-    { constituencyId: 'Booth-B50', changeType: 'Deletion', date: '2024-01-12', count: 55, riskLevel: 'High' },
-    { constituencyId: 'Booth-B51', changeType: 'Addition', date: '2024-01-08', count: 48, riskLevel: 'Medium' },
-    { constituencyId: 'Booth-B51', changeType: 'Modification', date: '2024-01-14', count: 38, riskLevel: 'Medium' },
-    { constituencyId: 'Booth-B51', changeType: 'Addition', date: '2024-01-22', count: 26, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B52', changeType: 'Addition', date: '2024-01-09', count: 35, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B52', changeType: 'Modification', date: '2024-01-14', count: 28, riskLevel: 'Low' },
-    { constituencyId: 'Booth-B52', changeType: 'Addition', date: '2024-01-18', count: 20, riskLevel: 'Low' },
-  ];
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const minDate = '2026-01-01';
 
-  const constituencyNames = {
-    'AC-101': 'Assembly Constituency 101 - North District',
-    'AC-102': 'Assembly Constituency 102 - North District',
-    'AC-103': 'Assembly Constituency 103 - North District',
-    'AC-104': 'Assembly Constituency 104 - North District',
-    'AC-105': 'Assembly Constituency 105 - Central District',
-    'AC-106': 'Assembly Constituency 106 - Central District',
-    'AC-107': 'Assembly Constituency 107 - Central District',
-    'AC-108': 'Assembly Constituency 108 - Central District',
-    'Ward-12': 'Municipal Ward 12 - Central District',
-    'Ward-13': 'Municipal Ward 13 - Central District',
-    'Ward-14': 'Municipal Ward 14 - South District',
-    'Ward-15': 'Municipal Ward 15 - South District',
-    'Booth-B45': 'Polling Booth B45 - South District',
-    'Booth-B46': 'Polling Booth B46 - South District',
-    'Booth-B47': 'Polling Booth B47 - South District',
-    'Booth-B48': 'Polling Booth B48 - South District',
-    'Booth-B49': 'Polling Booth B49 - East District',
-    'Booth-B50': 'Polling Booth B50 - East District',
-    'Booth-B51': 'Polling Booth B51 - East District',
-    'Booth-B52': 'Polling Booth B52 - East District',
+  useEffect(() => {
+    if (startDate && endDate && startDate > endDate) {
+      setEndDate(startDate);
+    }
+  }, [startDate]);
+
+  const handleStartDateChange = (e) => {
+    const newStartDate = e.target.value;
+    setStartDate(newStartDate);
+    if (endDate && newStartDate > endDate) {
+      setEndDate(newStartDate);
+    }
   };
 
-  const sampleRollDataWithNames = sampleRollData.map(item => ({
-    ...item,
-    constituencyName: item.constituencyName || constituencyNames[item.constituencyId] || item.constituencyId
-  }));
+  const handleEndDateChange = (e) => {
+    const newEndDate = e.target.value;
+    if (!startDate || newEndDate >= startDate) {
+      setEndDate(newEndDate);
+    }
+  };
+
+  // TEMP SAMPLE DATA — WILL BE REPLACED BY BACKEND
+  const generateSampleData = () => {
+    const dates = [];
+    const start = new Date('2026-01-01');
+    const end = yesterday;
+    const currentDate = new Date(start);
+    
+    while (currentDate <= end) {
+      dates.push(new Date(currentDate).toISOString().split('T')[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    const constituencies = [
+      { id: 'AC-101', name: 'Assembly Constituency 101 - North District' },
+      { id: 'AC-102', name: 'Assembly Constituency 102 - North District' },
+      { id: 'AC-103', name: 'Assembly Constituency 103 - North District' },
+      { id: 'AC-104', name: 'Assembly Constituency 104 - North District' },
+      { id: 'AC-105', name: 'Assembly Constituency 105 - Central District' },
+      { id: 'AC-106', name: 'Assembly Constituency 106 - Central District' },
+      { id: 'AC-107', name: 'Assembly Constituency 107 - Central District' },
+      { id: 'AC-108', name: 'Assembly Constituency 108 - Central District' },
+      { id: 'Ward-12', name: 'Municipal Ward 12 - Central District' },
+      { id: 'Ward-13', name: 'Municipal Ward 13 - Central District' },
+      { id: 'Ward-14', name: 'Municipal Ward 14 - South District' },
+      { id: 'Ward-15', name: 'Municipal Ward 15 - South District' },
+      { id: 'Booth-B45', name: 'Polling Booth B45 - South District' },
+      { id: 'Booth-B46', name: 'Polling Booth B46 - South District' },
+      { id: 'Booth-B47', name: 'Polling Booth B47 - South District' },
+      { id: 'Booth-B48', name: 'Polling Booth B48 - South District' },
+      { id: 'Booth-B49', name: 'Polling Booth B49 - East District' },
+      { id: 'Booth-B50', name: 'Polling Booth B50 - East District' },
+      { id: 'Booth-B51', name: 'Polling Booth B51 - East District' },
+      { id: 'Booth-B52', name: 'Polling Booth B52 - East District' },
+    ];
+
+    const sampleRollData = [];
+    const changeTypes = ['Addition', 'Deletion', 'Modification'];
+    const riskLevels = ['Low', 'Medium', 'High'];
+
+    dates.forEach((date, dateIndex) => {
+      const dayOfWeek = new Date(date).getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const recordsPerDay = isWeekend ? Math.floor(Math.random() * 3) + 1 : Math.floor(Math.random() * 8) + 3;
+
+      for (let i = 0; i < recordsPerDay; i++) {
+        const constituency = constituencies[Math.floor(Math.random() * constituencies.length)];
+        const changeType = changeTypes[Math.floor(Math.random() * changeTypes.length)];
+        let count, riskLevel;
+
+        if (changeType === 'Deletion') {
+          count = Math.floor(Math.random() * 120) + 10;
+          riskLevel = count > 80 ? 'High' : count > 40 ? 'Medium' : 'Low';
+        } else if (changeType === 'Modification') {
+          count = Math.floor(Math.random() * 60) + 5;
+          riskLevel = count > 40 ? 'Medium' : 'Low';
+        } else {
+          count = Math.floor(Math.random() * 100) + 10;
+          riskLevel = count > 70 ? 'Medium' : 'Low';
+        }
+
+        if (dateIndex % 7 === 0 && changeType === 'Deletion') {
+          count = Math.floor(Math.random() * 150) + 80;
+          riskLevel = 'High';
+        }
+
+        sampleRollData.push({
+          date,
+          constituencyId: constituency.id,
+          constituencyName: constituency.name,
+          changeType,
+          count,
+          riskLevel
+        });
+      }
+    });
+
+    return sampleRollData;
+  };
+
+  const sampleRollData = useMemo(() => generateSampleData(), []);
 
   const filteredData = useMemo(() => {
-    let filtered = [...sampleRollDataWithNames];
+    let filtered = [...sampleRollData];
 
     if (changeType !== 'All') {
       filtered = filtered.filter(item => item.changeType === changeType);
@@ -118,7 +130,7 @@ export default function DiffViewer() {
     }
 
     return filtered;
-  }, [startDate, endDate, changeType]);
+  }, [sampleRollData, startDate, endDate, changeType]);
 
   const summaryStats = useMemo(() => {
     const additions = filteredData.filter(d => d.changeType === 'Addition').reduce((sum, d) => sum + d.count, 0);
@@ -137,10 +149,13 @@ export default function DiffViewer() {
       dateMap[item.date][item.changeType] += item.count;
     });
 
-    const dates = ['2024-01-05', '2024-01-06', '2024-01-07', '2024-01-08', '2024-01-09', '2024-01-10', '2024-01-11', '2024-01-12', '2024-01-13', '2024-01-14', '2024-01-15', '2024-01-16', '2024-01-17', '2024-01-18', '2024-01-19', '2024-01-20', '2024-01-21', '2024-01-22', '2024-01-23', '2024-01-24'];
+    const allDates = Object.keys(dateMap).sort();
+    if (allDates.length === 0) {
+      return [];
+    }
 
-    return dates.map(date => {
-      const data = dateMap[date] || { Addition: 0, Deletion: 0, Modification: 0 };
+    return allDates.map(date => {
+      const data = dateMap[date];
       const changes = data.Addition + data.Deletion + data.Modification;
       let dominant = 'Addition';
       if (data.Deletion > data.Addition && data.Deletion > data.Modification) dominant = 'Deletion';
@@ -148,6 +163,7 @@ export default function DiffViewer() {
 
       return {
         date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        dateKey: date,
         changes,
         dominant,
         full: data
@@ -257,7 +273,9 @@ export default function DiffViewer() {
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={handleStartDateChange}
+                min={minDate}
+                max={yesterdayStr}
                 className="w-full border-2 border-gray-300 rounded px-3 py-2 text-gray-800"
               />
             </div>
@@ -267,7 +285,9 @@ export default function DiffViewer() {
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={handleEndDateChange}
+                min={startDate || minDate}
+                max={yesterdayStr}
                 className="w-full border-2 border-gray-300 rounded px-3 py-2 text-gray-800"
               />
             </div>
@@ -297,47 +317,55 @@ export default function DiffViewer() {
             <div className="bg-white border-2 border-blue-400 rounded-b p-6 mb-4">
               <h3 className="text-gray-800 font-bold text-base mb-4">Timeline of Changes</h3>
               <div className="p-4">
-                <div className="relative">
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-400"></div>
-                  <div className="flex items-end justify-between h-72 sm:h-56 gap-1">
-                    {timelineData.map((item, index) => {
-                      const height = (item.changes / maxChanges) * 100;
-                      const spike = isSpike(item.changes);
-                      return (
-                        <div key={index} className="flex flex-col items-center flex-1 relative">
-                          <div 
-                            className={`w-full ${spike ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-t relative group cursor-pointer transition-all`}
-                            style={{ height: `${height}%`, minHeight: '8px' }}
-                          >
-                            <div className="hidden group-hover:block absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-3 py-2 whitespace-nowrap z-20 shadow-lg">
-                              <div className="font-bold mb-1">{item.date}</div>
-                              <div className="text-gray-200">{item.changes} changes</div>
-                              <div className="text-gray-300 text-xs">Type: {item.dominant}</div>
-                            </div>
-                            {spike && (
-                              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-1">
-                                <div className="bg-red-600 text-white text-xs px-1 rounded font-bold">!</div>
+                {timelineData.length > 0 ? (
+                  <>
+                    <div className="relative">
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-400"></div>
+                      <div className="flex items-end justify-between h-72 sm:h-56 gap-1">
+                        {timelineData.map((item, index) => {
+                          const height = (item.changes / maxChanges) * 100;
+                          const spike = isSpike(item.changes);
+                          return (
+                            <div key={index} className="flex flex-col items-center flex-1 relative">
+                              <div 
+                                className={`w-full ${spike ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-t relative group cursor-pointer transition-all`}
+                                style={{ height: `${height}%`, minHeight: '8px' }}
+                              >
+                                <div className="hidden group-hover:block absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-3 py-2 whitespace-nowrap z-20 shadow-lg">
+                                  <div className="font-bold mb-1">{item.date}</div>
+                                  <div className="text-gray-200">{item.changes} changes</div>
+                                  <div className="text-gray-300 text-xs">Type: {item.dominant}</div>
+                                </div>
+                                {spike && (
+                                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-1">
+                                    <div className="bg-red-600 text-white text-xs px-1 rounded font-bold">!</div>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-px h-2 bg-gray-400"></div>
-                        </div>
-                      );
-                    })}
+                              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-px h-2 bg-gray-400"></div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex justify-between mt-3 px-1">
+                      {timelineData.map((item, index) => {
+                        if (index % Math.ceil(timelineData.length / 10) === 0) {
+                          return (
+                            <div key={index} className="flex-1 text-center">
+                              <span className="text-gray-700 text-xs font-medium">{item.date}</span>
+                            </div>
+                          );
+                        }
+                        return <div key={index} className="flex-1"></div>;
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    No data available for selected date range
                   </div>
-                </div>
-                <div className="flex justify-between mt-3 px-1">
-                  {timelineData.map((item, index) => {
-                    if (index % 2 === 0) {
-                      return (
-                        <div key={index} className="flex-1 text-center">
-                          <span className="text-gray-700 text-xs font-medium">{item.date}</span>
-                        </div>
-                      );
-                    }
-                    return <div key={index} className="flex-1"></div>;
-                  })}
-                </div>
+                )}
                 <div className="mt-6 flex items-center justify-center gap-6">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-8 bg-blue-600 rounded-t"></div>
@@ -375,91 +403,97 @@ export default function DiffViewer() {
             <div className="bg-white border-2 border-green-400 rounded p-6">
               <h3 className="text-gray-800 font-bold text-base mb-4">Geographical Heatmap</h3>
               <div className="p-4">
-                <div className="space-y-3">
-                  <div className="grid grid-cols-5 gap-2 pb-3 border-b border-gray-200">
-                    {heatmapData.slice(0, 8).map((item, index) => {
-                      return (
-                        <div
-                          key={index}
-                          className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
-                          title={`${item.region}: ${item.changes} changes`}
-                          onClick={() => setSelectedConstituency(item)}
-                        >
-                          <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
-                          <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
-                            <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
-                              <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
-                              <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
-                              <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
-                              <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
-                              <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
-                              <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
-                            </div>
-                            <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
-                              <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                {heatmapData.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-5 gap-2 pb-3 border-b border-gray-200">
+                      {heatmapData.slice(0, 8).map((item, index) => {
+                        return (
+                          <div
+                            key={index}
+                            className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
+                            title={`${item.region}: ${item.changes} changes`}
+                            onClick={() => setSelectedConstituency(item)}
+                          >
+                            <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
+                            <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                              <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
+                                <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
+                                <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
+                                <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
+                                <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
+                                <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
+                                <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
+                              </div>
+                              <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
+                                <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
 
-                  <div className="grid grid-cols-5 gap-2 pb-3 border-b border-gray-200">
-                    {heatmapData.slice(8, 13).map((item, index) => {
-                      return (
-                        <div
-                          key={index}
-                          className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
-                          title={`${item.region}: ${item.changes} changes`}
-                          onClick={() => setSelectedConstituency(item)}
-                        >
-                          <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
-                          <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
-                            <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
-                              <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
-                              <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
-                              <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
-                              <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
-                              <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
-                              <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
-                            </div>
-                            <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
-                              <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                    <div className="grid grid-cols-5 gap-2 pb-3 border-b border-gray-200">
+                      {heatmapData.slice(8, 13).map((item, index) => {
+                        return (
+                          <div
+                            key={index}
+                            className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
+                            title={`${item.region}: ${item.changes} changes`}
+                            onClick={() => setSelectedConstituency(item)}
+                          >
+                            <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
+                            <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                              <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
+                                <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
+                                <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
+                                <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
+                                <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
+                                <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
+                                <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
+                              </div>
+                              <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
+                                <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
 
-                  <div className="grid grid-cols-5 gap-2">
-                    {heatmapData.slice(13).map((item, index) => {
-                      return (
-                        <div
-                          key={index}
-                          className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
-                          title={`${item.region}: ${item.changes} changes`}
-                          onClick={() => setSelectedConstituency(item)}
-                        >
-                          <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
-                          <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 || index === 6 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
-                            <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
-                              <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
-                              <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
-                              <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
-                              <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
-                              <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
-                              <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
-                            </div>
-                            <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 || index === 6 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
-                              <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {heatmapData.slice(13).map((item, index) => {
+                        return (
+                          <div
+                            key={index}
+                            className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
+                            title={`${item.region}: ${item.changes} changes`}
+                            onClick={() => setSelectedConstituency(item)}
+                          >
+                            <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
+                            <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 || index === 6 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                              <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
+                                <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
+                                <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
+                                <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
+                                <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
+                                <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
+                                <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
+                              </div>
+                              <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 || index === 6 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
+                                <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    No data available for selected date range
+                  </div>
+                )}
 
                 <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-gray-300">
                   <div className="flex items-center gap-2">
@@ -536,16 +570,24 @@ export default function DiffViewer() {
               </tr>
             </thead>
             <tbody>
-              {sampleData.map((row, index) => (
-                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200">{row.id}</td>
-                  <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200">{row.type}</td>
-                  <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200">{row.timestamp}</td>
-                  <td className={`px-4 py-3 text-sm font-semibold border-b border-gray-200 ${getRiskColor(row.risk)}`}>
-                    {row.risk}
+              {sampleData.length > 0 ? (
+                sampleData.map((row, index) => (
+                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200">{row.id}</td>
+                    <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200">{row.type}</td>
+                    <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200">{row.timestamp}</td>
+                    <td className={`px-4 py-3 text-sm font-semibold border-b border-gray-200 ${getRiskColor(row.risk)}`}>
+                      {row.risk}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-4 py-3 text-center text-gray-500 text-sm">
+                    No data available for selected date range
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
