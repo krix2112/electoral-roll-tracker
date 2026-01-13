@@ -12,6 +12,7 @@ from database import init_db, db
 from routes.upload import upload_bp
 from routes.compare import compare_bp
 from routes.uploads import uploads_bp
+from routes.stats import stats_bp
 
 load_dotenv()
 
@@ -41,6 +42,7 @@ init_db(app)
 app.register_blueprint(upload_bp)
 app.register_blueprint(compare_bp)
 app.register_blueprint(uploads_bp)
+app.register_blueprint(stats_bp)
 
 @app.route('/health', methods=['GET'])
 def health_check():

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button } from '../components/ui/Button'
 import { Navbar } from '../components/Navbar'
-import { Shield, ArrowRight, Activity, Users, FileSearch, CheckCircle2 } from 'lucide-react'
+import { Shield, ArrowRight, Activity, Users, FileSearch, CheckCircle2, Search, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 function Home() {
@@ -54,11 +54,56 @@ function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Link to="/upload">
+          <Link to="/dashboard">
             <Button size="lg" className="bg-indigo-700 hover:bg-indigo-800 text-base h-12 px-8">
               Launch Audit Dashboard <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
+        </motion.div>
+      </div>
+
+      {/* Feature Cards Grid */}
+      <div className="container mx-auto px-4 pb-16 -mt-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="grid md:grid-cols-4 gap-6"
+        >
+          {[
+            {
+              title: "Anomaly Detection",
+              icon: Search,
+              color: "bg-blue-100 text-blue-600",
+              desc: "AI-powered detection of suspicious voter roll changes across 543 constituencies"
+            },
+            {
+              title: "Time Travel Analysis",
+              icon: TrendingUp,
+              color: "bg-green-100 text-green-600",
+              desc: "Visualize voter roll changes over time with interactive timeline slider"
+            },
+            {
+              title: "Real-time Monitoring",
+              icon: Users,
+              color: "bg-yellow-100 text-yellow-600",
+              desc: "Track 450M+ registered voters across all Indian states and union territories"
+            },
+            {
+              title: "Audit Reports",
+              icon: Shield,
+              color: "bg-red-100 text-red-600",
+              desc: "Generate comprehensive audit reports with charts, maps, and actionable insights"
+            }
+          ].map((feature, i) => (
+            <div key={i} className="bg-white p-8 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-gray-100 hover:-translate-y-1 transition-transform duration-300 flex flex-col items-center text-center">
+              <div className={`${feature.color} w-12 h-12 rounded-lg flex items-center justify-center mb-6`}>
+                <feature.icon className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">{feature.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{feature.desc}</p>
+            </div>
+          ))}
         </motion.div>
       </div>
 
