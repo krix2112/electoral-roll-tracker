@@ -9,7 +9,9 @@ export function Navbar() {
                 <Link to="/" className="flex items-center gap-3">
                     <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-10 w-auto" />
                     <div className="flex flex-col">
-                        <span className="font-bold text-gray-900 leading-none">Matsetu</span>
+                        <span className="font-bold text-gray-900 leading-none">
+                            <span className="text-orange-600">मत</span><span className="text-green-600">सेतु</span>
+                        </span>
                         <span className="text-[10px] text-gray-500 font-medium tracking-wide">Electoral Roll Forensic Audit</span>
                     </div>
                 </Link>
