@@ -17,6 +17,7 @@ class ElectoralRoll(db.Model):
     row_count = db.Column(db.Integer, nullable=False)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     data_hash = db.Column(db.String(64))
+    state = db.Column(db.String(50), nullable=False, default='Unknown')
     
     voter_records = db.relationship('VoterRecord', backref='electoral_roll', lazy='dynamic', cascade='all, delete-orphan')
     
@@ -24,6 +25,7 @@ class ElectoralRoll(db.Model):
         return {
             'upload_id': self.upload_id,
             'filename': self.filename,
+            'state': self.state,
             'row_count': self.row_count,
             'uploaded_at': self.uploaded_at.isoformat(),
             'data_hash': self.data_hash

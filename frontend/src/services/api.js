@@ -89,11 +89,11 @@ export const healthCheck = async () => {
  * 
  * @example
  * const file = document.querySelector('input[type="file"]').files[0];
- * const result = await uploadRoll(file);
+ * const result = await uploadRoll(file, "Maharashtra");
  * console.log(result.upload_id); // "uuid-string"
  * console.log(result.row_count); // 2000
  */
-export const uploadRoll = async (files) => {
+export const uploadRoll = async (files, state) => {
   if (!files) {
     throw new Error('Invalid file: File object or array is required')
   }
@@ -107,10 +107,13 @@ export const uploadRoll = async (files) => {
 
   try {
     const formData = new FormData()
-
     fileList.forEach(file => {
       formData.append('file', file)
     })
+
+    if (state) {
+      formData.append('state', state)
+    }
 
     const response = await api.post('/api/upload', formData, {
       headers: {

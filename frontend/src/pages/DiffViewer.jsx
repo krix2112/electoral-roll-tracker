@@ -17,6 +17,8 @@ export default function DiffViewer() {
   const [endDate, setEndDate] = useState('');
   const [changeType, setChangeType] = useState('All');
   const [selectedConstituency, setSelectedConstituency] = useState(null);
+  const [hoveredBlock, setHoveredBlock] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   const uploads = location.state?.uploads || [];
 
@@ -250,10 +252,10 @@ export default function DiffViewer() {
   const isSpike = (changes) => changes > 20; // Adjusted threshold for demo data
 
   const getRiskColor = (risk) => {
-    if (risk === 'Low') return 'text-green-700';
-    if (risk === 'Medium') return 'text-amber-600';
-    if (risk === 'High') return 'text-red-700';
-    return 'text-gray-800';
+    if (risk === 'Low') return 'bg-blue-100 text-blue-700 border-blue-300';
+    if (risk === 'Medium') return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+    if (risk === 'High') return 'bg-red-100 text-red-700 border-red-300';
+    return 'bg-gray-100 text-gray-700';
   };
 
   // Sample data list (first 100 rows for table)
@@ -312,30 +314,25 @@ export default function DiffViewer() {
         </p>
       </div>
 
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 border-2 border-blue-400 rounded p-4">
-            <h3 className="text-gray-800 font-bold text-sm mb-2">Total Changes</h3>
-            <p className="text-blue-800 text-3xl font-bold mb-1">{summaryStats.total}</p>
-            <p className="text-gray-600 text-xs">All modifications tracked</p>
-          </div>
+      <div className="max-w-7xl mx-auto px-6 -mt-8">
 
-          <div className="bg-green-50 border-2 border-green-400 rounded p-4">
-            <h3 className="text-gray-800 font-bold text-sm mb-2">Additions</h3>
-            <p className="text-green-800 text-3xl font-bold mb-1">{summaryStats.additions}</p>
-            <p className="text-gray-600 text-xs">New voter registrations</p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded shadow-lg p-4 border-l-4 border-indigo-500">
+            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Changes</h3>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{summaryStats.total}</p>
           </div>
-
-          <div className="bg-red-50 border-2 border-red-400 rounded p-4">
-            <h3 className="text-gray-800 font-bold text-sm mb-2">Deletions</h3>
-            <p className="text-red-800 text-3xl font-bold mb-1">{summaryStats.deletions}</p>
-            <p className="text-gray-600 text-xs">Removed entries</p>
+          <div className="bg-white rounded shadow-lg p-4 border-l-4 border-green-500">
+            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Additions</h3>
+            <p className="text-3xl font-bold text-green-600 mt-1">+{summaryStats.additions}</p>
           </div>
-
-          <div className="bg-amber-50 border-2 border-amber-400 rounded p-4">
-            <h3 className="text-gray-800 font-bold text-sm mb-2">Modifications</h3>
-            <p className="text-amber-800 text-3xl font-bold mb-1">{summaryStats.modifications}</p>
-            <p className="text-gray-600 text-xs">Updated records</p>
+          <div className="bg-white rounded shadow-lg p-4 border-l-4 border-red-500">
+            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Deletions</h3>
+            <p className="text-3xl font-bold text-red-600 mt-1">-{summaryStats.deletions}</p>
+          </div>
+          <div className="bg-white rounded shadow-lg p-4 border-l-4 border-amber-500">
+            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Modifications</h3>
+            <p className="text-3xl font-bold text-amber-600 mt-1">~{summaryStats.modifications}</p>
           </div>
         </div>
 
@@ -373,201 +370,192 @@ export default function DiffViewer() {
                 onChange={(e) => setChangeType(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded px-3 py-2 text-gray-800"
               >
-                <option>All</option>
-                <option>Addition</option>
-                <option>Deletion</option>
-                <option>Modification</option>
+                <option value="All">All Changes</option>
+                <option value="Addition">Additions Only</option>
+                <option value="Deletion">Deletions Only</option>
+                <option value="Modification">Modifications Only</option>
               </select>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-2">
-            <div className="bg-indigo-800 px-4 py-3 rounded-t">
-              <h2 className="text-white text-lg font-bold">Visual Analysis</h2>
-            </div>
 
-            <div className="bg-white border-2 border-blue-400 rounded-b p-6 mb-4">
-              <h3 className="text-gray-800 font-bold text-base mb-4">Timeline of Changes</h3>
-              <div className="p-4">
-                {timelineData.length > 0 ? (
-                  <>
-                    <div className="relative">
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-400"></div>
-                      <div className="flex items-end justify-between h-72 sm:h-56 gap-1 overflow-x-auto">
-                        {timelineData.map((item, index) => {
-                          const height = (item.changes / maxChanges) * 100;
-                          const spike = isSpike(item.changes);
-                          return (
-                            <div key={index} className="flex flex-col items-center flex-1 relative min-w-[10px]">
-                              <div
-                                className={`w-full ${spike ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-t relative group cursor-pointer transition-all`}
-                                style={{ height: `${height}%`, minHeight: '8px' }}
-                              >
-                                <div className="hidden group-hover:block absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-3 py-2 whitespace-nowrap z-20 shadow-lg">
-                                  <div className="font-bold mb-1">{item.date}</div>
-                                  <div className="text-gray-200">{item.changes} changes</div>
-                                  <div className="text-gray-300 text-xs">Type: {item.dominant}</div>
-                                </div>
-                                {spike && (
-                                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-1">
-                                    <div className="bg-red-600 text-white text-xs px-1 rounded font-bold">!</div>
-                                  </div>
-                                )}
+          <div className="bg-white border-2 border-blue-400 rounded-b p-6 mb-4">
+            <h3 className="text-gray-800 font-bold text-base mb-4">Timeline of Changes</h3>
+            <div className="p-4">
+              {timelineData.length > 0 ? (
+                <>
+                  <div className="relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-400"></div>
+                    <div className="flex items-end justify-between h-72 sm:h-56 gap-1 overflow-x-auto">
+                      {timelineData.map((item, index) => {
+                        const height = (item.changes / maxChanges) * 100;
+                        const spike = isSpike(item.changes);
+                        return (
+                          <div key={index} className="flex flex-col items-center flex-1 relative min-w-[10px]">
+                            <div
+                              className={`w-full ${spike ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-t relative group cursor-pointer transition-all`}
+                              style={{ height: `${height}%`, minHeight: '8px' }}
+                            >
+                              <div className="hidden group-hover:block absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-3 py-2 whitespace-nowrap z-20 shadow-lg">
+                                <div className="font-bold mb-1">{item.date}</div>
+                                <div className="text-gray-200">{item.changes} changes</div>
+                                <div className="text-gray-300 text-xs">Type: {item.dominant}</div>
                               </div>
+                              {spike && (
+                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-1">
+                                  <div className="bg-red-600 text-white text-xs px-1 rounded font-bold">!</div>
+                                </div>
+                              )}
                             </div>
-                          );
-                        })}
-                      </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </>
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    No data available for selected filters
                   </div>
-                )}
-                <div className="mt-6 flex items-center justify-center gap-6">
-                  {/* Legend code same as before */}
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-8 bg-blue-600 rounded-t"></div>
-                    <span className="text-gray-700 text-xs">Normal Volume</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-8 bg-red-600 rounded-t"></div>
-                    <span className="text-gray-700 text-xs">Spike (High Volume)</span>
-                  </div>
+                </>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  No data available for selected filters
+                </div>
+              )}
+              <div className="mt-6 flex items-center justify-center gap-6">
+                {/* Legend code same as before */}
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-8 bg-blue-600 rounded-t"></div>
+                  <span className="text-gray-700 text-xs">Normal Volume</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-8 bg-red-600 rounded-t"></div>
+                  <span className="text-gray-700 text-xs">Spike (High Volume)</span>
                 </div>
               </div>
             </div>
-
-            <div className="bg-white border-2 border-green-400 rounded p-6">
-              <h3 className="text-gray-800 font-bold text-base mb-4">Constituency/Region Heatmap</h3>
-              <div className="p-4">
-                {heatmapData.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                    {heatmapData.map((item, index) => (
-                      <div
-                        key={index}
-                        className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
-                        title={`${item.region}: ${item.changes} changes`}
-                        onClick={() => setSelectedConstituency(item)}
-                      >
-                        <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
-                        {/* Tooltip logic simplified/kept */}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    No regional data available
-                  </div>
-                )}
-                {/* Legend */}
-              </div>
-            </div>
           </div>
 
-          {/* Sidebar Legends - reused */}
-          <div className="lg:col-span-1">
-            {/* Legend Blocks */}
-            <div className="bg-white border-2 border-gray-300 rounded p-4 mb-4">
-              <h3 className="text-gray-800 font-bold text-sm mb-4">Change Type Legend</h3>
-              <div className="space-y-3">
-                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-green-600 mr-3"></div><span className="text-gray-800 text-sm">Additions</span></div>
-                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-red-600 mr-3"></div><span className="text-gray-800 text-sm">Deletions</span></div>
-                <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-amber-600 mr-3"></div><span className="text-gray-800 text-sm">Modifications</span></div>
-              </div>
+          <div className="bg-white border-2 border-green-400 rounded p-6">
+            <h3 className="text-gray-800 font-bold text-base mb-4">Constituency/Region Heatmap</h3>
+            <div className="p-4">
+              {heatmapData.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                  {heatmapData.map((item, index) => (
+                    <div
+                      key={index}
+                      className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
+                      title={`${item.region}: ${item.changes} changes`}
+                      onClick={() => setSelectedConstituency(item)}
+                    >
+                      <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
+                      {/* Tooltip logic simplified/kept */}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  No regional data available
+                </div>
+              )}
+              {/* Legend */}
             </div>
           </div>
         </div>
 
-        <div className="bg-indigo-800 px-4 py-3 rounded-t">
-          <h2 className="text-white text-lg font-bold">Detailed Change Log</h2>
+        {/* Sidebar Legends - reused */}
+        <div className="lg:col-span-1">
+          {/* Legend Blocks */}
+          <div className="bg-white border-2 border-gray-300 rounded p-4 mb-4">
+            <h3 className="text-gray-800 font-bold text-sm mb-4">Change Type Legend</h3>
+            <div className="space-y-3">
+              <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-green-600 mr-3"></div><span className="text-gray-800 text-sm">Additions</span></div>
+              <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-red-600 mr-3"></div><span className="text-gray-800 text-sm">Deletions</span></div>
+              <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-amber-600 mr-3"></div><span className="text-gray-800 text-sm">Modifications</span></div>
+            </div>
+          </div>
+          {/* Risk Legend */}
+          <div className="bg-white border-2 border-gray-300 rounded p-4">
+            <h3 className="text-gray-800 font-bold text-sm mb-4">Risk Levels/Intensity</h3>
+            <div className="space-y-3">
+              <div className="flex items-center"><div className="w-4 h-4 rounded bg-emerald-400 border border-emerald-700 mr-3"></div><span className="text-gray-800 text-sm">Low (Normal)</span></div>
+              <div className="flex items-center"><div className="w-4 h-4 rounded bg-amber-500 border border-amber-800 mr-3"></div><span className="text-gray-800 text-sm">Medium (Watch)</span></div>
+              <div className="flex items-center"><div className="w-4 h-4 rounded bg-red-500 border border-red-800 mr-3"></div><span className="text-gray-800 text-sm">High (Anomalous)</span></div>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white border-2 border-gray-300 rounded-b overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-100 border-b-2 border-gray-300">
-              <tr>
-                <th className="px-4 py-3 text-left text-gray-800 font-bold text-sm">Voter ID</th>
-                <th className="px-4 py-3 text-left text-gray-800 font-bold text-sm">Change Type</th>
-                <th className="px-4 py-3 text-left text-gray-800 font-bold text-sm">Date</th>
-                <th className="px-4 py-3 text-left text-gray-800 font-bold text-sm">Risk Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listData.length > 0 ? (
-                listData.map((row, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200 font-mono">{row.id}</td>
-                    <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200">{row.type}</td>
-                    <td className="px-4 py-3 text-gray-800 text-sm border-b border-gray-200">{row.timestamp}</td>
-                    <td className={`px-4 py-3 text-sm font-semibold border-b border-gray-200 ${getRiskColor(row.risk)}`}>
-                      {row.risk}
+        {/* Detailed List */}
+        <div className="bg-white border-2 border-gray-300 rounded p-6 mb-8">
+          <h3 className="text-gray-800 font-bold text-xl mb-4">Detailed Change Log</h3>
+          <p className="text-gray-500 text-sm mb-4">Showing first {Math.min(filteredData.length, 100)} records</p>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead className="bg-gray-100 border-b-2 border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-gray-700 font-bold text-sm uppercase">Voter ID</th>
+                  <th className="px-4 py-3 text-gray-700 font-bold text-sm uppercase">Type</th>
+                  <th className="px-4 py-3 text-gray-700 font-bold text-sm uppercase">Date</th>
+                  <th className="px-4 py-3 text-gray-700 font-bold text-sm uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {listData.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-mono text-sm text-gray-900">{row.id}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.type === 'Addition' ? 'bg-green-100 text-green-800' :
+                          row.type === 'Deletion' ? 'bg-red-100 text-red-800' :
+                            'bg-amber-100 text-amber-800'
+                        }`}>
+                        {row.type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{row.timestamp}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className={`px-2 py-1 rounded border text-xs font-medium ${getRiskColor(row.risk)}`}>
+                        {row.risk}
+                      </span>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-4 py-3 text-center text-gray-500 text-sm">
-                    No data available for selected date range
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <div className="p-4 bg-gray-50 text-center text-gray-500 text-xs text-italic">
-            Showing first {Math.min(100, listData.length)} records
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
 
-      {selectedConstituency && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end md:items-center justify-center md:p-4"
-          onClick={() => setSelectedConstituency(null)}
-        >
-          <div
-            className="bg-white rounded-t-lg md:rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-indigo-800 px-4 py-3 flex justify-between items-center">
-              <h3 className="text-white font-bold text-lg">Region Details</h3>
-              <button
-                onClick={() => setSelectedConstituency(null)}
-                className="text-white hover:text-gray-200 text-2xl font-bold"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-4">
-              <div className="mb-4">
-                <h4 className="text-gray-900 font-semibold text-base mb-2 break-words">{selectedConstituency.fullName}</h4>
+        {selectedConstituency && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedConstituency(null)}>
+            <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedConstituency.fullName}</h3>
+              <p className="text-gray-600 mb-4">Region ID: {selectedConstituency.region}</p>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <span className="font-medium text-gray-700">Total Changes</span>
+                  <span className="font-bold text-indigo-600">{selectedConstituency.changes}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="text-green-600 font-bold text-lg">+{selectedConstituency.breakdown.Addition}</div>
+                    <div className="text-green-800 text-xs">Added</div>
+                  </div>
+                  <div className="text-center p-2 bg-red-50 rounded">
+                    <div className="text-red-600 font-bold text-lg">-{selectedConstituency.breakdown.Deletion}</div>
+                    <div className="text-red-800 text-xs">Deleted</div>
+                  </div>
+                  <div className="text-center p-2 bg-amber-50 rounded">
+                    <div className="text-amber-600 font-bold text-lg">~{selectedConstituency.breakdown.Modification}</div>
+                    <div className="text-amber-800 text-xs">Modified</div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-gray-700 font-medium">Total Changes</span>
-                  <span className="text-gray-900 font-bold">{selectedConstituency.changes}</span>
-                </div>
-                {/* Breakdown details */}
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-gray-700 font-medium">Additions</span>
-                  <span className="text-green-700 font-semibold">{selectedConstituency.breakdown.Addition}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-gray-700 font-medium">Deletions</span>
-                  <span className="text-red-700 font-semibold">{selectedConstituency.breakdown.Deletion}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-gray-700 font-medium">Modifications</span>
-                  <span className="text-amber-700 font-semibold">{selectedConstituency.breakdown.Modification}</span>
-                </div>
+              <div className="mt-6 flex justify-end">
+                <Button onClick={() => setSelectedConstituency(null)}>Close</Button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
     </div>
   );
 }

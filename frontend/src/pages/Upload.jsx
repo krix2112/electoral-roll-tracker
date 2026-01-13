@@ -10,6 +10,7 @@ import { useNavigate, Link } from 'react-router-dom'
 function Upload() {
   const navigate = useNavigate()
   const [files, setFiles] = useState([])
+  const [state, setState] = useState('Andaman & Nicobar')
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState(null)
   const [error, setError] = useState(null)
@@ -117,7 +118,7 @@ function Upload() {
     setUploading(true)
     setError(null)
     try {
-      const response = await uploadElectoralRoll(files)
+      const response = await uploadElectoralRoll(files, state)
       // Normalize response to array if single object returned (backward compatibility)
       const resArray = response.results ? response.results : [response]
       setResults(resArray)
@@ -185,6 +186,21 @@ function Upload() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Select State / UT</label>
+                <select
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+                >
+                  <option value="Andaman & Nicobar">Andaman & Nicobar</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                </select>
+              </div>
 
               <AnimatePresence mode="wait">
                 {files.length === 0 && !results ? (

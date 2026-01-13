@@ -19,6 +19,12 @@ def process_single_file(file):
     Process a single CSV file and save to database.
     Returns dict with result or error.
     """
+    # Get State from request
+    state = request.form.get('state')
+    if not state or state == 'undefined' or state == 'null':
+        return {'error': 'State is required', 'filename': file.filename if file else 'unknown'}
+
+
     try:
         # Edge Case 2: Empty filename
         if file.filename == '':
@@ -151,6 +157,7 @@ def process_single_file(file):
         electoral_roll = ElectoralRoll(
             upload_id=upload_id,
             filename=file.filename,
+            state=state,
             row_count=len(df),
             data_hash=dataset_hash
         )

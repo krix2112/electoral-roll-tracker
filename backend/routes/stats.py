@@ -17,20 +17,18 @@ def get_dashboard_stats():
         total_audits = ElectoralRoll.query.count()
         
         # Get the latest roll to estimate current voter count
-        latest_roll = ElectoralRoll.query.order_by(ElectoralRoll.uploaded_at.desc()).first()
+        if state_filter != 'All States':
+            # Filter by state
+            latest_roll_query = ElectoralRoll.query.filter_by(state=state_filter).order_by(ElectoralRoll.uploaded_at.desc())
+            latest_roll = latest_roll_query.first()
+            total_audits = ElectoralRoll.query.filter_by(state=state_filter).count()
+        else:
+            # All states
+            latest_roll = ElectoralRoll.query.order_by(ElectoralRoll.uploaded_at.desc()).first()
         
         current_voters = 0
         if latest_roll:
             current_voters = latest_roll.row_count
-            
-        # Simulating state-based filtering (since we don't have structured state data yet)
-        # This allows the UI to demonstrate responsiveness to the filter "those things"
-        if state_filter == 'Maharashtra':
-            current_voters = int(current_voters * 0.45) # Mock approx 45%
-            total_audits = max(1, int(total_audits * 0.4))
-        elif state_filter == 'Delhi':
-             current_voters = int(current_voters * 0.15) # Mock approx 15%
-             total_audits = max(1, int(total_audits * 0.2))
 
         # Format voters count (e.g., 6.2M or 15.4K or just raw number)
         voters_display = str(current_voters)
@@ -40,8 +38,8 @@ def get_dashboard_stats():
             voters_display = f"{current_voters / 1000:.1f}K"
             
         return jsonify({
-            'voters': {'value': voters_display, 'raw': current_voters, 'change': '+2.1%' if state_filter == 'All States' else '-0.5%', 'trend': 'up' if state_filter == 'All States' else 'down'},
-            'anomalies': {'value': str(int(current_voters * 0.001)), 'type': 'critical'}, # Mock anomaly rate
+            'voters': {'value': voters_display, 'raw': current_voters, 'change': '+0.0%', 'trend': 'neutral'},
+            'anomalies': {'value': str(int(current_voters * 0.001)), 'type': 'critical'}, # Still mock anomaly rate until we have real anomalies table
             'audits': {'value': str(total_audits), 'type': 'info'},
             'filter_applied': state_filter
         }), 200
