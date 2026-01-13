@@ -93,14 +93,24 @@ export const healthCheck = async () => {
  * console.log(result.upload_id); // "uuid-string"
  * console.log(result.row_count); // 2000
  */
-export const uploadRoll = async (file, state) => {
-  if (!file || !(file instanceof File)) {
-    throw new Error('Invalid file: File object is required')
+export const uploadRoll = async (files, state) => {
+  if (!files) {
+    throw new Error('Invalid file: File object or array is required')
+  }
+
+  // Normalize to array
+  const fileList = Array.isArray(files) ? files : [files]
+
+  if (fileList.length === 0) {
+    throw new Error('No files provided')
   }
 
   try {
     const formData = new FormData()
-    formData.append('file', file)
+    fileList.forEach(file => {
+      formData.append('file', file)
+    })
+
     if (state) {
       formData.append('state', state)
     }

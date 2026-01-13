@@ -3,16 +3,25 @@ import { uploadElectoralRoll } from '../services/api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
-import { UploadCloud, File, CheckCircle2, AlertCircle, X } from 'lucide-react'
+import { UploadCloud, File, CheckCircle2, AlertCircle, X, ChevronLeft, Home } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { useNavigate, Link } from 'react-router-dom'
 
 function Upload() {
+<<<<<<< HEAD
   const [file, setFile] = useState(null)
   const [state, setState] = useState('Andaman & Nicobar')
+=======
+  const navigate = useNavigate()
+  const [files, setFiles] = useState([])
+>>>>>>> fb7cca0519e7982c5ab735fd2e527f53cdfac00d
   const [uploading, setUploading] = useState(false)
-  const [result, setResult] = useState(null)
+  const [results, setResults] = useState(null)
   const [error, setError] = useState(null)
   const [activeDrag, setActiveDrag] = useState(false)
+
+  // Preview State: { [filename]: { headers: [], rows: [] } }
+  const [previews, setPreviews] = useState({})
 
   const fileInputRef = useRef(null)
 
@@ -30,45 +39,90 @@ function Upload() {
     e.preventDefault()
   }
 
+  const parseCSVPreview = (file) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const text = e.target.result
+      const lines = text.split('\n').filter(line => line.trim() !== '').slice(0, 6) // Header + 5 rows
+      if (lines.length > 0) {
+        const headers = lines[0].split(',').map(h => h.trim())
+        const rows = lines.slice(1).map(line => line.split(',').map(c => c.trim()))
+
+        setPreviews(prev => ({
+          ...prev,
+          [file.name]: { headers, rows }
+        }))
+      }
+    }
+    const blob = file.slice(0, 5120)
+    reader.readAsText(blob)
+  }
+
+  const addFiles = (newFiles) => {
+    const validFiles = Array.from(newFiles).filter(
+      f => f.type === 'text/csv' || f.name.endsWith('.csv')
+    )
+
+    if (validFiles.length === 0) {
+      setError('Please upload valid CSV files.')
+      return
+    }
+
+    // Identify duplicates
+    const currentNames = new Set(files.map(f => f.name))
+    const uniqueFiles = validFiles.filter(f => !currentNames.has(f.name))
+
+    if (uniqueFiles.length < validFiles.length) {
+      setError('Some files were skipped because they are already added.')
+    } else {
+      setError(null)
+    }
+
+    setFiles(prev => [...prev, ...uniqueFiles])
+    setResults(null)
+
+    uniqueFiles.forEach(file => {
+      parseCSVPreview(file)
+    })
+  }
+
   const handleDrop = (e) => {
     e.preventDefault()
     setActiveDrag(false)
-    const droppedFile = e.dataTransfer.files[0]
-    if (droppedFile && droppedFile.type === 'text/csv' || droppedFile.name.endsWith('.csv')) {
-      setFile(droppedFile)
-      setError(null)
-      setResult(null)
-    } else {
-      setError('Please upload a valid CSV file.')
-    }
+    addFiles(e.dataTransfer.files)
   }
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0]
-    if (selectedFile) {
-      setFile(selectedFile)
-      setError(null)
-      setResult(null)
+    if (e.target.files && e.target.files.length > 0) {
+      addFiles(e.target.files)
     }
   }
 
-  const removeFile = () => {
-    setFile(null)
+  const removeFile = (fileNameToRemove) => {
+    setFiles(prev => prev.filter(f => f.name !== fileNameToRemove))
+    setPreviews(prev => {
+      const newPreviews = { ...prev }
+      delete newPreviews[fileNameToRemove]
+      return newPreviews
+    })
     setError(null)
-    setResult(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    setResults(null)
+    if (files.length <= 1 && fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!file) {
-      setError('Please select a file')
+    if (files.length === 0) {
+      setError('Please select at least one file')
       return
     }
 
     setUploading(true)
     setError(null)
     try {
+<<<<<<< HEAD
       // Create FormData with state
       file.state = state; // Hacky way to pass it to the API service helper if it accepts file object only, 
       // BUT wait, looking at api.js, `uploadRoll` takes `file` and puts it in FormData.
@@ -78,6 +132,12 @@ function Upload() {
       // I will update api.js on the next step. For now assume I will pass it as second arg.
       const response = await uploadElectoralRoll(file, state)
       setResult(response)
+=======
+      const response = await uploadElectoralRoll(files)
+      // Normalize response to array if single object returned (backward compatibility)
+      const resArray = response.results ? response.results : [response]
+      setResults(resArray)
+>>>>>>> fb7cca0519e7982c5ab735fd2e527f53cdfac00d
     } catch (err) {
       setError(err.message || 'Upload failed')
     } finally {
@@ -85,18 +145,49 @@ function Upload() {
     }
   }
 
+  const resetUpload = () => {
+    setFiles([])
+    setPreviews({})
+    setResults(null)
+    setError(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50/50 p-8 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50/50 p-8 flex items-center justify-center relative">
+      {/* Navigation Buttons */}
+      <div className="absolute top-8 left-8 flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="text-gray-500 hover:text-gray-900 gap-2"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back
+        </Button>
+        <Link to="/">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-gray-900 gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Button>
+        </Link>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-xl"
+        className="w-full max-w-2xl"
       >
         <Card className="w-full">
           <CardHeader>
             <CardTitle>Upload Electoral Roll</CardTitle>
-            <CardDescription>Drag and drop your CSV file here or click to browse.</CardDescription>
+            <CardDescription>Drag and drop CSV files here or click to browse. You can upload multiple files.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -117,7 +208,7 @@ function Upload() {
               </div>
 
               <AnimatePresence mode="wait">
-                {!file && !result ? (
+                {files.length === 0 && !results ? (
                   <motion.div
                     key="dropzone"
                     initial={{ opacity: 0 }}
@@ -140,6 +231,7 @@ function Upload() {
                       ref={fileInputRef}
                       className="hidden"
                       accept=".csv"
+                      multiple
                       onChange={handleFileChange}
                     />
                     <div className="p-4 rounded-full bg-indigo-50 text-indigo-600">
@@ -150,52 +242,120 @@ function Upload() {
                       <p className="text-sm text-gray-500 mt-1">CSV files only (max 50MB)</p>
                     </div>
                   </motion.div>
-                ) : !result ? (
+                ) : !results ? (
                   <motion.div
-                    key="file-preview"
+                    key="file-preview-list"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="border rounded-xl p-4 flex items-center gap-4 bg-white"
+                    className="space-y-4"
                   >
-                    <div className="p-3 rounded-lg bg-indigo-100 text-indigo-600">
-                      <File className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{file.name}</p>
-                      <p className="text-sm text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={removeFile}
-                      disabled={uploading}
+                    {/* Compact Add More Area */}
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 hover:border-indigo-300 transition-colors"
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
+                      <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
+                        <UploadCloud className="h-4 w-4" /> Add more files
+                      </p>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept=".csv"
+                        multiple
+                        onChange={handleFileChange}
+                      />
+                    </div>
+
+                    {files.map((file) => (
+                      <div key={file.name} className="space-y-2">
+                        <div className="border rounded-xl p-4 flex items-center gap-4 bg-white">
+                          <div className="p-3 rounded-lg bg-indigo-100 text-indigo-600">
+                            <File className="h-6 w-6" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{file.name}</p>
+                            <p className="text-sm text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeFile(file.name)}
+                            disabled={uploading}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        {previews[file.name] && (
+                          <div className="border rounded-xl overflow-hidden bg-white text-xs">
+                            <div className="bg-gray-50 px-4 py-1.5 border-b border-gray-200">
+                              <span className="font-semibold text-gray-500 uppercase tracking-wider">Preview: {file.name}</span>
+                            </div>
+                            <div className="overflow-x-auto max-h-32">
+                              <table className="w-full text-left">
+                                <thead className="text-gray-700 bg-gray-50 sticky top-0">
+                                  <tr>
+                                    {previews[file.name].headers.map((h, i) => (
+                                      <th key={i} className="px-4 py-2 whitespace-nowrap">{h}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {previews[file.name].rows.map((row, i) => (
+                                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
+                                      {row.map((cell, j) => (
+                                        <td key={j} className="px-4 py-1.5 whitespace-nowrap text-gray-600">{cell}</td>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </motion.div>
                 ) : (
                   <motion.div
                     key="success"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-green-50 border border-green-200 rounded-xl p-6 text-center"
+                    className="space-y-4"
                   >
-                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                      <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                        <CheckCircle2 className="h-6 w-6 text-green-600" />
+                      </div>
+                      <h3 className="text-lg font-medium text-green-900">Upload Process Complete</h3>
+                      <p className="text-sm text-green-700 mt-1">Processed {results.length} files.</p>
                     </div>
-                    <h3 className="text-lg font-medium text-green-900">Upload Successful!</h3>
-                    <div className="mt-2 text-sm text-green-700">
-                      <p>Upload ID: <span className="font-mono">{result.upload_id}</span></p>
-                      <p>Processed {result.row_count} rows successfully.</p>
+
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {results.map((res, idx) => (
+                        <div key={idx} className={cn(
+                          "p-3 rounded-lg border text-sm flex justify-between items-center",
+                          res.error ? "bg-red-50 border-red-200 text-red-700" : "bg-white border-gray-200"
+                        )}>
+                          <span className="font-medium truncate max-w-[200px]">{res.filename}</span>
+                          {res.error ? (
+                            <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Failed</span>
+                          ) : (
+                            <span className="text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> {res.row_count} rows</span>
+                          )}
+                        </div>
+                      ))}
                     </div>
+
                     <Button
                       type="button"
                       className="mt-6 w-full"
-                      onClick={removeFile}
+                      onClick={resetUpload}
                     >
-                      Upload Another File
+                      Upload More Files
                     </Button>
                   </motion.div>
                 )}
@@ -212,7 +372,7 @@ function Upload() {
                 </motion.div>
               )}
 
-              {file && !result && (
+              {files.length > 0 && !results && (
                 <Button
                   type="submit"
                   className="w-full"
@@ -222,10 +382,10 @@ function Upload() {
                   {uploading ? (
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Processing...
+                      Processing {files.length} files...
                     </div>
                   ) : (
-                    'Start Processing'
+                    `Start Processing (${files.length} files)`
                   )}
                 </Button>
               )}
