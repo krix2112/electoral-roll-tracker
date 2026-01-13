@@ -84,7 +84,7 @@ function Dashboard() {
               <span className="font-medium">Back</span>
             </Link>
             <div className="h-6 w-px bg-gray-200 mx-2"></div>
-            <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-8 w-auto" />
+            <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-12 w-auto" />
             <div>
               <h1 className="font-bold text-gray-900 leading-none">Matsetu</h1>
               <p className="text-[10px] text-gray-500 font-medium">Electoral Roll Forensic Audit System</p>

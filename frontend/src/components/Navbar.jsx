@@ -7,7 +7,7 @@ export function Navbar() {
         <nav className="border-b border-gray-100 bg-white">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 <Link to="/" className="flex items-center gap-3">
-                    <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-10 w-auto" />
+                    <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-14 w-auto" />
                     <div className="flex flex-col">
                         <span className="font-bold text-gray-900 leading-none">
                             <span className="text-orange-600">मत</span><span className="text-green-600">सेतु</span>
