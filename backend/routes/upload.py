@@ -40,6 +40,11 @@ def upload_electoral_roll():
     if not file.filename.lower().endswith('.csv'):
         return jsonify({'error': 'Only CSV files are supported'}), 400
     
+    # Get State from request
+    state = request.form.get('state')
+    if not state or state == 'undefined' or state == 'null':
+        return jsonify({'error': 'State is required'}), 400
+    
     # Edge Case 4: Check file size (before processing)
     file.seek(0, os.SEEK_END)
     file_size = file.tell()
@@ -161,6 +166,7 @@ def upload_electoral_roll():
         electoral_roll = ElectoralRoll(
             upload_id=upload_id,
             filename=file.filename,
+            state=state,
             row_count=len(df),
             data_hash=dataset_hash
         )
