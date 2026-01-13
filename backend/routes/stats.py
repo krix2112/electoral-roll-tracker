@@ -2,11 +2,19 @@
 from flask import Blueprint, jsonify, request
 import sys
 import os
+import pandas as pd
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models import ElectoralRoll
 
 stats_bp = Blueprint('stats', __name__)
+
+# Path to national dataset CSV (relative to backend root)
+NATIONAL_CSV_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'data',
+    'indian-national-level-election.csv'
+)
 
 @stats_bp.route('/api/stats', methods=['GET'])
 def get_dashboard_stats():
@@ -46,3 +54,95 @@ def get_dashboard_stats():
         
     except Exception as e:
         return jsonify({'error': f'Failed to fetch stats: {str(e)}'}), 500
+
+
+@stats_bp.route('/api/dashboard', methods=['GET'])
+def get_dashboard_aggregation():
+    """
+    Dashboard Aggregation API
+    Reads national-level CSV and returns aggregated statistics.
+    Does NOT expose individual voter records.
+    """
+    try:
+        # Get optional state filter (case-insensitive)
+        state_filter = request.args.get('state', '').strip()
+        
+        # Load CSV safely
+        if not os.path.exists(NATIONAL_CSV_PATH):
+            return jsonify({'error': 'National dataset file not found'}), 404
+        
+        try:
+            # Try reading with common encodings
+            df = None
+            for encoding in ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']:
+                try:
+                    df = pd.read_csv(NATIONAL_CSV_PATH, encoding=encoding, low_memory=False)
+                    break
+                except (UnicodeDecodeError, pd.errors.ParserError):
+                    continue
+            
+            if df is None:
+                return jsonify({'error': 'Unable to parse CSV file. Check file encoding and format'}), 400
+            
+            # Check for required columns (case-insensitive)
+            df.columns = df.columns.str.strip().str.lower()
+            
+            # Find state and constituency columns (case-insensitive)
+            state_col = None
+            constituency_col = None
+            
+            for col in df.columns:
+                if 'state' in col or 'st_name' in col:
+                    state_col = col
+                if 'constituency' in col or 'pc_name' in col or 'constituency' in col:
+                    constituency_col = col
+            
+            if state_col is None:
+                return jsonify({'error': 'State column not found in CSV. Expected column containing "state" or "st_name"'}), 400
+            
+            if constituency_col is None:
+                return jsonify({'error': 'Constituency column not found in CSV. Expected column containing "constituency" or "pc_name"'}), 400
+            
+            # Apply state filter if provided
+            if state_filter and state_filter.upper() not in ['ALL', '']:
+                # Case-insensitive state matching
+                df = df[df[state_col].astype(str).str.strip().str.upper() == state_filter.upper()]
+            
+            # Calculate aggregations
+            total_voters = len(df)
+            
+            # Count unique states (after filter)
+            states_count = df[state_col].astype(str).str.strip().nunique()
+            
+            # Count unique constituencies
+            constituencies_count = df[constituency_col].astype(str).str.strip().nunique()
+            
+            # Top 5 constituencies by voter count (row count per constituency)
+            constituency_counts = df.groupby(constituency_col).size().reset_index(name='voter_count')
+            constituency_counts = constituency_counts.sort_values('voter_count', ascending=False).head(5)
+            
+            top_constituencies = [
+                {
+                    'constituency': str(row[constituency_col]).strip(),
+                    'voter_count': int(row['voter_count'])
+                }
+                for _, row in constituency_counts.iterrows()
+            ]
+            
+            return jsonify({
+                'total_voters': int(total_voters),
+                'states_count': int(states_count),
+                'constituencies_count': int(constituencies_count),
+                'top_constituencies': top_constituencies,
+                'filter_applied': state_filter if state_filter else 'ALL'
+            }), 200
+            
+        except pd.errors.EmptyDataError:
+            return jsonify({'error': 'CSV file is empty'}), 400
+        except pd.errors.ParserError as e:
+            return jsonify({'error': f'CSV parsing error: {str(e)}'}), 400
+        except KeyError as e:
+            return jsonify({'error': f'Required column not found: {str(e)}'}), 400
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to process dashboard data: {str(e)}'}), 500
