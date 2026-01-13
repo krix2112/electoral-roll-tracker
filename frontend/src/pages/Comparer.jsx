@@ -8,7 +8,7 @@ import { uploadElectoralRoll } from '../services/api';
 // but inline styles/classes work faster for this single-file injection without restarting build/config.
 // However, I've added .matsetu-text to index.css.
 
-export default function Compare() {
+export default function Upload() {
   const navigate = useNavigate();
   const [baseFile, setBaseFile] = useState(null);
   const [compareFile, setCompareFile] = useState(null);
@@ -135,21 +135,17 @@ export default function Compare() {
               </div>
               <div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Last Analyzed</p>
-                <p className="text-sm font-medium">2 hours ago</p>
+                <p className="text-sm font-medium">Recently</p>
               </div>
             </div>
           </div>
 
           <div className="bg-slate-100 dark:bg-slate-800/50 rounded-2xl p-5 border border-transparent dark:border-slate-700">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Recent Activity</h3>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5 shrink-0"></div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed"><span className="font-semibold text-slate-900 dark:text-slate-200">Rahul M.</span> uploaded Revision_v2.csv</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 mt-1.5 shrink-0"></div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">Comparison session started for Sector 04</p>
+                <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5"></div>
+                <p className="text-xs text-slate-600 dark:text-slate-400"><span className="font-semibold text-slate-900 dark:text-slate-200">System</span> initialized workspace</p>
               </div>
             </div>
           </div>
@@ -186,12 +182,12 @@ export default function Compare() {
 
                 {/* Base Context Zone */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-1 px-1">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-orange-50 text-orange-600 text-xs font-bold">1</span>
-                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Base Context</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500/10 text-orange-500 text-xs font-bold">1</span>
+                      <label className="block text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Base Context</label>
                     </div>
-                    <span className="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase tracking-widest">Required</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Required</span>
                   </div>
 
                   <div
@@ -207,25 +203,25 @@ export default function Compare() {
                       accept=".csv"
                       onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'base')}
                     />
-                    <div className="flex flex-col items-center gap-4 py-4">
+                    <div className="flex flex-col items-center gap-3">
                       {baseFile ? (
                         <>
-                          <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
-                            <span className="material-symbols-outlined text-4xl">check_circle</span>
+                          <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
+                            <span className="material-symbols-outlined text-3xl">check_circle</span>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-700 dark:text-slate-200 text-lg">{baseFile.name}</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">{(baseFile.size / 1024).toFixed(1)} KB • Ready</p>
+                            <p className="font-semibold text-slate-700 dark:text-slate-200">{baseFile.name}</p>
+                            <p className="text-xs text-slate-400 mt-1">{(baseFile.size / 1024).toFixed(1)} KB • Ready</p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 hover:text-orange-500 hover:bg-orange-50 transition-colors">
+                          <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 hover:text-orange-500 hover:bg-orange-500/5 transition-colors">
                             <span className="material-symbols-outlined text-3xl">upload_file</span>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-700 dark:text-slate-200 text-base">Upload Base Roll (File 1)</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">Select source file or drag here</p>
+                            <p className="font-semibold text-slate-700 dark:text-slate-200">Upload Base Roll (File 1)</p>
+                            <p className="text-xs text-slate-400 mt-1">Select source file or drag here</p>
                           </div>
                         </>
                       )}
@@ -235,12 +231,12 @@ export default function Compare() {
 
                 {/* Comparison Data Zone */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-1 px-1">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-green-50 text-green-600 text-xs font-bold">2</span>
-                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Comparison Data</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/10 text-green-500 text-xs font-bold">2</span>
+                      <label className="block text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Comparison Data</label>
                     </div>
-                    <span className="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase tracking-widest">Required</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Required</span>
                   </div>
 
                   <div
@@ -256,25 +252,25 @@ export default function Compare() {
                       accept=".csv"
                       onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'compare')}
                     />
-                    <div className="flex flex-col items-center gap-4 py-4">
+                    <div className="flex flex-col items-center gap-3">
                       {compareFile ? (
                         <>
-                          <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">
-                            <span className="material-symbols-outlined text-4xl">check_circle</span>
+                          <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center text-green-500">
+                            <span className="material-symbols-outlined text-3xl">check_circle</span>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-700 dark:text-slate-200 text-lg">{compareFile.name}</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">{(compareFile.size / 1024).toFixed(1)} KB • Ready</p>
+                            <p className="font-semibold text-slate-700 dark:text-slate-200">{compareFile.name}</p>
+                            <p className="text-xs text-slate-400 mt-1">{(compareFile.size / 1024).toFixed(1)} KB • Ready</p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 hover:text-green-600 hover:bg-green-50 transition-colors">
+                          <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 hover:text-green-500 hover:bg-green-500/5 transition-colors">
                             <span className="material-symbols-outlined text-3xl">description</span>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-700 dark:text-slate-200 text-base">Upload Comparison Roll (File 2)</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">Select target file or drag here</p>
+                            <p className="font-semibold text-slate-700 dark:text-slate-200">Upload Comparison Roll (File 2)</p>
+                            <p className="text-xs text-slate-400 mt-1">Select target file or drag here</p>
                           </div>
                         </>
                       )}
@@ -347,6 +343,6 @@ export default function Compare() {
         </button>
       </div>
 
-    </div >
+    </div>
   );
 }

@@ -54,11 +54,18 @@ function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Link to="/dashboard">
-            <Button size="lg" className="bg-indigo-700 hover:bg-indigo-800 text-base h-12 px-8">
-              Launch Audit Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+          <div className="flex justify-center gap-4">
+            <Link to="/dashboard">
+              <Button size="lg" className="bg-indigo-700 hover:bg-indigo-800 text-base h-12 px-8">
+                Launch Audit Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/compare">
+              <Button size="lg" className="bg-indigo-700 hover:bg-indigo-800 text-base h-12 px-8">
+                Compare Rolls <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </motion.div>
       </div>
 

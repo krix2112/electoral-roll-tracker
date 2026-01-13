@@ -4,9 +4,25 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  .matsetu-text {
+    background: linear-gradient(to right, #f97316 0%, #f97316 50%, #22c55e 50%, #22c55e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: 'Noto Sans Devanagari', sans-serif;
+  }
+}
+
+/* Custom Colors mapping if not in tailwind.config.js yet */
+:root {
+  --color-brand-orange: #f97316;
+  --color-brand-green: #22c55e;
+  --color-brand-blue: #3b82f6;
 }
