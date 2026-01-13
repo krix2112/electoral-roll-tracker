@@ -20,18 +20,6 @@ const generateSampleNotifications = () => {
       actionType: 'navigate'
     },
     {
-      id: 2,
-      title: 'Audit Report Ready',
-      message: 'The comprehensive audit report for January 2026 has been generated and is ready for download. The report includes all roll changes, constituency-level summaries, and risk assessments.',
-      severity: 'success',
-      relatedEntity: 'Monthly Report - January 2026',
-      timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
-      read: true,
-      action: 'Download Report',
-      actionUrl: '/dashboard',
-      actionType: 'navigate'
-    },
-    {
       id: 3,
       title: 'System Update Completed',
       message: 'RollDiff engine has been updated to version 2.4. Performance improvements include a 15% reduction in processing time and enhanced data validation algorithms. All systems are operating normally.',
@@ -50,18 +38,6 @@ const generateSampleNotifications = () => {
       read: false,
       action: 'View Details',
       actionUrl: '/diffviewer',
-      actionType: 'navigate'
-    },
-    {
-      id: 5,
-      title: 'Data Validation Complete',
-      message: 'Scheduled data validation for all constituencies has completed successfully. No inconsistencies were detected in the electoral roll database.',
-      severity: 'success',
-      relatedEntity: 'System Validation',
-      timestamp: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
-      read: true,
-      action: 'View Report',
-      actionUrl: '/dashboard',
       actionType: 'navigate'
     },
     {
@@ -86,18 +62,6 @@ const generateSampleNotifications = () => {
       actionType: 'navigate'
     },
     {
-      id: 8,
-      title: 'Weekly Summary Report Generated',
-      message: 'Weekly summary report for the period January 8-14, 2026 has been generated. The report includes statistics, trend analysis, and risk assessments for all constituencies.',
-      severity: 'success',
-      relatedEntity: 'Weekly Report - Week 2',
-      timestamp: new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString(),
-      read: true,
-      action: 'View Report',
-      actionUrl: '/dashboard',
-      actionType: 'navigate'
-    },
-    {
       id: 9,
       title: 'Anomaly Detected in Booth-B46',
       message: 'Polling Booth B46 - South District has shown unusual modification patterns. 132 modifications were recorded in a single day, which is significantly higher than the baseline.',
@@ -109,18 +73,6 @@ const generateSampleNotifications = () => {
       actionUrl: '/diffviewer',
       actionType: 'navigate'
     },
-    {
-      id: 10,
-      title: 'Monthly Export Ready',
-      message: 'Monthly data export for January 2026 is ready. The export includes all roll changes, audit logs, and constituency-level breakdowns in CSV format.',
-      severity: 'info',
-      relatedEntity: 'Monthly Export - January 2026',
-      timestamp: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(),
-      read: true,
-      action: 'Download Report',
-      actionUrl: '/dashboard',
-      actionType: 'navigate'
-    }
   ];
   return sampleNotifications;
 };
