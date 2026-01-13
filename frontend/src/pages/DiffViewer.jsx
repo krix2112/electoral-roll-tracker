@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 export default function DiffViewer() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [changeType, setChangeType] = useState('All');
+  const [selectedConstituency, setSelectedConstituency] = useState(null);
 
-  const rawData = [
-    { constituencyId: 'AC-101', changeType: 'Addition', date: '2024-01-05', count: 23, riskLevel: 'Low' },
+  const sampleRollData = [
+    { constituencyId: 'AC-101', constituencyName: 'Assembly Constituency 101 - North District', changeType: 'Addition', date: '2024-01-05', count: 23, riskLevel: 'Low' },
     { constituencyId: 'AC-101', changeType: 'Modification', date: '2024-01-05', count: 12, riskLevel: 'Low' },
     { constituencyId: 'AC-101', changeType: 'Deletion', date: '2024-01-11', count: 45, riskLevel: 'Medium' },
     { constituencyId: 'AC-101', changeType: 'Addition', date: '2024-01-15', count: 34, riskLevel: 'Low' },
@@ -73,8 +74,36 @@ export default function DiffViewer() {
     { constituencyId: 'Booth-B52', changeType: 'Addition', date: '2024-01-18', count: 20, riskLevel: 'Low' },
   ];
 
+  const constituencyNames = {
+    'AC-101': 'Assembly Constituency 101 - North District',
+    'AC-102': 'Assembly Constituency 102 - North District',
+    'AC-103': 'Assembly Constituency 103 - North District',
+    'AC-104': 'Assembly Constituency 104 - North District',
+    'AC-105': 'Assembly Constituency 105 - Central District',
+    'AC-106': 'Assembly Constituency 106 - Central District',
+    'AC-107': 'Assembly Constituency 107 - Central District',
+    'AC-108': 'Assembly Constituency 108 - Central District',
+    'Ward-12': 'Municipal Ward 12 - Central District',
+    'Ward-13': 'Municipal Ward 13 - Central District',
+    'Ward-14': 'Municipal Ward 14 - South District',
+    'Ward-15': 'Municipal Ward 15 - South District',
+    'Booth-B45': 'Polling Booth B45 - South District',
+    'Booth-B46': 'Polling Booth B46 - South District',
+    'Booth-B47': 'Polling Booth B47 - South District',
+    'Booth-B48': 'Polling Booth B48 - South District',
+    'Booth-B49': 'Polling Booth B49 - East District',
+    'Booth-B50': 'Polling Booth B50 - East District',
+    'Booth-B51': 'Polling Booth B51 - East District',
+    'Booth-B52': 'Polling Booth B52 - East District',
+  };
+
+  const sampleRollDataWithNames = sampleRollData.map(item => ({
+    ...item,
+    constituencyName: item.constituencyName || constituencyNames[item.constituencyId] || item.constituencyId
+  }));
+
   const filteredData = useMemo(() => {
-    let filtered = [...rawData];
+    let filtered = [...sampleRollDataWithNames];
 
     if (changeType !== 'All') {
       filtered = filtered.filter(item => item.changeType === changeType);
@@ -128,48 +157,31 @@ export default function DiffViewer() {
 
   const heatmapData = useMemo(() => {
     const constituencyMap = {};
+    const constituencyRiskMap = {};
+    
     filteredData.forEach(item => {
       if (!constituencyMap[item.constituencyId]) {
         constituencyMap[item.constituencyId] = { Addition: 0, Deletion: 0, Modification: 0 };
+        constituencyRiskMap[item.constituencyId] = { name: item.constituencyName, risks: [] };
       }
       constituencyMap[item.constituencyId][item.changeType] += item.count;
+      constituencyRiskMap[item.constituencyId].risks.push(item.riskLevel);
     });
-
-    const fullNames = {
-      'AC-101': 'Assembly Constituency 101 - North District',
-      'AC-102': 'Assembly Constituency 102 - North District',
-      'AC-103': 'Assembly Constituency 103 - North District',
-      'AC-104': 'Assembly Constituency 104 - North District',
-      'AC-105': 'Assembly Constituency 105 - Central District',
-      'AC-106': 'Assembly Constituency 106 - Central District',
-      'AC-107': 'Assembly Constituency 107 - Central District',
-      'AC-108': 'Assembly Constituency 108 - Central District',
-      'Ward-12': 'Municipal Ward 12 - Central District',
-      'Ward-13': 'Municipal Ward 13 - Central District',
-      'Ward-14': 'Municipal Ward 14 - South District',
-      'Ward-15': 'Municipal Ward 15 - South District',
-      'Booth-B45': 'Polling Booth B45 - South District',
-      'Booth-B46': 'Polling Booth B46 - South District',
-      'Booth-B47': 'Polling Booth B47 - South District',
-      'Booth-B48': 'Polling Booth B48 - South District',
-      'Booth-B49': 'Polling Booth B49 - East District',
-      'Booth-B50': 'Polling Booth B50 - East District',
-      'Booth-B51': 'Polling Booth B51 - East District',
-      'Booth-B52': 'Polling Booth B52 - East District',
-    };
 
     return Object.keys(constituencyMap).map(region => {
       const data = constituencyMap[region];
       const total = data.Addition + data.Deletion + data.Modification;
-      let risk = 'Low';
-      if (total >= 150) risk = 'High';
-      else if (total >= 80) risk = 'Medium';
+      const risks = constituencyRiskMap[region].risks;
+      
+      let riskLevel = 'Low';
+      if (risks.includes('High')) riskLevel = 'High';
+      else if (risks.includes('Medium')) riskLevel = 'Medium';
 
       return {
         region,
-        fullName: fullNames[region] || region,
+        fullName: constituencyRiskMap[region].name,
         changes: total,
-        risk,
+        risk: riskLevel,
         breakdown: data
       };
     });
@@ -179,10 +191,10 @@ export default function DiffViewer() {
     return Math.max(...timelineData.map(d => d.changes), 1);
   }, [timelineData]);
 
-  const getHeatmapColor = (changes) => {
-    if (changes < 80) return 'bg-emerald-300 border-emerald-600';
-    if (changes < 150) return 'bg-amber-400 border-amber-700';
-    return 'bg-red-400 border-red-700';
+  const getHeatmapColorByRisk = (riskLevel) => {
+    if (riskLevel === 'Low') return 'bg-emerald-400 border-emerald-700';
+    if (riskLevel === 'Medium') return 'bg-amber-500 border-amber-800';
+    return 'bg-red-500 border-red-800';
   };
 
   const isSpike = (changes) => changes > 120;
@@ -366,22 +378,21 @@ export default function DiffViewer() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-5 gap-2 pb-3 border-b border-gray-200">
                     {heatmapData.slice(0, 8).map((item, index) => {
-                      const isDeletionFocus = changeType === 'Deletion';
-                      const highlightValue = isDeletionFocus ? item.breakdown.Deletion : item.changes;
                       return (
                         <div
                           key={index}
-                          className={`${getHeatmapColor(highlightValue)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
+                          className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
                           title={`${item.region}: ${item.changes} changes`}
+                          onClick={() => setSelectedConstituency(item)}
                         >
                           <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
-                          <div className={`invisible group-hover:visible absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                          <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
                             <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
-                              <div className="text-gray-900 font-semibold text-xs mb-1">{item.fullName}</div>
+                              <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
                               <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Additions: {item.breakdown.Addition}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Deletions: {item.breakdown.Deletion}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Modifications: {item.breakdown.Modification}</div>
+                              <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
+                              <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
+                              <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
                               <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
                             </div>
                             <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
@@ -395,22 +406,21 @@ export default function DiffViewer() {
 
                   <div className="grid grid-cols-5 gap-2 pb-3 border-b border-gray-200">
                     {heatmapData.slice(8, 13).map((item, index) => {
-                      const isDeletionFocus = changeType === 'Deletion';
-                      const highlightValue = isDeletionFocus ? item.breakdown.Deletion : item.changes;
                       return (
                         <div
                           key={index}
-                          className={`${getHeatmapColor(highlightValue)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
+                          className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
                           title={`${item.region}: ${item.changes} changes`}
+                          onClick={() => setSelectedConstituency(item)}
                         >
                           <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
-                          <div className={`invisible group-hover:visible absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                          <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
                             <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
-                              <div className="text-gray-900 font-semibold text-xs mb-1">{item.fullName}</div>
+                              <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
                               <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Additions: {item.breakdown.Addition}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Deletions: {item.breakdown.Deletion}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Modifications: {item.breakdown.Modification}</div>
+                              <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
+                              <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
+                              <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
                               <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
                             </div>
                             <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
@@ -424,22 +434,21 @@ export default function DiffViewer() {
 
                   <div className="grid grid-cols-5 gap-2">
                     {heatmapData.slice(13).map((item, index) => {
-                      const isDeletionFocus = changeType === 'Deletion';
-                      const highlightValue = isDeletionFocus ? item.breakdown.Deletion : item.changes;
                       return (
                         <div
                           key={index}
-                          className={`${getHeatmapColor(highlightValue)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
+                          className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
                           title={`${item.region}: ${item.changes} changes`}
+                          onClick={() => setSelectedConstituency(item)}
                         >
                           <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
-                          <div className={`invisible group-hover:visible absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 || index === 6 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                          <div className={`invisible group-hover:visible md:block absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 || index === 6 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
                             <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
-                              <div className="text-gray-900 font-semibold text-xs mb-1">{item.fullName}</div>
+                              <div className="text-gray-900 font-semibold text-xs mb-1 break-words">{item.fullName}</div>
                               <div className="text-gray-700 text-xs mb-0.5">Total: {item.changes}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Additions: {item.breakdown.Addition}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Deletions: {item.breakdown.Deletion}</div>
-                              <div className={`text-gray-700 text-xs ${isDeletionFocus && item.breakdown.Deletion > 0 ? 'font-bold' : ''}`}>Modifications: {item.breakdown.Modification}</div>
+                              <div className="text-gray-700 text-xs">Additions: {item.breakdown.Addition}</div>
+                              <div className="text-gray-700 text-xs">Deletions: {item.breakdown.Deletion}</div>
+                              <div className="text-gray-700 text-xs">Modifications: {item.breakdown.Modification}</div>
                               <div className="text-gray-700 text-xs mt-1">Risk: {item.risk}</div>
                             </div>
                             <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 || index === 6 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
@@ -454,16 +463,16 @@ export default function DiffViewer() {
 
                 <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-gray-300">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-emerald-300 border-2 border-emerald-600 rounded"></div>
-                    <span className="text-gray-600 text-xs">Low (&lt;80)</span>
+                    <div className="w-6 h-6 bg-emerald-400 border-2 border-emerald-700 rounded"></div>
+                    <span className="text-gray-600 text-xs">Low Risk</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-amber-400 border-2 border-amber-700 rounded"></div>
-                    <span className="text-gray-600 text-xs">Medium (80-150)</span>
+                    <div className="w-6 h-6 bg-amber-500 border-2 border-amber-800 rounded"></div>
+                    <span className="text-gray-600 text-xs">Medium Risk</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-red-400 border-2 border-red-700 rounded"></div>
-                    <span className="text-gray-600 text-xs">High (&gt;150)</span>
+                    <div className="w-6 h-6 bg-red-500 border-2 border-red-800 rounded"></div>
+                    <span className="text-gray-600 text-xs">High Risk</span>
                   </div>
                 </div>
                 <div className="mt-3 text-gray-600 text-xs text-center italic">
@@ -541,6 +550,56 @@ export default function DiffViewer() {
           </table>
         </div>
       </div>
+
+      {selectedConstituency && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end md:items-center justify-center md:p-4"
+          onClick={() => setSelectedConstituency(null)}
+        >
+          <div 
+            className="bg-white rounded-t-lg md:rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-indigo-800 px-4 py-3 flex justify-between items-center">
+              <h3 className="text-white font-bold text-lg">Constituency Details</h3>
+              <button
+                onClick={() => setSelectedConstituency(null)}
+                className="text-white hover:text-gray-200 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="mb-4">
+                <h4 className="text-gray-900 font-semibold text-base mb-2 break-words">{selectedConstituency.fullName}</h4>
+                <p className="text-gray-600 text-sm">{selectedConstituency.region}</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-700 font-medium">Total Changes</span>
+                  <span className="text-gray-900 font-bold">{selectedConstituency.changes}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-700 font-medium">Additions</span>
+                  <span className="text-green-700 font-semibold">{selectedConstituency.breakdown.Addition}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-700 font-medium">Deletions</span>
+                  <span className="text-red-700 font-semibold">{selectedConstituency.breakdown.Deletion}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-700 font-medium">Modifications</span>
+                  <span className="text-amber-700 font-semibold">{selectedConstituency.breakdown.Modification}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-700 font-medium">Risk Level</span>
+                  <span className={`font-semibold ${getRiskColor(selectedConstituency.risk)}`}>{selectedConstituency.risk}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
