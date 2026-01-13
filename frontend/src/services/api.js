@@ -15,16 +15,41 @@ import axios from 'axios'
 // ============================================
 
 /**
- * Backend base URL
- * Supports environment variable override via VITE_API_URL
- * Default: https://electoral-roll-tracker-1.onrender.com
+ * Backend base URL - PRODUCTION HARDENED
+ * 
+ * Priority:
+ * 1. VITE_API_URL environment variable (set in Vercel)
+ * 2. Fallback to production Render backend
+ * 
+ * IMPORTANT: Frontend NEVER calls itself for /api/dashboard
+ * All API calls go to the Render backend.
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://electoral-roll-tracker-1.onrender.com' // FIX
-console.debug('[api] Resolved base URL', API_BASE_URL) // FIX
+const PRODUCTION_BACKEND_URL = 'https://electoral-roll-tracker-1.onrender.com'
+const API_BASE_URL = import.meta.env.VITE_API_URL || PRODUCTION_BACKEND_URL
+
+// ============================================
+// STARTUP LOGGING - Essential for debugging production issues
+// ============================================
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+console.log('[API SERVICE] Frontend API Configuration')
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+console.log('[API SERVICE] VITE_API_URL env:', import.meta.env.VITE_API_URL || '(not set)')
+console.log('[API SERVICE] Using backend:', API_BASE_URL)
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
+// Warn if VITE_API_URL is not explicitly set (using fallback)
+if (!import.meta.env.VITE_API_URL) {
+  console.warn('[API SERVICE] ⚠️ VITE_API_URL not set. Using fallback:', PRODUCTION_BACKEND_URL)
+}
+
+// SAFETY CHECK: Ensure we never accidentally call localhost or wrong domain
+if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+  console.error('[API SERVICE] 🚨 CRITICAL: API pointing to localhost in production build!')
+}
 
 /**
  * Axios instance with base configuration
- * Common headers and error handling are centralized here
+ * All API calls use this instance (baseURL is production backend)
  */
 const api = axios.create({
   baseURL: API_BASE_URL,
