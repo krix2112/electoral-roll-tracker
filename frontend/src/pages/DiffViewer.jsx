@@ -79,15 +79,15 @@ export default function DiffViewer() {
 
       for (let i = 0; i < recordsPerDay; i++) {
         const constituency = constituencies[Math.floor(Math.random() * constituencies.length)];
-        const changeType = changeTypes[Math.floor(Math.random() * changeTypes.length)];
+        let changeType = changeTypes[Math.floor(Math.random() * changeTypes.length)];
         let count, riskLevel;
 
         if (changeType === 'Deletion') {
           count = Math.floor(Math.random() * 120) + 10;
           riskLevel = count > 80 ? 'High' : count > 40 ? 'Medium' : 'Low';
         } else if (changeType === 'Modification') {
-          count = Math.floor(Math.random() * 60) + 5;
-          riskLevel = count > 40 ? 'Medium' : 'Low';
+          count = Math.floor(Math.random() * 90) + 10;
+          riskLevel = count > 70 ? 'High' : count > 45 ? 'Medium' : 'Low';
         } else {
           count = Math.floor(Math.random() * 100) + 10;
           riskLevel = count > 70 ? 'Medium' : 'Low';
@@ -105,6 +105,20 @@ export default function DiffViewer() {
           changeType,
           count,
           riskLevel
+        });
+      }
+
+      if (!isWeekend && dateIndex % 3 === 0) {
+        const modConstituency = constituencies[Math.floor(Math.random() * constituencies.length)];
+        const modCount = Math.floor(Math.random() * 85) + 15;
+        const modRisk = modCount > 70 ? 'High' : modCount > 50 ? 'Medium' : 'Low';
+        sampleRollData.push({
+          date,
+          constituencyId: modConstituency.id,
+          constituencyName: modConstituency.name,
+          changeType: 'Modification',
+          count: modCount,
+          riskLevel: modRisk
         });
       }
     });
