@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { getDashboardStats } from '../services/api'
 import { Card, CardContent } from '../components/ui/Card'
+import { StatCard } from '../components/ui/StatCard'
 import { Button } from '../components/ui/Button'
 import { Link } from 'react-router-dom'
 import {
@@ -205,7 +206,7 @@ function Dashboard() {
         <main className="flex-1 p-6 overflow-y-auto">
           {/* Top Stats Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card className="shadow-none border-none ring-1 ring-gray-100">
+            <StatCard className="shadow-none border-none ring-1 ring-gray-100">
               <CardContent className="p-6 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500 mb-1">Total Registered Voters</p>
@@ -219,9 +220,9 @@ function Dashboard() {
                   <Users className="h-6 w-6" />
                 </div>
               </CardContent>
-            </Card>
+            </StatCard>
 
-            <Card className="shadow-none border-none ring-1 ring-gray-100">
+            <StatCard className="shadow-none border-none ring-1 ring-gray-100">
               <CardContent className="p-6 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500 mb-1">Anomalies Detected</p>
@@ -231,9 +232,9 @@ function Dashboard() {
                   <AlertTriangle className="h-6 w-6" />
                 </div>
               </CardContent>
-            </Card>
+            </StatCard>
 
-            <Card className="shadow-none border-none ring-1 ring-gray-100">
+            <StatCard className="shadow-none border-none ring-1 ring-gray-100">
               <CardContent className="p-6 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500 mb-1">Audits Required</p>
@@ -243,7 +244,7 @@ function Dashboard() {
                   <FileText className="h-6 w-6" />
                 </div>
               </CardContent>
-            </Card>
+            </StatCard>
           </div>
 
           {/* Map Area */}
