@@ -8,13 +8,9 @@ import { cn } from '../lib/utils'
 import { useNavigate, Link } from 'react-router-dom'
 
 function Upload() {
-<<<<<<< HEAD
-  const [file, setFile] = useState(null)
-  const [state, setState] = useState('Andaman & Nicobar')
-=======
   const navigate = useNavigate()
   const [files, setFiles] = useState([])
->>>>>>> fb7cca0519e7982c5ab735fd2e527f53cdfac00d
+  const [state, setState] = useState('Andaman & Nicobar')
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState(null)
   const [error, setError] = useState(null)
@@ -122,22 +118,10 @@ function Upload() {
     setUploading(true)
     setError(null)
     try {
-<<<<<<< HEAD
-      // Create FormData with state
-      file.state = state; // Hacky way to pass it to the API service helper if it accepts file object only, 
-      // BUT wait, looking at api.js, `uploadRoll` takes `file` and puts it in FormData.
-      // I need to update api.js OR update how I call it here. 
-      // Let's look at api.js first. Ah, api.js `uploadRoll` only takes `file`.
-      // I should update api.js too. OR I can just modify the file object? No, that's bad.
-      // I will update api.js on the next step. For now assume I will pass it as second arg.
-      const response = await uploadElectoralRoll(file, state)
-      setResult(response)
-=======
-      const response = await uploadElectoralRoll(files)
+      const response = await uploadElectoralRoll(files, state)
       // Normalize response to array if single object returned (backward compatibility)
       const resArray = response.results ? response.results : [response]
       setResults(resArray)
->>>>>>> fb7cca0519e7982c5ab735fd2e527f53cdfac00d
     } catch (err) {
       setError(err.message || 'Upload failed')
     } finally {
