@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getDashboardStats } from '../services/api'
+import { getDashboardStats, getDashboardAggregation } from '../services/api'
 import { Card, CardContent } from '../components/ui/Card'
 import { StatCard } from '../components/ui/StatCard'
 import { Button } from '../components/ui/Button'
 import { Link } from 'react-router-dom'
 import {
   Users, AlertTriangle, FileText, ChevronLeft, Bell, Search,
-  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch
+  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch, Loader2
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -21,10 +21,15 @@ function Dashboard() {
     audits: { value: '0', type: 'info' }
   })
 
+  // Dashboard Aggregation Data
+  const [dashboardData, setDashboardData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
   // Filter States
   const [showAnomaliesOnly, setShowAnomaliesOnly] = useState(false)
   const [anomalyThreshold, setAnomalyThreshold] = useState(0)
-  const [selectedState, setSelectedState] = useState('All States')
+  const [selectedState, setSelectedState] = useState('ALL')
 
   // Mock Map Data (Constituencies)
   // We generate this once so it doesn't change on every render
@@ -43,10 +48,29 @@ function Dashboard() {
     return points
   }, [])
 
+  // Fetch dashboard aggregation data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await getDashboardAggregation(selectedState)
+        setDashboardData(data)
+      } catch (err) {
+        console.error("Failed to load dashboard aggregation", err)
+        setError(err.message || 'Failed to load dashboard data')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDashboardData()
+  }, [selectedState])
+
+  // Keep existing stats fetch for backward compatibility
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await getDashboardStats(selectedState)
+        const data = await getDashboardStats(selectedState === 'ALL' ? 'All States' : selectedState)
         setStats(data)
       } catch (error) {
         console.error("Failed to load dashboard stats", error)
@@ -119,7 +143,7 @@ function Dashboard() {
               onClick={() => {
                 setShowAnomaliesOnly(false)
                 setAnomalyThreshold(0)
-                setSelectedState('All States')
+                setSelectedState('ALL')
               }}
               className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
               <RotateCcw className="h-3 w-3" /> Reset
@@ -145,9 +169,15 @@ function Dashboard() {
                   value={selectedState}
                   onChange={(e) => setSelectedState(e.target.value)}
                   className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                  <option>All States</option>
-                  <option>Maharashtra</option>
-                  <option>Delhi</option>
+                  <option value="ALL">ALL</option>
+                  <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Gujarat">Gujarat</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
@@ -185,14 +215,32 @@ function Dashboard() {
             <div className="pt-8 border-t border-gray-100">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Quick Stats</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Total States</span>
-                  <span className="font-medium text-gray-900">10</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Constituencies</span>
-                  <span className="font-medium text-gray-900">21</span>
-                </div>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                  </div>
+                ) : error ? (
+                  <div className="text-red-600 text-xs">{error}</div>
+                ) : dashboardData ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Total States</span>
+                      <span className="font-medium text-gray-900">{dashboardData.states_count || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Constituencies</span>
+                      <span className="font-medium text-gray-900">{dashboardData.constituencies_count || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Total Voters</span>
+                      <span className="font-medium text-gray-900">
+                        {dashboardData.total_voters ? dashboardData.total_voters.toLocaleString() : 'N/A'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-gray-500 text-xs">No data available</div>
+                )}
                 <div className="pt-4">
                   <span className="text-xs text-gray-400">Last updated</span>
                   <div className="text-sm font-medium text-gray-900">Just now</div>
@@ -204,6 +252,90 @@ function Dashboard() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-y-auto">
+          {/* Dashboard Aggregation Section */}
+          <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">National Voter Statistics</h2>
+              <p className="text-sm text-gray-500 mt-1">Aggregated data from national electoral roll</p>
+            </div>
+            <div className="p-6">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+                  <span className="ml-3 text-gray-600">Loading dashboard data...</span>
+                </div>
+              ) : error ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-red-700">
+                    <AlertTriangle className="h-5 w-5" />
+                    <span className="font-medium">Error loading data</span>
+                  </div>
+                  <p className="text-sm text-red-600 mt-1">{error}</p>
+                </div>
+              ) : dashboardData ? (
+                <div className="space-y-6">
+                  {/* Key Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-indigo-50 rounded-lg p-4">
+                      <p className="text-sm font-medium text-indigo-600 mb-1">Total Voters</p>
+                      <p className="text-2xl font-bold text-indigo-900">
+                        {dashboardData.total_voters?.toLocaleString() || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <p className="text-sm font-medium text-green-600 mb-1">Constituencies</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {dashboardData.constituencies_count || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <p className="text-sm font-medium text-blue-600 mb-1">States</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {dashboardData.states_count || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Top Constituencies */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Top 5 Constituencies by Voter Count</h3>
+                    {dashboardData.top_constituencies && dashboardData.top_constituencies.length > 0 ? (
+                      <div className="space-y-2">
+                        {dashboardData.top_constituencies.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm">
+                                {index + 1}
+                              </div>
+                              <span className="font-medium text-gray-900">{item.constituency}</span>
+                            </div>
+                            <span className="text-sm font-semibold text-gray-700">
+                              {item.voter_count?.toLocaleString() || 'N/A'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No constituency data available</p>
+                    )}
+                  </div>
+
+                  {/* Filter Info */}
+                  <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                    Filter: <span className="font-medium text-gray-700">{dashboardData.filter_applied || 'ALL'}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  No data available
+                </div>
+              )}
+            </div>
+          </Card>
+
           {/* Top Stats Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <StatCard className="shadow-none border-none ring-1 ring-gray-100">

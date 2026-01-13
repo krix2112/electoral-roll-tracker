@@ -217,5 +217,31 @@ export const getDashboardStats = async (state) => {
   }
 }
 
+/**
+ * Get Dashboard Aggregation
+ * Calls GET /api/dashboard
+ * Reads national-level CSV and returns aggregated statistics
+ * 
+ * @param {string} state - Optional state filter (use 'ALL' for all states)
+ * @returns {Promise<Object>} Dashboard aggregation data
+ * 
+ * @example
+ * const data = await getDashboardAggregation('Maharashtra');
+ * console.log(data.total_voters); // 50000
+ * console.log(data.top_constituencies); // Array of top 5
+ */
+export const getDashboardAggregation = async (state = 'ALL') => {
+  try {
+    const url = state && state !== 'ALL' ? `/api/dashboard?state=${encodeURIComponent(state)}` : '/api/dashboard'
+    console.debug('[api] GET', `${API_BASE_URL}${url}`)
+    const response = await api.get(url)
+    console.debug('[api] Dashboard aggregation response', response.data)
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}
+
 // Export default for potential future use
 export default api
