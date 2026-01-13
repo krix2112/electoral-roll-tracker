@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button'
 import { Link } from 'react-router-dom'
 import {
   Users, AlertTriangle, FileText, ChevronLeft, Bell, Search,
-  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown
+  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -170,6 +170,15 @@ function Dashboard() {
                 <span>50</span>
                 <span>100</span>
               </div>
+            </div>
+
+            <div className="pt-6">
+              <Link to="/diffviewer">
+                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center gap-2">
+                  <FileSearch className="h-4 w-4" />
+                  View Diff Viewer
+                </Button>
+              </Link>
             </div>
 
             <div className="pt-8 border-t border-gray-100">
