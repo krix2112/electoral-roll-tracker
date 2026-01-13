@@ -15,14 +15,7 @@ function Dashboard() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [timelineProgress, setTimelineProgress] = useState(100) // 0 to 100
 
-  // Real stats from backend
-  const [stats, setStats] = useState({
-    voters: { value: 'Loading...', change: '...', trend: 'neutral' },
-    anomalies: { value: '0', type: 'normal' },
-    audits: { value: '0', type: 'info' }
-  })
-
-  // Dashboard Aggregation Data
+  // Dashboard Aggregation Data (SINGLE SOURCE OF TRUTH)
   const [dashboardData, setDashboardData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -32,12 +25,49 @@ function Dashboard() {
   const [anomalyThreshold, setAnomalyThreshold] = useState(0)
   const [selectedState, setSelectedState] = useState('ALL')
 
-  // Map Data (Constituencies)
-  // We generate this once so it doesn't change on every render
+  // ============================================
+  // DERIVED METRICS (from /api/dashboard response)
+  // These update automatically when dashboardData changes
+  // ============================================
+
+  /**
+   * Format voter count for display (e.g., "1.2M" or "45.3K")
+   */
+  const formatVoterCount = (count) => {
+    if (!count) return 'N/A'
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`
+    return count.toLocaleString()
+  }
+
+  /**
+   * DERIVED: Anomalies Detected
+   * Formula: ~3% of constituencies flagged as having anomalies
+   * This is a demo-safe estimate, not real anomaly detection
+   */
+  const anomaliesDetected = useMemo(() => {
+    if (!dashboardData?.constituencies_count) return 0
+    return Math.round(dashboardData.constituencies_count * 0.03)
+  }, [dashboardData])
+
+  /**
+   * DERIVED: Audits Required
+   * Formula: ~40% of anomalies require manual audit
+   * This is a demo-safe estimate
+   */
+  const auditsRequired = useMemo(() => {
+    return Math.round(anomaliesDetected * 0.4)
+  }, [anomaliesDetected])
+
+  // ============================================
+  // MAP POINTS (derived from top_constituencies)
+  // Updates when state filter changes
+  // ============================================
   const mapPoints = useMemo(() => {
-    const points = []
-    // Define rough bounding boxes for points to fall within India's shape 
-    // to avoid them floating in the ocean
+    // Use top_constituencies from backend if available
+    const constituencies = dashboardData?.top_constituencies || []
+
+    // Define rough bounding boxes for India map regions
     const regions = [
       { topMin: 10, topMax: 30, leftMin: 20, leftMax: 45 }, // North
       { topMin: 30, topMax: 50, leftMin: 15, leftMax: 50 }, // Central/West
@@ -45,20 +75,42 @@ function Dashboard() {
       { topMin: 50, topMax: 80, leftMin: 30, leftMax: 55 }, // South
     ]
 
-    for (let i = 0; i < 40; i++) {
-      const region = regions[Math.floor(Math.random() * regions.length)];
-      points.push({
-        id: i,
-        // Random positions within the selected region
-        top: Math.floor(Math.random() * (region.topMax - region.topMin)) + region.topMin + '%',
-        left: Math.floor(Math.random() * (region.leftMax - region.leftMin)) + region.leftMin + '%',
-        anomalyScore: Math.floor(Math.random() * 100), // 0 to 100
-        discoveryTime: Math.floor(Math.random() * 100), // When this anomaly appeared on timeline (0-100)
-        name: `Constituency ${i + 1}`
+    // If we have real constituency data, use it
+    if (constituencies.length > 0) {
+      const maxVoters = Math.max(...constituencies.map(c => c.voter_count || 0))
+
+      return constituencies.map((constituency, index) => {
+        // Assign position based on hash of name for consistent placement
+        const hash = constituency.constituency?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || index
+        const region = regions[hash % regions.length]
+
+        // Calculate anomaly score based on voter_count rank
+        // Top 10% → Critical (86-100)
+        // Next 20% → High (71-85)
+        // Next 30% → Warning (31-70)
+        // Rest → Normal (0-30)
+        const percentile = (index / constituencies.length) * 100
+        let anomalyScore
+        if (percentile < 10) anomalyScore = 86 + Math.floor(Math.random() * 15) // Critical
+        else if (percentile < 30) anomalyScore = 71 + Math.floor(Math.random() * 15) // High
+        else if (percentile < 60) anomalyScore = 31 + Math.floor(Math.random() * 40) // Warning
+        else anomalyScore = Math.floor(Math.random() * 31) // Normal
+
+        return {
+          id: index,
+          top: (region.topMin + (hash * 7) % (region.topMax - region.topMin)) + '%',
+          left: (region.leftMin + (hash * 13) % (region.leftMax - region.leftMin)) + '%',
+          anomalyScore,
+          discoveryTime: Math.floor((index / constituencies.length) * 100),
+          name: constituency.constituency || `Constituency ${index + 1}`,
+          voterCount: constituency.voter_count
+        }
       })
     }
-    return points.sort((a, b) => a.discoveryTime - b.discoveryTime)
-  }, [])
+
+    // Fallback: No data available
+    return []
+  }, [dashboardData])
 
   // Fetch dashboard aggregation data
   useEffect(() => {
@@ -94,9 +146,6 @@ function Dashboard() {
     }
     return () => clearInterval(interval)
   }, [isPlaying])
-
-  // Note: stats state is kept for UI compatibility but could be derived from dashboardData
-  // For now, we maintain it as-is to avoid breaking the StatCard components
 
   // Filter Logic
   const filteredPoints = mapPoints.filter(point => {
@@ -363,17 +412,21 @@ function Dashboard() {
             </div>
           </Card>
 
-          {/* Top Stats Row */}
+          {/* Top Stats Row - ALL VALUES DERIVED FROM /api/dashboard */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <StatCard className="shadow-none border-none ring-1 ring-gray-100">
               <CardContent className="p-6 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500 mb-1">Total Registered Voters</p>
-                  <h3 className="text-3xl font-bold text-gray-900">{stats.voters.value}</h3>
-                  <p className="text-sm text-red-500 mt-1 font-medium flex items-center">
-                    {/* Mock trend for now */}
-                    ↘ -2.3%
-                  </p>
+                  <h3 className="text-3xl font-bold text-gray-900">
+                    {loading ? 'Loading...' : formatVoterCount(dashboardData?.total_voters)}
+                  </h3>
+                  {/* Trend indicator - derived from data availability */}
+                  {dashboardData?.total_voters && (
+                    <p className="text-sm text-green-500 mt-1 font-medium flex items-center">
+                      ✓ Live data
+                    </p>
+                  )}
                 </div>
                 <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
                   <Users className="h-6 w-6" />
@@ -385,7 +438,11 @@ function Dashboard() {
               <CardContent className="p-6 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500 mb-1">Anomalies Detected</p>
-                  <h3 className="text-3xl font-bold text-gray-900">{stats.anomalies.value}</h3>
+                  {/* DERIVED: ~3% of constituencies (demo estimate) */}
+                  <h3 className="text-3xl font-bold text-gray-900">
+                    {loading ? '...' : anomaliesDetected}
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">~3% of constituencies</p>
                 </div>
                 <div className="p-3 bg-red-50 rounded-lg text-red-600">
                   <AlertTriangle className="h-6 w-6" />
@@ -397,7 +454,11 @@ function Dashboard() {
               <CardContent className="p-6 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500 mb-1">Audits Required</p>
-                  <h3 className="text-3xl font-bold text-gray-900">{stats.audits.value}</h3>
+                  {/* DERIVED: ~40% of anomalies (demo estimate) */}
+                  <h3 className="text-3xl font-bold text-gray-900">
+                    {loading ? '...' : auditsRequired}
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">~40% of anomalies</p>
                 </div>
                 <div className="p-3 bg-amber-50 rounded-lg text-amber-600">
                   <FileText className="h-6 w-6" />
@@ -431,7 +492,7 @@ function Dashboard() {
                 </div>
               </div>
               <div className="text-sm text-gray-500">
-                Showing {filteredPoints.length} constituencies
+                Showing {filteredPoints.length} of {dashboardData?.top_constituencies?.length || 0} constituencies
               </div>
             </div>
 
@@ -461,9 +522,12 @@ function Dashboard() {
                         <div className={`group relative -translate-x-1/2 -translate-y-1/2`}> {/* Centered pin */}
                           <div className={`w-3 h-3 ${getPointColor(point.anomalyScore)} rounded-full shadow-lg cursor-pointer hover:scale-150 transition-transform duration-200 ring-2 ring-white`}></div>
 
-                          {/* Tooltip */}
+                          {/* Tooltip with real constituency data */}
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
-                            {point.name} (Score: {point.anomalyScore})
+                            <div className="font-medium">{point.name}</div>
+                            <div className="text-gray-300">
+                              {point.voterCount ? `${point.voterCount.toLocaleString()} voters` : `Score: ${point.anomalyScore}`}
+                            </div>
                             <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                           </div>
                         </div>
@@ -474,12 +538,14 @@ function Dashboard() {
               </div>
             </div>
 
-            {/* Time Travel Section */}
+            {/* Time Travel Section - SIMULATION MODE */}
+            {/* NOTE: This timeline is a UI simulation for demo purposes */}
+            {/* Real time-series data would require additional backend endpoints */}
             <div className="p-6 border-t border-gray-100 bg-white">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900">Time Travel</h3>
-                  <p className="text-sm text-gray-500">Explore voter roll changes over time</p>
+                  <h3 className="font-semibold text-gray-900">Time Travel <span className="text-xs font-normal text-amber-600 ml-2">(Simulation)</span></h3>
+                  <p className="text-sm text-gray-500">Visual demo of voter roll timeline</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => {
                   if (timelineProgress >= 100) setTimelineProgress(0);
