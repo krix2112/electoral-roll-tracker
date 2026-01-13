@@ -621,33 +621,7 @@ function Dashboard() {
           )}
 
           {/* Insights Card */}
-          {!loading && insights.length > 0 && (
-            <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
-              <div className="p-4">
-                <h3 className="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Key Insights
-                  <span className="text-xs font-normal text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">Derived</span>
-                </h3>
-                <ul className="space-y-2">
-                  {insights.map((insight, index) => (
-                    <motion.li
-                      key={index}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="text-sm text-indigo-800 flex items-start gap-2"
-                    >
-                      <span className="text-indigo-500 mt-0.5">•</span>
-                      {insight}
-                    </motion.li>
-                  ))}
-                </ul>
-              </div>
-            </Card>
-          )}
 
-          {/* Map Area - PRIMARY VISUALIZATION (Moved to top priority) */}
           <Card className="mb-6 min-h-[650px] shadow-none border-none ring-1 ring-gray-100 flex flex-col">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
               <div>
@@ -792,6 +766,33 @@ function Dashboard() {
               </div>
             </div>
           </Card>
+
+          {/* Insights Card */}
+          {!loading && insights.length > 0 && (
+            <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+              <div className="p-4">
+                <h3 className="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Key Insights
+                  <span className="text-xs font-normal text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">Derived</span>
+                </h3>
+                <ul className="space-y-2">
+                  {insights.map((insight, index) => (
+                    <motion.li
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="text-sm text-indigo-800 flex items-start gap-2"
+                    >
+                      <span className="text-indigo-500 mt-0.5">•</span>
+                      {insight}
+                    </motion.li>
+                  ))}
+                </ul>
+              </div>
+            </Card>
+          )}
 
           {/* Visual Analytics Section - Mini Charts */}
           {!loading && dashboardData && (
