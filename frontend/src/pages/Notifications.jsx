@@ -24,7 +24,7 @@ const notifications = [
         id: 3,
         type: 'info',
         title: 'System Update',
-        message: 'RollDiff engine updated to version 2.4. Performance improved by 15%.',
+        message: 'Matsetu engine updated to version 2.4. Performance improved by 15%.',
         time: '1 day ago',
         read: true
     }

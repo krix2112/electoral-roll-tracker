@@ -84,9 +84,9 @@ function Dashboard() {
               <span className="font-medium">Back</span>
             </Link>
             <div className="h-6 w-px bg-gray-200 mx-2"></div>
-            <div className="bg-indigo-700 text-white font-bold p-1.5 rounded text-lg">RD</div>
+            <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-8 w-auto" />
             <div>
-              <h1 className="font-bold text-gray-900 leading-none">RollDiff</h1>
+              <h1 className="font-bold text-gray-900 leading-none">Matsetu</h1>
               <p className="text-[10px] text-gray-500 font-medium">Electoral Roll Forensic Audit System</p>
             </div>
           </div>
