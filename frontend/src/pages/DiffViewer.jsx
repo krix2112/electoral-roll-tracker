@@ -161,7 +161,7 @@ export default function DiffViewer() {
               <div className="p-4">
                 <div className="relative">
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-400"></div>
-                  <div className="flex items-end justify-between h-56 gap-1">
+                  <div className="flex items-end justify-between h-96 gap-1">
                     {timelineData.map((item, index) => {
                       const height = (item.changes / maxChanges) * 100;
                       const spike = isSpike(item.changes);
@@ -242,18 +242,18 @@ export default function DiffViewer() {
                     {heatmapData.slice(0, 8).map((item, index) => (
                       <div
                         key={index}
-                        className={`${getHeatmapColor(item.changes)} border-2 rounded p-3 text-center hover:shadow-md relative group cursor-pointer transition-shadow`}
+                        className={`${getHeatmapColor(item.changes)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
                         title={`${item.region}: ${item.changes} changes`}
                       >
-                        <div className="text-gray-900 text-xs font-bold">{item.region}</div>
-                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-64 z-50">
-                          <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-4 py-3">
-                            <div className="text-gray-900 font-bold text-sm mb-1">{item.fullName}</div>
-                            <div className="text-gray-700 text-xs mb-1"><span className="font-semibold">Changes:</span> {item.changes}</div>
-                            <div className="text-gray-700 text-xs"><span className="font-semibold">Risk Level:</span> {item.risk}</div>
+                        <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
+                        <div className={`invisible group-hover:visible absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                          <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
+                            <div className="text-gray-900 font-semibold text-xs mb-1">{item.fullName}</div>
+                            <div className="text-gray-700 text-xs">Changes: {item.changes}</div>
+                            <div className="text-gray-700 text-xs">Risk Level: {item.risk}</div>
                           </div>
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px">
-                            <div className="border-8 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                          <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
+                            <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
                           </div>
                         </div>
                       </div>
@@ -264,18 +264,18 @@ export default function DiffViewer() {
                     {heatmapData.slice(8, 13).map((item, index) => (
                       <div
                         key={index}
-                        className={`${getHeatmapColor(item.changes)} border-2 rounded p-3 text-center hover:shadow-md relative group cursor-pointer transition-shadow`}
+                        className={`${getHeatmapColor(item.changes)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
                         title={`${item.region}: ${item.changes} changes`}
                       >
-                        <div className="text-gray-900 text-xs font-bold">{item.region}</div>
-                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-64 z-50">
-                          <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-4 py-3">
-                            <div className="text-gray-900 font-bold text-sm mb-1">{item.fullName}</div>
-                            <div className="text-gray-700 text-xs mb-1"><span className="font-semibold">Changes:</span> {item.changes}</div>
-                            <div className="text-gray-700 text-xs"><span className="font-semibold">Risk Level:</span> {item.risk}</div>
+                        <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
+                        <div className={`invisible group-hover:visible absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                          <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
+                            <div className="text-gray-900 font-semibold text-xs mb-1">{item.fullName}</div>
+                            <div className="text-gray-700 text-xs">Changes: {item.changes}</div>
+                            <div className="text-gray-700 text-xs">Risk Level: {item.risk}</div>
                           </div>
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px">
-                            <div className="border-8 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                          <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
+                            <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
                           </div>
                         </div>
                       </div>
@@ -286,18 +286,18 @@ export default function DiffViewer() {
                     {heatmapData.slice(13).map((item, index) => (
                       <div
                         key={index}
-                        className={`${getHeatmapColor(item.changes)} border-2 rounded p-3 text-center hover:shadow-md relative group cursor-pointer transition-shadow`}
+                        className={`${getHeatmapColor(item.changes)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
                         title={`${item.region}: ${item.changes} changes`}
                       >
-                        <div className="text-gray-900 text-xs font-bold">{item.region}</div>
-                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-64 z-50">
-                          <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-4 py-3">
-                            <div className="text-gray-900 font-bold text-sm mb-1">{item.fullName}</div>
-                            <div className="text-gray-700 text-xs mb-1"><span className="font-semibold">Changes:</span> {item.changes}</div>
-                            <div className="text-gray-700 text-xs"><span className="font-semibold">Risk Level:</span> {item.risk}</div>
+                        <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
+                        <div className={`invisible group-hover:visible absolute bottom-full mb-3 w-56 max-w-[85vw] z-50 ${index === 0 || index === 1 ? 'left-0' : index === 3 || index === 4 || index === 6 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}`}>
+                          <div className="bg-white border-2 border-gray-300 rounded-lg shadow-xl px-3 py-2">
+                            <div className="text-gray-900 font-semibold text-xs mb-1">{item.fullName}</div>
+                            <div className="text-gray-700 text-xs">Changes: {item.changes}</div>
+                            <div className="text-gray-700 text-xs">Risk Level: {item.risk}</div>
                           </div>
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px">
-                            <div className="border-8 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
+                          <div className={`absolute top-full -mt-px ${index === 0 || index === 1 ? 'left-6' : index === 3 || index === 4 || index === 6 ? 'right-6' : 'left-1/2 transform -translate-x-1/2'}`}>
+                            <div className="border-6 border-transparent border-t-white" style={{ filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.1))' }}></div>
                           </div>
                         </div>
                       </div>
