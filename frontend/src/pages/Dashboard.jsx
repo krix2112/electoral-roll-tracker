@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getDashboardStats, getDashboardAggregation } from '../services/api'
+import { getDashboardAggregation } from '../services/api'
 import { Card, CardContent } from '../components/ui/Card'
 import { StatCard } from '../components/ui/StatCard'
 import { Button } from '../components/ui/Button'
@@ -95,22 +95,8 @@ function Dashboard() {
     return () => clearInterval(interval)
   }, [isPlaying])
 
-  // Keep existing stats fetch for backward compatibility
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await getDashboardStats(selectedState === 'ALL' ? 'All States' : selectedState)
-        setStats(data)
-      } catch (error) {
-        console.error("Failed to load dashboard stats", error)
-        setStats(prev => ({
-          ...prev,
-          voters: { value: 'Error', change: '-', trend: 'neutral' }
-        }))
-      }
-    }
-    fetchStats()
-  }, [selectedState])
+  // Note: stats state is kept for UI compatibility but could be derived from dashboardData
+  // For now, we maintain it as-is to avoid breaking the StatCard components
 
   // Filter Logic
   const filteredPoints = mapPoints.filter(point => {

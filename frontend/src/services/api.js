@@ -199,39 +199,31 @@ export const compareRolls = async (uploadId1, uploadId2) => {
 }
 
 /**
- * Get Dashboard Stats
- * Calls GET /api/stats
- * 
- * @param {string} state - Optional state filter
- * @returns {Promise<Object>} Dashboard statistics
- */
-export const getDashboardStats = async (state) => {
-  try {
-    const url = state && state !== 'All States' ? `/api/stats?state=${encodeURIComponent(state)}` : '/api/stats'
-    console.debug('[api] GET', `${API_BASE_URL}${url}`)
-    const response = await api.get(url)
-    return response.data
-  } catch (error) {
-    handleError(error)
-    throw error
-  }
-}
-
-/**
  * Get Dashboard Aggregation
  * Calls GET /api/dashboard
  * Reads national-level CSV and returns aggregated statistics
  * 
- * @param {string} state - Optional state filter (use 'ALL' for all states)
- * @returns {Promise<Object>} Dashboard aggregation data
+ * SINGLE SOURCE OF TRUTH for dashboard data
+ * Backend reads from: backend/data/indian-national-level-election.csv
+ * 
+ * @param {string} state - Optional state filter (use 'ALL' for national view)
+ * @returns {Promise<Object>} Dashboard aggregation data with:
+ *   - total_voters: number
+ *   - states_count: number
+ *   - constituencies_count: number
+ *   - top_constituencies: array of {constituency, voter_count}
  * 
  * @example
- * const data = await getDashboardAggregation('Maharashtra');
- * console.log(data.total_voters); // 50000
- * console.log(data.top_constituencies); // Array of top 5
+ * // National view
+ * const nationalData = await getDashboardAggregation('ALL');
+ * 
+ * // State view
+ * const stateData = await getDashboardAggregation('Maharashtra');
  */
 export const getDashboardAggregation = async (state = 'ALL') => {
   try {
+    // National view: no query param OR state=ALL
+    // State view: state=<state name>
     const url = state && state !== 'ALL' ? `/api/dashboard?state=${encodeURIComponent(state)}` : '/api/dashboard'
     console.debug('[api] GET', `${API_BASE_URL}${url}`)
     const response = await api.get(url)
