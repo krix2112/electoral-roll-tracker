@@ -427,89 +427,7 @@ function Dashboard() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-y-auto">
-          {/* Dashboard Aggregation Section */}
-          <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">National Voter Statistics</h2>
-              <p className="text-sm text-gray-500 mt-1">Aggregated data from national electoral roll</p>
-            </div>
-            <div className="p-6">
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-                  <span className="ml-3 text-gray-600">Loading dashboard data...</span>
-                </div>
-              ) : error ? (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-red-700">
-                    <AlertTriangle className="h-5 w-5" />
-                    <span className="font-medium">Error loading data</span>
-                  </div>
-                  <p className="text-sm text-red-600 mt-1">{error}</p>
-                </div>
-              ) : dashboardData ? (
-                <div className="space-y-6">
-                  {/* Key Metrics */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-indigo-50 rounded-lg p-4">
-                      <p className="text-sm font-medium text-indigo-600 mb-1">Total Voters</p>
-                      <p className="text-2xl font-bold text-indigo-900">
-                        {dashboardData.total_voters?.toLocaleString() || 'N/A'}
-                      </p>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <p className="text-sm font-medium text-green-600 mb-1">Constituencies</p>
-                      <p className="text-2xl font-bold text-green-900">
-                        {dashboardData.constituencies_count || 'N/A'}
-                      </p>
-                    </div>
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <p className="text-sm font-medium text-blue-600 mb-1">States</p>
-                      <p className="text-2xl font-bold text-blue-900">
-                        {dashboardData.states_count || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Top Constituencies */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Top 5 Constituencies by Voter Count</h3>
-                    {dashboardData.top_constituencies && dashboardData.top_constituencies.length > 0 ? (
-                      <div className="space-y-2">
-                        {dashboardData.top_constituencies.map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm">
-                                {index + 1}
-                              </div>
-                              <span className="font-medium text-gray-900">{item.constituency}</span>
-                            </div>
-                            <span className="text-sm font-semibold text-gray-700">
-                              {item.voter_count?.toLocaleString() || 'N/A'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No constituency data available</p>
-                    )}
-                  </div>
-
-                  {/* Filter Info */}
-                  <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
-                    Filter: <span className="font-medium text-gray-700">{dashboardData.filter_applied || 'ALL'}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  No data available
-                </div>
-              )}
-            </div>
-          </Card>
+          {/* REMOVED: National Voter Statistics section - data now displayed in metric cards and charts below */}
 
           {/* State Context Indicator */}
           <motion.div
@@ -729,8 +647,8 @@ function Dashboard() {
             </Card>
           )}
 
-          {/* Map Area */}
-          <Card className="flex-1 min-h-[500px] shadow-none border-none ring-1 ring-gray-100 flex flex-col">
+          {/* Map Area - PRIMARY VISUALIZATION (Moved to top priority) */}
+          <Card className="mb-6 min-h-[650px] shadow-none border-none ring-1 ring-gray-100 flex flex-col">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -830,8 +748,8 @@ function Dashboard() {
             <div className="p-6 border-t border-gray-100 bg-white">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900">Time Travel <span className="text-xs font-normal text-amber-600 ml-2">(Simulation)</span></h3>
-                  <p className="text-sm text-gray-500">Visual demo of voter roll timeline</p>
+                  <h3 className="font-semibold text-gray-900">Time Travel <span className="text-xs font-normal text-amber-600 ml-2 bg-amber-50 px-2 py-0.5 rounded-full">(Simulation)</span></h3>
+                  <p className="text-sm text-gray-500">Illustrative visualization of roll change behavior over time</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => {
                   if (timelineProgress >= 100) setTimelineProgress(0);
@@ -874,6 +792,190 @@ function Dashboard() {
               </div>
             </div>
           </Card>
+
+          {/* Visual Analytics Section - Mini Charts */}
+          {!loading && dashboardData && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Mini Bar Chart - Top 5 Constituencies */}
+              <Card className="shadow-none border-none ring-1 ring-gray-100">
+                <div className="p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-indigo-600" />
+                    Top Constituencies by Voter Count
+                  </h3>
+                  <div className="space-y-3">
+                    {(dashboardData.top_constituencies || []).slice(0, 5).map((item, index) => {
+                      const maxVoters = Math.max(...(dashboardData.top_constituencies || []).map(c => c.voter_count || 0))
+                      const percent = maxVoters > 0 ? ((item.voter_count || 0) / maxVoters) * 100 : 0
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="group"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-gray-700 truncate max-w-[60%]" title={item.constituency}>
+                              {item.constituency}
+                            </span>
+                            <span className="text-xs text-gray-500">{formatVoterCount(item.voter_count)}</span>
+                          </div>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${percent}%` }}
+                              transition={{ duration: 0.5, delay: index * 0.1 }}
+                              className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"
+                            />
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </Card>
+
+              {/* Donut Chart - Risk Distribution (Pure CSS/SVG) */}
+              <Card className="shadow-none border-none ring-1 ring-gray-100">
+                <div className="p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-indigo-600" />
+                    Risk Distribution
+                    <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Derived</span>
+                  </h3>
+                  <div className="flex items-center justify-center gap-6">
+                    {/* SVG Donut Chart */}
+                    <div className="relative w-32 h-32">
+                      <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
+                        {/* Background circle */}
+                        <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#f3f4f6" strokeWidth="3" />
+                        {/* Normal segment */}
+                        <motion.circle
+                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#22c55e" strokeWidth="3"
+                          strokeDasharray={`${riskDistribution.normal.percent} ${100 - riskDistribution.normal.percent}`}
+                          strokeDashoffset="0"
+                          initial={{ strokeDasharray: "0 100" }}
+                          animate={{ strokeDasharray: `${riskDistribution.normal.percent} ${100 - riskDistribution.normal.percent}` }}
+                          transition={{ duration: 0.5 }}
+                        />
+                        {/* Warning segment */}
+                        <motion.circle
+                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#f59e0b" strokeWidth="3"
+                          strokeDasharray={`${riskDistribution.warning.percent} ${100 - riskDistribution.warning.percent}`}
+                          strokeDashoffset={`${-riskDistribution.normal.percent}`}
+                          initial={{ strokeDasharray: "0 100" }}
+                          animate={{ strokeDasharray: `${riskDistribution.warning.percent} ${100 - riskDistribution.warning.percent}` }}
+                          transition={{ duration: 0.5, delay: 0.1 }}
+                        />
+                        {/* High segment */}
+                        <motion.circle
+                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#f97316" strokeWidth="3"
+                          strokeDasharray={`${riskDistribution.high.percent} ${100 - riskDistribution.high.percent}`}
+                          strokeDashoffset={`${-(riskDistribution.normal.percent + riskDistribution.warning.percent)}`}
+                          initial={{ strokeDasharray: "0 100" }}
+                          animate={{ strokeDasharray: `${riskDistribution.high.percent} ${100 - riskDistribution.high.percent}` }}
+                          transition={{ duration: 0.5, delay: 0.2 }}
+                        />
+                        {/* Critical segment */}
+                        <motion.circle
+                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#ef4444" strokeWidth="3"
+                          strokeDasharray={`${riskDistribution.critical.percent} ${100 - riskDistribution.critical.percent}`}
+                          strokeDashoffset={`${-(riskDistribution.normal.percent + riskDistribution.warning.percent + riskDistribution.high.percent)}`}
+                          initial={{ strokeDasharray: "0 100" }}
+                          animate={{ strokeDasharray: `${riskDistribution.critical.percent} ${100 - riskDistribution.critical.percent}` }}
+                          transition={{ duration: 0.5, delay: 0.3 }}
+                        />
+                      </svg>
+                      {/* Center text */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-2xl font-bold text-gray-900">{dashboardData.top_constituencies?.length || 0}</span>
+                        <span className="text-xs text-gray-500">Total</span>
+                      </div>
+                    </div>
+                    {/* Legend */}
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-green-500" />
+                        <span className="text-gray-600">Normal</span>
+                        <span className="font-medium text-gray-900">{riskDistribution.normal.percent}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-amber-500" />
+                        <span className="text-gray-600">Warning</span>
+                        <span className="font-medium text-gray-900">{riskDistribution.warning.percent}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-orange-500" />
+                        <span className="text-gray-600">High</span>
+                        <span className="font-medium text-gray-900">{riskDistribution.high.percent}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                        <span className="text-gray-600">Critical</span>
+                        <span className="font-medium text-gray-900">{riskDistribution.critical.percent}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Top 5 Constituencies Detail (Moved to bottom) */}
+          {!loading && dashboardData?.top_constituencies && dashboardData.top_constituencies.length > 0 && (
+            <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Users className="h-4 w-4 text-indigo-600" />
+                    Constituency Details
+                  </h3>
+                  <span className="text-xs text-gray-500">Top 5 by voter count</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left py-2 text-gray-500 font-medium">Rank</th>
+                        <th className="text-left py-2 text-gray-500 font-medium">Constituency</th>
+                        <th className="text-right py-2 text-gray-500 font-medium">Voters</th>
+                        <th className="text-right py-2 text-gray-500 font-medium">Risk Level</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dashboardData.top_constituencies.slice(0, 5).map((item, index) => {
+                        const risk = index < 1 ? 'Critical' : index < 2 ? 'High' : index < 3 ? 'Warning' : 'Normal'
+                        const riskColor = index < 1 ? 'text-red-600 bg-red-50' : index < 2 ? 'text-orange-600 bg-orange-50' : index < 3 ? 'text-amber-600 bg-amber-50' : 'text-green-600 bg-green-50'
+                        return (
+                          <motion.tr
+                            key={index}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="border-b border-gray-50 hover:bg-gray-50"
+                          >
+                            <td className="py-3">
+                              <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-xs">
+                                {index + 1}
+                              </div>
+                            </td>
+                            <td className="py-3 font-medium text-gray-900">{item.constituency}</td>
+                            <td className="py-3 text-right text-gray-600">{item.voter_count?.toLocaleString()}</td>
+                            <td className="py-3 text-right">
+                              <span className={`text-xs font-medium px-2 py-1 rounded ${riskColor}`}>
+                                {risk}
+                              </span>
+                            </td>
+                          </motion.tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </Card>
+          )}
         </main>
       </div>
     </div>
