@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { getUploads } from '../services/api'
+import { useState, useEffect, useMemo } from 'react'
+import { getDashboardStats } from '../services/api'
 import { Card, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Link } from 'react-router-dom'
@@ -7,17 +7,70 @@ import {
   Users, AlertTriangle, FileText, ChevronLeft, Bell, Search,
   RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 
 function Dashboard() {
   const [isPlaying, setIsPlaying] = useState(false)
 
-  // Mock data to match the UI visual until real backend data is fully wired for this view
-  const stats = {
-    voters: { value: '6.2M', change: '-2.3%', trend: 'down' },
-    anomalies: { value: '9', type: 'critical' },
-    audits: { value: '4', type: 'pending' }
+  // Real stats from backend
+  const [stats, setStats] = useState({
+    voters: { value: 'Loading...', change: '...', trend: 'neutral' },
+    anomalies: { value: '0', type: 'normal' },
+    audits: { value: '0', type: 'info' }
+  })
+
+  // Filter States
+  const [showAnomaliesOnly, setShowAnomaliesOnly] = useState(false)
+  const [anomalyThreshold, setAnomalyThreshold] = useState(0)
+  const [selectedState, setSelectedState] = useState('All States')
+
+  // Mock Map Data (Constituencies)
+  // We generate this once so it doesn't change on every render
+  const mapPoints = useMemo(() => {
+    const points = []
+    for (let i = 0; i < 40; i++) {
+      points.push({
+        id: i,
+        // Random positions within the map container (roughly)
+        top: Math.floor(Math.random() * 70) + 15 + '%', // Avoid edges
+        left: Math.floor(Math.random() * 80) + 10 + '%',
+        anomalyScore: Math.floor(Math.random() * 100), // 0 to 100
+        name: `Constituency ${i + 1}`
+      })
+    }
+    return points
+  }, [])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getDashboardStats(selectedState)
+        setStats(data)
+      } catch (error) {
+        console.error("Failed to load dashboard stats", error)
+        setStats(prev => ({
+          ...prev,
+          voters: { value: 'Error', change: '-', trend: 'neutral' }
+        }))
+      }
+    }
+    fetchStats()
+  }, [selectedState])
+
+  // Filter Logic
+  const filteredPoints = mapPoints.filter(point => {
+    if (showAnomaliesOnly && point.anomalyScore < 50) return false
+    if (point.anomalyScore < anomalyThreshold) return false
+    return true
+  })
+
+  // Helper to get color based on score
+  const getPointColor = (score) => {
+    if (score >= 86) return 'bg-red-500'
+    if (score >= 71) return 'bg-orange-500'
+    if (score >= 31) return 'bg-amber-500'
+    return 'bg-green-500'
   }
 
   return (
@@ -39,10 +92,10 @@ function Dashboard() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <Link to="/notifications" className="relative p-2 rounded-full hover:bg-gray-50 text-gray-500 hover:text-indigo-600 transition-colors">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+            </Link>
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-medium text-sm">
                 A
@@ -61,21 +114,36 @@ function Dashboard() {
               <SlidersHorizontal className="h-5 w-5 text-indigo-600" />
               Filters
             </div>
-            <button className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
+            <button
+              onClick={() => {
+                setShowAnomaliesOnly(false)
+                setAnomalyThreshold(0)
+                setSelectedState('All States')
+              }}
+              className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
               <RotateCcw className="h-3 w-3" /> Reset
             </button>
           </div>
 
           <div className="space-y-8">
             <div className="flex items-center gap-3">
-              <input type="checkbox" id="anomalies" className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-              <label htmlFor="anomalies" className="text-sm font-medium text-gray-700">Show Anomalies Only</label>
+              <input
+                type="checkbox"
+                id="anomalies"
+                checked={showAnomaliesOnly}
+                onChange={(e) => setShowAnomaliesOnly(e.target.checked)}
+                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+              />
+              <label htmlFor="anomalies" className="text-sm font-medium text-gray-700 select-none cursor-pointer">Show Anomalies Only</label>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">State / UT</label>
               <div className="relative">
-                <select className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
                   <option>All States</option>
                   <option>Maharashtra</option>
                   <option>Delhi</option>
@@ -87,9 +155,16 @@ function Dashboard() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium text-gray-700">Anomaly Score Threshold</label>
-                <span className="text-xs text-indigo-600 font-medium">0+</span>
+                <span className="text-xs text-indigo-600 font-medium">{anomalyThreshold}+</span>
               </div>
-              <input type="range" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={anomalyThreshold}
+                onChange={(e) => setAnomalyThreshold(parseInt(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              />
               <div className="flex justify-between text-xs text-gray-400">
                 <span>0</span>
                 <span>50</span>
@@ -110,7 +185,7 @@ function Dashboard() {
                 </div>
                 <div className="pt-4">
                   <span className="text-xs text-gray-400">Last updated</span>
-                  <div className="text-sm font-medium text-gray-900">2 hours ago</div>
+                  <div className="text-sm font-medium text-gray-900">Just now</div>
                 </div>
               </div>
             </div>
@@ -127,7 +202,8 @@ function Dashboard() {
                   <p className="text-sm font-medium text-gray-500 mb-1">Total Registered Voters</p>
                   <h3 className="text-3xl font-bold text-gray-900">{stats.voters.value}</h3>
                   <p className="text-sm text-red-500 mt-1 font-medium flex items-center">
-                    ↘ {stats.voters.change}
+                    {/* Mock trend for now */}
+                    ↘ -2.3%
                   </p>
                 </div>
                 <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
@@ -163,50 +239,64 @@ function Dashboard() {
 
           {/* Map Area */}
           <Card className="flex-1 min-h-[500px] shadow-none border-none ring-1 ring-gray-100 flex flex-col">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Constituency Anomaly Map</h2>
-              <div className="flex gap-4 mt-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-gray-600">Normal (0-30)</span>
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Constituency Anomaly Map</h2>
+                <div className="flex gap-4 mt-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="text-gray-600">Normal (0-30)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                    <span className="text-gray-600">Warning (31-70)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                    <span className="text-gray-600">High (71-85)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span className="text-gray-600">Critical (86-100)</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                  <span className="text-gray-600">Warning (31-70)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <span className="text-gray-600">High (71-85)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span className="text-gray-600">Critical (86-100)</span>
-                </div>
+              </div>
+              <div className="text-sm text-gray-500">
+                Showing {filteredPoints.length} constituencies
               </div>
             </div>
 
-            <div className="flex-1 bg-white relative flex items-center justify-center p-8 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
+            <div className="flex-1 bg-white relative flex items-center justify-center p-8 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
               {/* Abstract India Map Shape Placeholder - using SVG for a clean look */}
               <svg viewBox="0 0 400 500" className="h-full w-auto opacity-10 absolute pointer-events-none">
                 <path d="M200,10 C250,50 350,150 350,300 C350,450 200,490 200,490 C200,490 50,450 50,300 C50,150 150,50 200,10 Z" fill="#94a3b8" />
               </svg>
 
-              {/* Mock Data Points */}
+              {/* Dynamic Map Points */}
               <div className="relative w-[300px] h-[400px]">
-                <motion.div
-                  initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2 }}
-                  className="absolute top-[30%] left-[40%] text-center"
-                >
-                  <div className="w-4 h-4 bg-red-500 rounded-full shadow-lg ring-4 ring-red-500/20 cursor-pointer hover:scale-125 transition"></div>
-                  <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 hover:opacity-100">Constituency 1</div>
-                </motion.div>
+                <AnimatePresence>
+                  {filteredPoints.map((point) => (
+                    <motion.div
+                      key={point.id}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute"
+                      style={{ top: point.top, left: point.left }}
+                    >
+                      <div className={`group relative`}>
+                        <div className={`w-3 h-3 ${getPointColor(point.anomalyScore)} rounded-full shadow-lg cursor-pointer hover:scale-150 transition-transform duration-200 ring-2 ring-white`}></div>
 
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }}
-                  className="absolute top-[45%] left-[60%] w-3 h-3 bg-amber-500 rounded-full shadow-lg cursor-pointer hover:scale-125 transition" />
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4 }}
-                  className="absolute top-[60%] left-[30%] w-3 h-3 bg-green-500 rounded-full shadow-lg cursor-pointer hover:scale-125 transition" />
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }}
-                  className="absolute top-[25%] left-[55%] w-3 h-3 bg-orange-500 rounded-full shadow-lg cursor-pointer hover:scale-125 transition" />
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
+                          {point.name} (Score: {point.anomalyScore})
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
 

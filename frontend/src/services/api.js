@@ -185,5 +185,24 @@ export const compareRolls = async (uploadId1, uploadId2) => {
   }
 }
 
+/**
+ * Get Dashboard Stats
+ * Calls GET /api/stats
+ * 
+ * @param {string} state - Optional state filter
+ * @returns {Promise<Object>} Dashboard statistics
+ */
+export const getDashboardStats = async (state) => {
+  try {
+    const url = state && state !== 'All States' ? `/api/stats?state=${encodeURIComponent(state)}` : '/api/stats'
+    console.debug('[api] GET', `${API_BASE_URL}${url}`)
+    const response = await api.get(url)
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}
+
 // Export default for potential future use
 export default api

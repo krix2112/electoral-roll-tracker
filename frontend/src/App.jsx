@@ -4,6 +4,7 @@ import Upload from './pages/Upload'
 import Compare from './pages/Compare'
 import Dashboard from './pages/Dashboard'
 import DiffViewer from './pages/DiffViewer';
+import Notifications from './pages/Notifications';
 
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <Route path="/compare" element={<Compare />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/diffviewer" element={<DiffViewer />} />
+        <Route path="/notifications" element={<Notifications />} />
       </Routes>
     </Router>
   )
