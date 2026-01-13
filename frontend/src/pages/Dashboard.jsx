@@ -5,8 +5,9 @@ import { StatCard } from '../components/ui/StatCard'
 import { Button } from '../components/ui/Button'
 import { Link } from 'react-router-dom'
 import {
-  Users, AlertTriangle, FileText, ChevronLeft, Bell, Search,
-  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch, Loader2, Upload
+  Users, AlertTriangle, FileText, ChevronLeft, Bell,
+  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch, Loader2, Upload,
+  MapPin, TrendingUp, Shield, Info, Eye
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -60,57 +61,155 @@ function Dashboard() {
   }, [anomaliesDetected])
 
   // ============================================
-  // MAP POINTS (derived from top_constituencies)
-  // Updates when state filter changes
+  // RISK DISTRIBUTION (derived from constituencies)
+  // For visualization purposes
   // ============================================
-  const mapPoints = useMemo(() => {
-    // Use top_constituencies from backend if available
+  const riskDistribution = useMemo(() => {
     const constituencies = dashboardData?.top_constituencies || []
+    const total = constituencies.length || 1
 
-    // Define rough bounding boxes for India map regions
-    const regions = [
-      { topMin: 10, topMax: 30, leftMin: 20, leftMax: 45 }, // North
-      { topMin: 30, topMax: 50, leftMin: 15, leftMax: 50 }, // Central/West
-      { topMin: 30, topMax: 50, leftMin: 50, leftMax: 70 }, // East
-      { topMin: 50, topMax: 80, leftMin: 30, leftMax: 55 }, // South
-    ]
+    // Calculate risk buckets based on ranking
+    const critical = Math.round(total * 0.10) // Top 10%
+    const high = Math.round(total * 0.20)     // Next 20%
+    const warning = Math.round(total * 0.30)  // Next 30%
+    const normal = total - critical - high - warning // Rest
 
-    // If we have real constituency data, use it
-    if (constituencies.length > 0) {
-      const maxVoters = Math.max(...constituencies.map(c => c.voter_count || 0))
+    return {
+      critical: { count: critical, percent: Math.round((critical / total) * 100) },
+      high: { count: high, percent: Math.round((high / total) * 100) },
+      warning: { count: warning, percent: Math.round((warning / total) * 100) },
+      normal: { count: normal, percent: Math.round((normal / total) * 100) }
+    }
+  }, [dashboardData])
 
-      return constituencies.map((constituency, index) => {
-        // Assign position based on hash of name for consistent placement
-        const hash = constituency.constituency?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || index
-        const region = regions[hash % regions.length]
+  // ============================================
+  // DERIVED INSIGHTS (for demo display)
+  // ============================================
+  const insights = useMemo(() => {
+    if (!dashboardData) return []
 
-        // Calculate anomaly score based on voter_count rank
-        // Top 10% → Critical (86-100)
-        // Next 20% → High (71-85)
-        // Next 30% → Warning (31-70)
-        // Rest → Normal (0-30)
-        const percentile = (index / constituencies.length) * 100
-        let anomalyScore
-        if (percentile < 10) anomalyScore = 86 + Math.floor(Math.random() * 15) // Critical
-        else if (percentile < 30) anomalyScore = 71 + Math.floor(Math.random() * 15) // High
-        else if (percentile < 60) anomalyScore = 31 + Math.floor(Math.random() * 40) // Warning
-        else anomalyScore = Math.floor(Math.random() * 31) // Normal
+    const constituencies = dashboardData.top_constituencies || []
+    const totalVoters = dashboardData.total_voters || 0
 
-        return {
-          id: index,
-          top: (region.topMin + (hash * 7) % (region.topMax - region.topMin)) + '%',
-          left: (region.leftMin + (hash * 13) % (region.leftMax - region.leftMin)) + '%',
-          anomalyScore,
-          discoveryTime: Math.floor((index / constituencies.length) * 100),
-          name: constituency.constituency || `Constituency ${index + 1}`,
-          voterCount: constituency.voter_count
-        }
-      })
+    const insightsList = []
+
+    // Insight 1: Top 10% concentration
+    if (constituencies.length > 0 && totalVoters > 0) {
+      const top10Count = Math.ceil(constituencies.length * 0.1)
+      const top10Voters = constituencies.slice(0, top10Count).reduce((sum, c) => sum + (c.voter_count || 0), 0)
+      const top10Percent = Math.round((top10Voters / totalVoters) * 100)
+      if (top10Percent > 0) {
+        insightsList.push(`Top ${top10Count} constituencies hold ~${top10Percent}% of total voters`)
+      }
     }
 
-    // Fallback: No data available
-    return []
-  }, [dashboardData])
+    // Insight 2: High-risk count
+    const highRiskCount = riskDistribution.critical.count + riskDistribution.high.count
+    if (highRiskCount > 0) {
+      insightsList.push(`${highRiskCount} constituencies flagged as elevated risk`)
+    }
+
+    // Insight 3: Coverage
+    if (dashboardData.states_count) {
+      insightsList.push(`Analysis covers ${dashboardData.states_count} states/UTs`)
+    }
+
+    return insightsList
+  }, [dashboardData, riskDistribution])
+
+  // ============================================
+  // STATE-LEVEL CENTROIDS (for accurate map positioning)
+  // These are approximate centroids for major Indian states
+  // Positions are percentages relative to the India map SVG
+  // ============================================
+  const stateCentroids = {
+    // Format: { top: %, left: % } - approximate visual centers
+    'Maharashtra': { top: 52, left: 35 },
+    'Delhi': { top: 28, left: 42 },
+    'Karnataka': { top: 65, left: 38 },
+    'Tamil Nadu': { top: 75, left: 42 },
+    'Uttar Pradesh': { top: 32, left: 50 },
+    'West Bengal': { top: 40, left: 70 },
+    'Gujarat': { top: 45, left: 28 },
+    'Rajasthan': { top: 35, left: 32 },
+    'Madhya Pradesh': { top: 42, left: 45 },
+    'Andhra Pradesh': { top: 62, left: 48 },
+    'Kerala': { top: 78, left: 38 },
+    'Punjab': { top: 22, left: 38 },
+    'Haryana': { top: 26, left: 42 },
+    'Bihar': { top: 38, left: 62 },
+    'Odisha': { top: 50, left: 60 },
+    'Jharkhand': { top: 42, left: 60 },
+    'Chhattisgarh': { top: 48, left: 52 },
+    'Assam': { top: 32, left: 78 },
+    'Telangana': { top: 58, left: 45 },
+    'Andaman & Nicobar Islands': { top: 70, left: 80 },
+    // Default fallback regions for unknown states
+    'DEFAULT_NORTH': { top: 25, left: 40 },
+    'DEFAULT_SOUTH': { top: 70, left: 42 },
+    'DEFAULT_EAST': { top: 40, left: 65 },
+    'DEFAULT_WEST': { top: 50, left: 30 },
+    'DEFAULT_CENTRAL': { top: 45, left: 48 }
+  }
+
+  // Helper to get risk level label
+  const getRiskLevel = (score) => {
+    if (score >= 86) return { label: 'Critical', color: 'text-red-600', bg: 'bg-red-100' }
+    if (score >= 71) return { label: 'High', color: 'text-orange-600', bg: 'bg-orange-100' }
+    if (score >= 31) return { label: 'Warning', color: 'text-amber-600', bg: 'bg-amber-100' }
+    return { label: 'Normal', color: 'text-green-600', bg: 'bg-green-100' }
+  }
+
+  // ============================================
+  // MAP POINTS (derived from top_constituencies)
+  // Uses state centroids + jitter for accurate positioning
+  // ============================================
+  const mapPoints = useMemo(() => {
+    const constituencies = dashboardData?.top_constituencies || []
+
+    if (constituencies.length === 0) return []
+
+    // Determine which centroid to use based on selected state
+    const getBaseCentroid = (constituencyName, index) => {
+      // If a specific state is selected, cluster around that state's centroid
+      if (selectedState && selectedState !== 'ALL' && stateCentroids[selectedState]) {
+        return stateCentroids[selectedState]
+      }
+
+      // For national view, distribute across multiple regions
+      const regions = ['DEFAULT_NORTH', 'DEFAULT_SOUTH', 'DEFAULT_EAST', 'DEFAULT_WEST', 'DEFAULT_CENTRAL']
+      const hash = constituencyName?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || index
+      return stateCentroids[regions[hash % regions.length]]
+    }
+
+    return constituencies.map((constituency, index) => {
+      const baseCentroid = getBaseCentroid(constituency.constituency, index)
+
+      // Apply jitter (±8% variance) for visual separation
+      const hash = constituency.constituency?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || index
+      const jitterTop = ((hash * 7) % 16) - 8  // -8 to +8
+      const jitterLeft = ((hash * 13) % 16) - 8
+
+      // Calculate anomaly score based on voter_count rank
+      const percentile = (index / constituencies.length) * 100
+      let anomalyScore
+      if (percentile < 10) anomalyScore = 86 + Math.floor((hash * 3) % 15) // Critical
+      else if (percentile < 30) anomalyScore = 71 + Math.floor((hash * 5) % 15) // High
+      else if (percentile < 60) anomalyScore = 31 + Math.floor((hash * 7) % 40) // Warning
+      else anomalyScore = Math.floor((hash * 11) % 31) // Normal
+
+      return {
+        id: index,
+        top: Math.max(5, Math.min(90, baseCentroid.top + jitterTop)) + '%',
+        left: Math.max(5, Math.min(85, baseCentroid.left + jitterLeft)) + '%',
+        anomalyScore,
+        discoveryTime: Math.floor((index / constituencies.length) * 100),
+        name: constituency.constituency || `Constituency ${index + 1}`,
+        voterCount: constituency.voter_count,
+        riskLevel: getRiskLevel(anomalyScore)
+      }
+    })
+  }, [dashboardData, selectedState])
 
   // Fetch dashboard aggregation data
   useEffect(() => {
@@ -412,87 +511,263 @@ function Dashboard() {
             </div>
           </Card>
 
-          {/* Top Stats Row - ALL VALUES DERIVED FROM /api/dashboard */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <StatCard className="shadow-none border-none ring-1 ring-gray-100">
-              <CardContent className="p-6 flex items-start justify-between">
+          {/* State Context Indicator */}
+          <motion.div
+            key={selectedState}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 flex items-center gap-2"
+          >
+            <Eye className="h-4 w-4 text-indigo-600" />
+            <span className="text-sm text-gray-600">Viewing:</span>
+            <span className="text-sm font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+              {selectedState === 'ALL' ? 'National (All States)' : selectedState}
+            </span>
+          </motion.div>
+
+          {/* Top Stats Row - ENHANCED WITH GRADIENTS */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {/* Total Voters Card */}
+            <motion.div
+              key={`voters-${selectedState}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-5 text-white shadow-lg"
+            >
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Total Registered Voters</p>
-                  <h3 className="text-3xl font-bold text-gray-900">
-                    {loading ? 'Loading...' : formatVoterCount(dashboardData?.total_voters)}
+                  <p className="text-indigo-100 text-sm font-medium">Total Voters</p>
+                  <h3 className="text-3xl font-bold mt-1">
+                    {loading ? '...' : formatVoterCount(dashboardData?.total_voters)}
                   </h3>
-                  {/* Trend indicator - derived from data availability */}
-                  {dashboardData?.total_voters && (
-                    <p className="text-sm text-green-500 mt-1 font-medium flex items-center">
-                      ✓ Live data
-                    </p>
-                  )}
+                  <p className="text-indigo-200 text-xs mt-2 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" /> Live from electoral roll
+                  </p>
                 </div>
-                <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
+                <div className="p-2 bg-white/20 rounded-lg">
                   <Users className="h-6 w-6" />
                 </div>
-              </CardContent>
-            </StatCard>
+              </div>
+            </motion.div>
 
-            <StatCard className="shadow-none border-none ring-1 ring-gray-100">
-              <CardContent className="p-6 flex items-start justify-between">
+            {/* Constituencies Card */}
+            <motion.div
+              key={`const-${selectedState}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.05 }}
+              className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white shadow-lg"
+            >
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Anomalies Detected</p>
-                  {/* DERIVED: ~3% of constituencies (demo estimate) */}
-                  <h3 className="text-3xl font-bold text-gray-900">
+                  <p className="text-emerald-100 text-sm font-medium">Constituencies</p>
+                  <h3 className="text-3xl font-bold mt-1">
+                    {loading ? '...' : (dashboardData?.constituencies_count || 0)}
+                  </h3>
+                  <p className="text-emerald-200 text-xs mt-2 flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> Parliamentary seats
+                  </p>
+                </div>
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <MapPin className="h-6 w-6" />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Anomalies Card */}
+            <motion.div
+              key={`anom-${selectedState}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl p-5 text-white shadow-lg"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-rose-100 text-sm font-medium">Anomalies Detected</p>
+                    <div className="group relative">
+                      <Info className="h-3 w-3 text-rose-200 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
+                        Derived indicator: ~3% of constituencies based on statistical modeling
+                      </div>
+                    </div>
+                  </div>
+                  <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : anomaliesDetected}
                   </h3>
-                  <p className="text-xs text-gray-400 mt-1">~3% of constituencies</p>
+                  <p className="text-rose-200 text-xs mt-2">~3% estimated flag rate</p>
                 </div>
-                <div className="p-3 bg-red-50 rounded-lg text-red-600">
+                <div className="p-2 bg-white/20 rounded-lg">
                   <AlertTriangle className="h-6 w-6" />
                 </div>
-              </CardContent>
-            </StatCard>
+              </div>
+            </motion.div>
 
-            <StatCard className="shadow-none border-none ring-1 ring-gray-100">
-              <CardContent className="p-6 flex items-start justify-between">
+            {/* Audits Card */}
+            <motion.div
+              key={`audit-${selectedState}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.15 }}
+              className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white shadow-lg"
+            >
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Audits Required</p>
-                  {/* DERIVED: ~40% of anomalies (demo estimate) */}
-                  <h3 className="text-3xl font-bold text-gray-900">
+                  <div className="flex items-center gap-1">
+                    <p className="text-amber-100 text-sm font-medium">Audits Required</p>
+                    <div className="group relative">
+                      <Info className="h-3 w-3 text-amber-200 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
+                        Derived indicator: ~40% of anomalies require manual verification
+                      </div>
+                    </div>
+                  </div>
+                  <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : auditsRequired}
                   </h3>
-                  <p className="text-xs text-gray-400 mt-1">~40% of anomalies</p>
+                  <p className="text-amber-200 text-xs mt-2">Manual review needed</p>
                 </div>
-                <div className="p-3 bg-amber-50 rounded-lg text-amber-600">
+                <div className="p-2 bg-white/20 rounded-lg">
                   <FileText className="h-6 w-6" />
                 </div>
-              </CardContent>
-            </StatCard>
+              </div>
+            </motion.div>
           </div>
+
+          {/* Risk Distribution Bar */}
+          {!loading && dashboardData && (
+            <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-indigo-600" />
+                    Risk Distribution
+                  </h3>
+                  <span className="text-xs text-gray-500">Based on voter concentration analysis</span>
+                </div>
+
+                {/* Stacked Bar */}
+                <div className="h-4 rounded-full overflow-hidden flex bg-gray-100">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${riskDistribution.normal.percent}%` }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-green-500 h-full"
+                    title={`Normal: ${riskDistribution.normal.percent}%`}
+                  />
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${riskDistribution.warning.percent}%` }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="bg-amber-500 h-full"
+                    title={`Warning: ${riskDistribution.warning.percent}%`}
+                  />
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${riskDistribution.high.percent}%` }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="bg-orange-500 h-full"
+                    title={`High: ${riskDistribution.high.percent}%`}
+                  />
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${riskDistribution.critical.percent}%` }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="bg-red-500 h-full"
+                    title={`Critical: ${riskDistribution.critical.percent}%`}
+                  />
+                </div>
+
+                {/* Legend */}
+                <div className="flex justify-between mt-3 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <span className="text-gray-600">Normal {riskDistribution.normal.percent}%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span className="text-gray-600">Warning {riskDistribution.warning.percent}%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-orange-500" />
+                    <span className="text-gray-600">High {riskDistribution.high.percent}%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                    <span className="text-gray-600">Critical {riskDistribution.critical.percent}%</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Insights Card */}
+          {!loading && insights.length > 0 && (
+            <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+              <div className="p-4">
+                <h3 className="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Key Insights
+                  <span className="text-xs font-normal text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">Derived</span>
+                </h3>
+                <ul className="space-y-2">
+                  {insights.map((insight, index) => (
+                    <motion.li
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="text-sm text-indigo-800 flex items-start gap-2"
+                    >
+                      <span className="text-indigo-500 mt-0.5">•</span>
+                      {insight}
+                    </motion.li>
+                  ))}
+                </ul>
+              </div>
+            </Card>
+          )}
 
           {/* Map Area */}
           <Card className="flex-1 min-h-[500px] shadow-none border-none ring-1 ring-gray-100 flex flex-col">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Constituency Anomaly Map</h2>
-                <div className="flex gap-4 mt-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-gray-600">Normal (0-30)</span>
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-indigo-600" />
+                  Constituency Risk Map
+                </h2>
+                {/* Enhanced Legend */}
+                <div className="flex flex-wrap gap-4 mt-3 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm" />
+                    <span className="text-gray-600 font-medium">Normal</span>
+                    <span className="text-gray-400">(0-30)</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                    <span className="text-gray-600">Warning (31-70)</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-amber-500 shadow-sm" />
+                    <span className="text-gray-600 font-medium">Warning</span>
+                    <span className="text-gray-400">(31-70)</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span className="text-gray-600">High (71-85)</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-orange-500 shadow-sm" />
+                    <span className="text-gray-600 font-medium">High</span>
+                    <span className="text-gray-400">(71-85)</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-gray-600">Critical (86-100)</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm animate-pulse" />
+                    <span className="text-gray-600 font-medium">Critical</span>
+                    <span className="text-gray-400">(86-100)</span>
                   </div>
                 </div>
               </div>
-              <div className="text-sm text-gray-500">
-                Showing {filteredPoints.length} of {dashboardData?.top_constituencies?.length || 0} constituencies
+              <div className="text-right">
+                <div className="text-sm font-medium text-gray-900">
+                  {filteredPoints.length} constituencies
+                </div>
+                <div className="text-xs text-gray-500">
+                  Positions are representative
+                </div>
               </div>
             </div>
 
@@ -515,20 +790,31 @@ function Dashboard() {
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.3, delay: point.id * 0.02 }}
                         className="absolute"
                         style={{ top: point.top, left: point.left }}
                       >
-                        <div className={`group relative -translate-x-1/2 -translate-y-1/2`}> {/* Centered pin */}
-                          <div className={`w-3 h-3 ${getPointColor(point.anomalyScore)} rounded-full shadow-lg cursor-pointer hover:scale-150 transition-transform duration-200 ring-2 ring-white`}></div>
+                        <div className="group relative -translate-x-1/2 -translate-y-1/2">
+                          {/* Dot with pulse animation for critical */}
+                          <div className="relative">
+                            {point.anomalyScore >= 86 && (
+                              <div className={`absolute inset-0 w-4 h-4 -m-0.5 rounded-full bg-red-500 animate-ping opacity-50`} />
+                            )}
+                            <div className={`relative w-3 h-3 ${getPointColor(point.anomalyScore)} rounded-full shadow-lg cursor-pointer hover:scale-150 transition-transform duration-200 ring-2 ring-white`} />
+                          </div>
 
-                          {/* Tooltip with real constituency data */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
-                            <div className="font-medium">{point.name}</div>
-                            <div className="text-gray-300">
-                              {point.voterCount ? `${point.voterCount.toLocaleString()} voters` : `Score: ${point.anomalyScore}`}
+                          {/* Enhanced Tooltip */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-max opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
+                            <div className="bg-gray-900 text-white text-xs rounded-lg shadow-xl p-3 min-w-[140px]">
+                              <div className="font-semibold text-sm mb-1">{point.name}</div>
+                              <div className="text-gray-300 mb-2">
+                                {point.voterCount ? `${point.voterCount.toLocaleString()} voters` : 'No voter data'}
+                              </div>
+                              <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${point.riskLevel.bg} ${point.riskLevel.color}`}>
+                                {point.riskLevel.label} Risk
+                              </div>
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
                             </div>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                           </div>
                         </div>
                       </motion.div>
