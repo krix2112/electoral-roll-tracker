@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
 import { Bell, CheckCircle2, AlertTriangle, Info, XCircle } from 'lucide-react'
 
@@ -14,7 +15,9 @@ const generateSampleNotifications = () => {
       relatedEntity: 'AC-103',
       timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
       read: false,
-      action: 'View Details'
+      action: 'View Details',
+      actionUrl: '/diffviewer',
+      actionType: 'navigate'
     },
     {
       id: 2,
@@ -24,7 +27,9 @@ const generateSampleNotifications = () => {
       relatedEntity: 'Monthly Report - January 2026',
       timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
       read: true,
-      action: 'Download Report'
+      action: 'Download Report',
+      actionUrl: '/dashboard',
+      actionType: 'navigate'
     },
     {
       id: 3,
@@ -43,7 +48,9 @@ const generateSampleNotifications = () => {
       relatedEntity: 'Ward-13',
       timestamp: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
       read: false,
-      action: 'View Details'
+      action: 'View Details',
+      actionUrl: '/diffviewer',
+      actionType: 'navigate'
     },
     {
       id: 5,
@@ -52,7 +59,10 @@ const generateSampleNotifications = () => {
       severity: 'success',
       relatedEntity: 'System Validation',
       timestamp: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
-      read: true
+      read: true,
+      action: 'View Report',
+      actionUrl: '/dashboard',
+      actionType: 'navigate'
     },
     {
       id: 6,
@@ -62,12 +72,61 @@ const generateSampleNotifications = () => {
       relatedEntity: 'System Backup',
       timestamp: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(),
       read: true
+    },
+    {
+      id: 7,
+      title: 'Constituency Analysis Available',
+      message: 'Detailed analysis report for Assembly Constituency 107 - Central District is now available. The report shows 203 total changes with high-risk deletion patterns detected.',
+      severity: 'warning',
+      relatedEntity: 'AC-107',
+      timestamp: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(),
+      read: false,
+      action: 'View Details',
+      actionUrl: '/diffviewer',
+      actionType: 'navigate'
+    },
+    {
+      id: 8,
+      title: 'Weekly Summary Report Generated',
+      message: 'Weekly summary report for the period January 8-14, 2026 has been generated. The report includes statistics, trend analysis, and risk assessments for all constituencies.',
+      severity: 'success',
+      relatedEntity: 'Weekly Report - Week 2',
+      timestamp: new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString(),
+      read: true,
+      action: 'View Report',
+      actionUrl: '/dashboard',
+      actionType: 'navigate'
+    },
+    {
+      id: 9,
+      title: 'Anomaly Detected in Booth-B46',
+      message: 'Polling Booth B46 - South District has shown unusual modification patterns. 132 modifications were recorded in a single day, which is significantly higher than the baseline.',
+      severity: 'critical',
+      relatedEntity: 'Booth-B46',
+      timestamp: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
+      read: false,
+      action: 'View Details',
+      actionUrl: '/diffviewer',
+      actionType: 'navigate'
+    },
+    {
+      id: 10,
+      title: 'Monthly Export Ready',
+      message: 'Monthly data export for January 2026 is ready. The export includes all roll changes, audit logs, and constituency-level breakdowns in CSV format.',
+      severity: 'info',
+      relatedEntity: 'Monthly Export - January 2026',
+      timestamp: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(),
+      read: true,
+      action: 'Download Report',
+      actionUrl: '/dashboard',
+      actionType: 'navigate'
     }
   ];
   return sampleNotifications;
 };
 
 function Notifications() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState(() => generateSampleNotifications());
   const [expandedId, setExpandedId] = useState(null);
 
@@ -89,7 +148,14 @@ function Notifications() {
 
   const handleAction = (e, notification) => {
     e.stopPropagation();
-    console.log(`Action clicked: ${notification.action} for ${notification.title}`);
+    
+    if (notification.actionType === 'navigate' && notification.actionUrl) {
+      navigate(notification.actionUrl);
+    } else if (notification.actionType === 'download') {
+      console.log(`Downloading report: ${notification.relatedEntity}`);
+    } else {
+      console.log(`Action clicked: ${notification.action} for ${notification.title}`);
+    }
   };
 
   const formatTimestamp = (timestamp) => {
