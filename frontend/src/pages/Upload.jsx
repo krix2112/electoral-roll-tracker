@@ -121,6 +121,17 @@ function Upload() {
       // Normalize response to array if single object returned (backward compatibility)
       const resArray = response.results ? response.results : [response]
       setResults(resArray)
+
+      // If multiple files uploaded, navigate to DiffViewer for comparison
+      // specifically check for exactly 2 files for pairwise comparison as per requirement
+      // but passing all results is safer for future extensibility
+      if (resArray.length >= 2) {
+        // Short delay to let user see success state, then navigate
+        setTimeout(() => {
+          navigate('/diffviewer', { state: { uploads: resArray } })
+        }, 1500)
+      }
+
     } catch (err) {
       setError(err.message || 'Upload failed')
     } finally {
