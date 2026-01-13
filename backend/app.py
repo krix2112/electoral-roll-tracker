@@ -62,6 +62,8 @@ def root():
             'upload': '/api/upload',
             'compare': '/api/compare',
             'uploads': '/api/uploads',
+            'stats': '/api/stats',
+            'dashboard': '/api/dashboard',
             'health': '/health'
         }
     }), 200
