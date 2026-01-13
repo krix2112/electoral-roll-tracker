@@ -9,7 +9,9 @@ export function Navbar() {
                 <Link to="/" className="flex items-center gap-3">
                     <div className="bg-indigo-700 text-white font-bold p-1.5 rounded text-xl">RD</div>
                     <div className="flex flex-col">
-                        <span className="font-bold text-gray-900 leading-none">RollDiff</span>
+                        <span className="font-bold text-gray-900 leading-none">
+                            <span className="text-orange-600">मत</span><span className="text-green-600">सेतु</span>
+                        </span>
                         <span className="text-[10px] text-gray-500 font-medium tracking-wide">Electoral Roll Forensic Audit</span>
                     </div>
                 </Link>
