@@ -1,0 +1,79 @@
+graph TB
+    subgraph "HOUR 0-2: SETUP PHASE"
+        A[Krishna: Creates Repo & Structure] --> B[All: Clone & Setup Dev Environment]
+        B --> C[Krishna: Creates Sample Data CSV]
+        B --> D[Vansh: DB Schema Design]
+        B --> E[Hitendra: React Project Init]
+        B --> F[Aarushi: Design System Setup]
+    end
+
+    subgraph "HOUR 2-8: BACKEND FOUNDATION - Vansh Leads"
+        D --> G[Vansh: Build Upload API Endpoint]
+        G --> H[Vansh: CSV Parser with Pandas]
+        H --> I[Vansh: Database Models & Tables]
+        I --> J[Vansh: Core Diff Algorithm]
+        C -.Sample Data.-> J
+        J --> K[Vansh: Compare API Endpoint]
+        K --> L[Vansh: Pattern Detection Logic]
+    end
+
+    subgraph "HOUR 8-12: FRONTEND FOUNDATION"
+        E --> M[Hitendra: Dashboard Layout]
+        F --> N[Aarushi: Component Library]
+        N --> O[Hitendra: Upload Page UI]
+        M --> P[Hitendra: Chart Components]
+        N --> Q[Aarushi: DiffViewer Component]
+    end
+
+    subgraph "HOUR 8-16: INTEGRATION - Krishna Coordinates"
+        L --> R[Krishna: API Service Layer]
+        R --> S[Krishna: Connect Upload Page to Backend]
+        S --> T[Krishna: Test File Upload Flow]
+        Q -.needs data.-> R
+        O -.sends files.-> S
+    end
+
+    subgraph "HOUR 12-18: ADVANCED FEATURES"
+        Q --> U[Aarushi: Red/Green Diff Highlighting]
+        P --> V[Hitendra: Statistics Dashboard]
+        L --> W[Vansh: Alerts & Flags API]
+        W --> X[Aarushi: Alerts Panel UI]
+        U --> Y[Aarushi: Report Generator]
+    end
+
+    subgraph "HOUR 16-20: DEPLOYMENT - Krishna Leads"
+        T --> Z[Krishna: Deploy Backend to Railway]
+        Z --> AA[Krishna: Setup PostgreSQL]
+        AA --> AB[Krishna: Deploy Frontend to Vercel]
+        AB --> AC[Krishna: Configure CORS & Env Vars]
+        V --> AC
+        Y --> AC
+    end
+
+    subgraph "HOUR 20-28: TESTING & POLISH"
+        AC --> AD[All: Integration Testing]
+        AD --> AE[Hitendra: UI Responsiveness]
+        AD --> AF[Aarushi: Visual Polish & Animations]
+        AD --> AG[Vansh: Performance Optimization]
+        AD --> AH[Krishna: Bug Fixes Across Stack]
+    end
+
+    subgraph "HOUR 28-36: DEMO PREP"
+        AH --> AI[Krishna: Create Demo Scenarios]
+        AI --> AJ[Hitendra: Demo Data Upload]
+        AI --> AK[Aarushi: Final UI Tweaks]
+        AI --> AL[Vansh: API Documentation]
+        AJ --> AM[All: Practice Demo Presentation]
+        AK --> AM
+        AL --> AM
+        AM --> AN[Krishna: Record Backup Video]
+        AN --> AO[READY FOR JUDGING!]
+    end
+
+    style A fill:#ff6b6b
+    style G fill:#4ecdc4
+    style M fill:#95e1d3
+    style Q fill:#95e1d3
+    style R fill:#ff6b6b
+    style Z fill:#ff6b6b
+    style AO fill:#ffd93d
