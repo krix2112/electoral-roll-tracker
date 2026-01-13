@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { compareRolls } from '../services/api';
 import { Button } from '../components/ui/Button'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Home } from 'lucide-react'
 
 export default function DiffViewer() {
   const navigate = useNavigate();
@@ -272,6 +272,16 @@ export default function DiffViewer() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="fixed top-4 left-4 flex gap-2 z-50">
+          <Button variant="secondary" size="sm" className="bg-white/90 shadow-sm hover:bg-white" onClick={() => navigate(-1)}>
+            <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+          <Link to="/">
+            <Button variant="secondary" size="sm" className="bg-white/90 shadow-sm hover:bg-white">
+              <Home className="h-4 w-4 mr-1" /> Home
+            </Button>
+          </Link>
+        </div>
         <div className="h-10 w-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
         <p className="text-gray-600 font-medium">Analyzing Electoral Differences...</p>
         <p className="text-gray-400 text-sm mt-1">Comparing {uploads.length} files</p>
@@ -283,6 +293,16 @@ export default function DiffViewer() {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="fixed top-4 left-4 flex gap-2 z-50">
+          <Button variant="secondary" size="sm" className="bg-white/90 shadow-sm hover:bg-white" onClick={() => navigate(-1)}>
+            <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+          <Link to="/">
+            <Button variant="secondary" size="sm" className="bg-white/90 shadow-sm hover:bg-white">
+              <Home className="h-4 w-4 mr-1" /> Home
+            </Button>
+          </Link>
+        </div>
         <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
           <h2 className="text-red-600 text-xl font-bold mb-2">Comparison Failed</h2>
           <p className="text-gray-600 mb-6">{error}</p>
@@ -296,15 +316,25 @@ export default function DiffViewer() {
     <div className="min-h-screen bg-white text-gray-800 relative">
 
       {/* Home Button Overlay */}
-      <div className="fixed top-4 left-4 z-50">
+      {/* Navigation Overlay */}
+      <div className="fixed top-4 left-4 flex gap-2 z-50">
         <Button
           variant="secondary"
           size="sm"
           className="bg-white/90 shadow-md backdrop-blur text-gray-700 hover:bg-white"
-          onClick={() => navigate('/')}
+          onClick={() => navigate(-1)}
         >
-          <ChevronLeft className="h-4 w-4 mr-1" /> Back Home
+          <ChevronLeft className="h-4 w-4 mr-1" /> Back
         </Button>
+        <Link to="/">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="bg-white/90 shadow-md backdrop-blur text-gray-700 hover:bg-white"
+          >
+            <Home className="h-4 w-4 mr-1" /> Home
+          </Button>
+        </Link>
       </div>
 
       <div className="bg-indigo-800 px-6 py-6 pt-16">
@@ -503,8 +533,8 @@ export default function DiffViewer() {
                     <td className="px-4 py-3 font-mono text-sm text-gray-900">{row.id}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.type === 'Addition' ? 'bg-green-100 text-green-800' :
-                          row.type === 'Deletion' ? 'bg-red-100 text-red-800' :
-                            'bg-amber-100 text-amber-800'
+                        row.type === 'Deletion' ? 'bg-red-100 text-red-800' :
+                          'bg-amber-100 text-amber-800'
                         }`}>
                         {row.type}
                       </span>

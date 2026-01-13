@@ -6,13 +6,14 @@ import { Button } from '../components/ui/Button'
 import { Link } from 'react-router-dom'
 import {
   Users, AlertTriangle, FileText, ChevronLeft, Bell, Search,
-  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch
+  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch, Upload
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 
 function Dashboard() {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [timelineProgress, setTimelineProgress] = useState(100) // 0 to 100
 
   // Real stats from backend
   const [stats, setStats] = useState({
@@ -26,22 +27,50 @@ function Dashboard() {
   const [anomalyThreshold, setAnomalyThreshold] = useState(0)
   const [selectedState, setSelectedState] = useState('All States')
 
-  // Mock Map Data (Constituencies)
+  // Map Data (Constituencies)
   // We generate this once so it doesn't change on every render
   const mapPoints = useMemo(() => {
     const points = []
+    // Define rough bounding boxes for points to fall within India's shape 
+    // to avoid them floating in the ocean
+    const regions = [
+      { topMin: 10, topMax: 30, leftMin: 20, leftMax: 45 }, // North
+      { topMin: 30, topMax: 50, leftMin: 15, leftMax: 50 }, // Central/West
+      { topMin: 30, topMax: 50, leftMin: 50, leftMax: 70 }, // East
+      { topMin: 50, topMax: 80, leftMin: 30, leftMax: 55 }, // South
+    ]
+
     for (let i = 0; i < 40; i++) {
+      const region = regions[Math.floor(Math.random() * regions.length)];
       points.push({
         id: i,
-        // Random positions within the map container (roughly)
-        top: Math.floor(Math.random() * 70) + 15 + '%', // Avoid edges
-        left: Math.floor(Math.random() * 80) + 10 + '%',
+        // Random positions within the selected region
+        top: Math.floor(Math.random() * (region.topMax - region.topMin)) + region.topMin + '%',
+        left: Math.floor(Math.random() * (region.leftMax - region.leftMin)) + region.leftMin + '%',
         anomalyScore: Math.floor(Math.random() * 100), // 0 to 100
+        discoveryTime: Math.floor(Math.random() * 100), // When this anomaly appeared on timeline (0-100)
         name: `Constituency ${i + 1}`
       })
     }
-    return points
+    return points.sort((a, b) => a.discoveryTime - b.discoveryTime)
   }, [])
+
+  // Playback Logic
+  useEffect(() => {
+    let interval;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setTimelineProgress(prev => {
+          if (prev >= 100) {
+            setIsPlaying(false)
+            return 100
+          }
+          return prev + 1
+        })
+      }, 50) // Speed of playback
+    }
+    return () => clearInterval(interval)
+  }, [isPlaying])
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -61,6 +90,10 @@ function Dashboard() {
 
   // Filter Logic
   const filteredPoints = mapPoints.filter(point => {
+    // Time Travel Filter
+    if (point.discoveryTime > timelineProgress) return false
+
+    // Standard Filters
     if (showAnomaliesOnly && point.anomalyScore < 50) return false
     if (point.anomalyScore < anomalyThreshold) return false
     return true
@@ -72,6 +105,13 @@ function Dashboard() {
     if (score >= 71) return 'bg-orange-500'
     if (score >= 31) return 'bg-amber-500'
     return 'bg-green-500'
+  }
+
+  // Get current month label based on progress
+  const getCurrentMonth = () => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const index = Math.min(11, Math.floor((timelineProgress / 100) * 11))
+    return `${months[index]} 2024`
   }
 
   return (
@@ -97,12 +137,12 @@ function Dashboard() {
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-medium text-sm">
-                A
-              </div>
-              <span className="text-sm font-medium text-gray-700">Admin</span>
-            </div>
+            <Link to="/upload">
+              <Button size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+                <Upload className="h-4 w-4" />
+                Upload Data
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -120,6 +160,7 @@ function Dashboard() {
                 setShowAnomaliesOnly(false)
                 setAnomalyThreshold(0)
                 setSelectedState('All States')
+                setTimelineProgress(100)
               }}
               className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
               <RotateCcw className="h-3 w-3" /> Reset
@@ -146,8 +187,11 @@ function Dashboard() {
                   onChange={(e) => setSelectedState(e.target.value)}
                   className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
                   <option>All States</option>
+                  <option>Andaman & Nicobar</option>
                   <option>Maharashtra</option>
                   <option>Delhi</option>
+                  <option>Karnataka</option>
+                  <option>Uttar Pradesh</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
@@ -186,12 +230,16 @@ function Dashboard() {
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Quick Stats</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Total States</span>
-                  <span className="font-medium text-gray-900">10</span>
+                  <span className="text-gray-500">States</span>
+                  <span className="font-medium text-gray-900">28</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Union Territories</span>
+                  <span className="font-medium text-gray-900">8</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Constituencies</span>
-                  <span className="font-medium text-gray-900">21</span>
+                  <span className="font-medium text-gray-900">543</span>
                 </div>
                 <div className="pt-4">
                   <span className="text-xs text-gray-400">Last updated</span>
@@ -276,37 +324,42 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className="flex-1 bg-white relative flex items-center justify-center p-8 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
-              {/* Abstract India Map Shape Placeholder - using SVG for a clean look */}
-              <svg viewBox="0 0 400 500" className="h-full w-auto opacity-10 absolute pointer-events-none">
-                <path d="M200,10 C250,50 350,150 350,300 C350,450 200,490 200,490 C200,490 50,450 50,300 C50,150 150,50 200,10 Z" fill="#94a3b8" />
-              </svg>
+            <div className="flex-1 bg-white relative flex items-center justify-center p-2 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
+              {/* Map Wrapper: Constraints the visual area to match the map's aspect ratio */}
+              <div className="relative h-full w-auto aspect-[612/696] max-h-[80vh]">
+                {/* Dynamic India Map Shape */}
+                <img
+                  src="/assets/india_map.svg"
+                  alt="India Map"
+                  className="w-full h-full object-contain pointer-events-none opacity-90"
+                />
 
-              {/* Dynamic Map Points */}
-              <div className="relative w-[300px] h-[400px]">
-                <AnimatePresence>
-                  {filteredPoints.map((point) => (
-                    <motion.div
-                      key={point.id}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="absolute"
-                      style={{ top: point.top, left: point.left }}
-                    >
-                      <div className={`group relative`}>
-                        <div className={`w-3 h-3 ${getPointColor(point.anomalyScore)} rounded-full shadow-lg cursor-pointer hover:scale-150 transition-transform duration-200 ring-2 ring-white`}></div>
+                {/* Dynamic Map Points */}
+                <div className="absolute inset-0">
+                  <AnimatePresence>
+                    {filteredPoints.map((point) => (
+                      <motion.div
+                        key={point.id}
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="absolute"
+                        style={{ top: point.top, left: point.left }}
+                      >
+                        <div className={`group relative -translate-x-1/2 -translate-y-1/2`}> {/* Centered pin */}
+                          <div className={`w-3 h-3 ${getPointColor(point.anomalyScore)} rounded-full shadow-lg cursor-pointer hover:scale-150 transition-transform duration-200 ring-2 ring-white`}></div>
 
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
-                          {point.name} (Score: {point.anomalyScore})
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
+                            {point.name} (Score: {point.anomalyScore})
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
 
@@ -317,21 +370,38 @@ function Dashboard() {
                   <h3 className="font-semibold text-gray-900">Time Travel</h3>
                   <p className="text-sm text-gray-500">Explore voter roll changes over time</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setIsPlaying(!isPlaying)}>
+                <Button variant="outline" size="sm" onClick={() => {
+                  if (timelineProgress >= 100) setTimelineProgress(0);
+                  setIsPlaying(!isPlaying);
+                }}>
                   {isPlaying ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
                   {isPlaying ? 'Pause' : 'Play'}
                 </Button>
               </div>
 
               <div className="text-center mb-2">
-                <span className="text-2xl font-bold text-indigo-700">Dec 2024</span>
-                <p className="text-xs text-gray-500">100% of timeline</p>
+                <span className="text-2xl font-bold text-indigo-700">{getCurrentMonth()}</span>
+                <p className="text-xs text-gray-500">{timelineProgress}% of timeline</p>
               </div>
 
-              <div className="relative h-2 bg-gray-100 rounded-full mb-6">
-                <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-green-400 via-amber-400 to-red-500 rounded-full opacity-20"></div>
-                <div className="absolute left-0 top-0 h-full w-full bg-indigo-900 rounded-full origin-left transform" style={{ transform: 'scaleX(1)' }}></div>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 bg-indigo-600 rounded-full border-2 border-white shadow hover:scale-110 cursor-pointer"></div>
+              <div className="relative h-2 bg-gray-100 rounded-full mb-6 flex items-center">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={timelineProgress}
+                  onChange={(e) => setTimelineProgress(parseInt(e.target.value))}
+                  className="absolute z-20 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-green-400 via-amber-400 to-red-500 rounded-full opacity-20 pointer-events-none"></div>
+                <div
+                  className="absolute left-0 top-0 h-full bg-indigo-900 rounded-full origin-left transition-all duration-75 ease-linear pointer-events-none"
+                  style={{ width: `${timelineProgress}%` }}
+                ></div>
+                <div
+                  className="absolute h-5 w-5 bg-indigo-600 rounded-full border-2 border-white shadow hover:scale-110 cursor-pointer transition-all duration-75 ease-linear pointer-events-none"
+                  style={{ left: `${timelineProgress}%`, transform: 'translateX(-50%)' }}
+                ></div>
               </div>
 
               <div className="flex justify-between text-xs font-medium text-gray-400">
