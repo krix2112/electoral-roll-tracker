@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button'
 import {
   ChevronLeft, Home, TrendingUp, LayoutDashboard, Upload as UploadIcon,
   GitCompare, Activity, ArrowRight, ArrowLeft, ZoomIn, Plus, Trash2,
-  Edit2, Filter, Clock, MapPin, User, Search, FileText, ChevronDown, AlertTriangle
+  Edit2, Filter, Clock, MapPin, User, Search, FileText, ChevronDown, AlertTriangle, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -575,48 +575,64 @@ function DiffViewerContent() {
             >
               {/* Stats Grid - Premium Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl p-5 text-white shadow-lg shadow-indigo-200/50 relative overflow-hidden group">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl p-5 text-white shadow-lg shadow-indigo-200/50 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <ZoomIn className="h-16 w-16" />
+                    <ZoomIn className="h-20 w-20" />
                   </div>
-                  <p className="text-indigo-100 text-xs font-medium uppercase tracking-wider mb-1">Total Changes</p>
-                  <h3 className="text-3xl font-bold tracking-tight">{summaryStats.total}</h3>
-                  <p className="text-indigo-200 text-xs mt-2 flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" /> Analysis complete
-                  </p>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <p className="text-indigo-100 text-xs font-semibold uppercase tracking-wider">Total Changes</p>
+                      <div className="group/tooltip relative">
+                        <Info className="h-3.5 w-3.5 text-indigo-200 cursor-help" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900/90 backdrop-blur text-white text-[10px] rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity z-20">
+                          Aggregated differences detected between the two selected electoral rolls.
+                        </div>
+                      </div>
+                    </div>
+                    <h3 className="text-4xl font-bold tracking-tight mb-1">{summaryStats.total}</h3>
+                    <p className="text-indigo-200 text-xs flex items-center gap-1 font-medium bg-indigo-800/30 px-2 py-1 rounded w-fit">
+                      <TrendingUp className="h-3 w-3" /> Analysis complete
+                    </p>
+                  </div>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 }} className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white shadow-lg shadow-emerald-200/50 relative overflow-hidden group">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 }} className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white shadow-lg shadow-emerald-200/50 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Plus className="h-16 w-16" />
+                    <Plus className="h-20 w-20" />
                   </div>
-                  <p className="text-emerald-100 text-xs font-medium uppercase tracking-wider mb-1">New Voters</p>
-                  <h3 className="text-3xl font-bold tracking-tight">+{summaryStats.additions}</h3>
-                  <p className="text-emerald-100 text-xs mt-2 bg-white/20 inline-block px-1.5 py-0.5 rounded">
-                    {(summaryStats.additions / (summaryStats.total || 1) * 100).toFixed(1)}% of total
-                  </p>
+                  <div className="relative z-10">
+                    <p className="text-emerald-100 text-xs font-semibold uppercase tracking-wider mb-1">New Voters</p>
+                    <h3 className="text-4xl font-bold tracking-tight mb-1">+{summaryStats.additions}</h3>
+                    <p className="text-emerald-100 text-xs font-medium bg-emerald-700/30 inline-block px-2 py-1 rounded">
+                      {(summaryStats.additions / (summaryStats.total || 1) * 100).toFixed(1)}% of total
+                    </p>
+                  </div>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl p-5 text-white shadow-lg shadow-rose-200/50 relative overflow-hidden group">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl p-5 text-white shadow-lg shadow-rose-200/50 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Trash2 className="h-16 w-16" />
+                    <Trash2 className="h-20 w-20" />
                   </div>
-                  <p className="text-rose-100 text-xs font-medium uppercase tracking-wider mb-1">Deletions</p>
-                  <h3 className="text-3xl font-bold tracking-tight">-{summaryStats.deletions}</h3>
-                  <p className="text-rose-100 text-xs mt-2 bg-white/20 inline-block px-1.5 py-0.5 rounded">
-                    {(summaryStats.deletions / (summaryStats.total || 1) * 100).toFixed(1)}% of total
-                  </p>
+                  <div className="relative z-10">
+                    <p className="text-rose-100 text-xs font-semibold uppercase tracking-wider mb-1">Deletions</p>
+                    <h3 className="text-4xl font-bold tracking-tight mb-1">-{summaryStats.deletions}</h3>
+                    <p className="text-rose-100 text-xs font-medium bg-rose-700/30 inline-block px-2 py-1 rounded">
+                      {(summaryStats.deletions / (summaryStats.total || 1) * 100).toFixed(1)}% of total
+                    </p>
+                  </div>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 }} className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white shadow-lg shadow-amber-200/50 relative overflow-hidden group">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 }} className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white shadow-lg shadow-amber-200/50 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Edit2 className="h-16 w-16" />
+                    <Edit2 className="h-20 w-20" />
                   </div>
-                  <p className="text-amber-100 text-xs font-medium uppercase tracking-wider mb-1">Modifications</p>
-                  <h3 className="text-3xl font-bold tracking-tight">~{summaryStats.modifications}</h3>
-                  <p className="text-amber-100 text-xs mt-2 bg-white/20 inline-block px-1.5 py-0.5 rounded">
-                    {(summaryStats.modifications / (summaryStats.total || 1) * 100).toFixed(1)}% of total
-                  </p>
+                  <div className="relative z-10">
+                    <p className="text-amber-100 text-xs font-semibold uppercase tracking-wider mb-1">Modifications</p>
+                    <h3 className="text-4xl font-bold tracking-tight mb-1">~{summaryStats.modifications}</h3>
+                    <p className="text-amber-100 text-xs font-medium bg-amber-700/30 inline-block px-2 py-1 rounded">
+                      {(summaryStats.modifications / (summaryStats.total || 1) * 100).toFixed(1)}% of total
+                    </p>
+                  </div>
                 </motion.div>
               </div>
 
@@ -627,8 +643,11 @@ function DiffViewerContent() {
                     <Filter className="h-4 w-4 text-indigo-500" />
                     <h3 className="font-semibold text-gray-800 text-sm">Filter Results</h3>
                   </div>
-                  <div className="flex gap-2">
-                    <span className="text-xs text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm">
+                  <div className="flex gap-2 items-center">
+                    <span className="text-xs text-gray-500 italic">
+                      filters apply instantly
+                    </span>
+                    <span className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded shadow-sm font-medium">
                       {filteredData.length} records found
                     </span>
                   </div>
@@ -684,6 +703,7 @@ function DiffViewerContent() {
                     <h3 className="font-semibold text-gray-800 flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-indigo-500" /> Timeline of Changes
                     </h3>
+                    <p className="text-xs text-gray-500">Change frequency over time between selected roll versions</p>
                   </div>
                   <div className="p-6 flex-1">
                     <ResponsiveContainer width="100%" height="100%">
@@ -746,6 +766,14 @@ function DiffViewerContent() {
                     <h3 className="font-semibold text-gray-800 flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-indigo-500" /> Constituency Heatmap
                     </h3>
+                    <div className="flex items-center gap-1.5">
+                      <div className="group/map-info relative">
+                        <Info className="h-3.5 w-3.5 text-gray-400 cursor-help" />
+                        <div className="absolute bottom-full right-0 mb-2 w-56 p-2 bg-gray-900/90 backdrop-blur text-white text-[10px] rounded shadow-lg opacity-0 group-hover/map-info:opacity-100 pointer-events-none transition-opacity z-20">
+                          Map positions are representative of constituency regions, not exact geographic coordinates.
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="p-6 flex-1 overflow-y-auto max-h-[400px] custom-scrollbar">
                     {heatmapData.length === 0 ? (
@@ -827,17 +855,17 @@ function DiffViewerContent() {
                   <table className="w-full text-sm text-left">
                     <thead className="text-xs text-gray-500 uppercase bg-gray-50/80 border-b border-gray-100">
                       <tr>
-                        <th className="px-6 py-3 font-semibold tracking-wider">Voter ID</th>
-                        <th className="px-6 py-3 font-semibold tracking-wider">Constituency</th>
-                        <th className="px-6 py-3 font-semibold tracking-wider">Type</th>
-                        <th className="px-6 py-3 font-semibold tracking-wider">Date</th>
-                        <th className="px-6 py-3 font-semibold tracking-wider">Risk Status</th>
-                        <th className="px-6 py-3 font-semibold tracking-wider text-right">Action</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider bg-gray-50 sticky top-0 z-10">Voter ID</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider bg-gray-50 sticky top-0 z-10">Constituency</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider bg-gray-50 sticky top-0 z-10">Type</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider bg-gray-50 sticky top-0 z-10">Date</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider bg-gray-50 sticky top-0 z-10">Risk Status</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider text-right bg-gray-50 sticky top-0 z-10">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {listData.map((item, idx) => (
-                        <tr key={idx} className="bg-white hover:bg-gray-50/80 transition-colors group">
+                        <tr key={idx} className="bg-white hover:bg-indigo-50/30 even:bg-gray-50/50 transition-colors group border-b border-gray-100 last:border-0 relative">
                           <td className="px-6 py-3 font-medium text-gray-900 font-mono text-xs">{item.id}</td>
                           <td className="px-6 py-3 text-gray-600 text-xs">{item.constituencyName || item.constituency}</td>
                           <td className="px-6 py-3">
