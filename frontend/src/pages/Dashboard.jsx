@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { DASHBOARD_CONFIG } from '../config/constants'
 import { getDashboardAggregation } from '../services/api'
 import { Card, CardContent } from '../components/ui/Card'
 import { StatCard } from '../components/ui/StatCard'
@@ -13,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 
 function Dashboard() {
+
   const [isPlaying, setIsPlaying] = useState(false)
   const [timelineProgress, setTimelineProgress] = useState(100) // 0 to 100
 
@@ -320,7 +322,7 @@ function Dashboard() {
   const getCurrentMonth = () => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     const index = Math.min(11, Math.floor((timelineProgress / 100) * 11))
-    return `${months[index]} 2026`
+    return `${months[index]} ${DASHBOARD_CONFIG.YEAR}`
   }
 
   return (
@@ -441,10 +443,19 @@ function Dashboard() {
                 ) : dashboardData ? (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Total States</span>
-                      <span className="font-medium text-gray-900">{dashboardData.states_count || 'N/A'}</span>
+                      <span className="text-gray-500">States</span>
+                      <span className="font-medium text-gray-900">{DASHBOARD_CONFIG.STATES_COUNT}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span className="text-gray-500">Union Territories</span>
+                      <span className="font-medium text-gray-900">{DASHBOARD_CONFIG.XX_UTS_COUNT}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
+                      <span className="text-gray-900 font-semibold">Total Admin Units</span>
+                      <span className="font-bold text-indigo-600">{DASHBOARD_CONFIG.TOTAL_ADMIN_UNITS}</span>
+                    </div>
+
+                    <div className="flex justify-between mt-3">
                       <span className="text-gray-500">Constituencies</span>
                       <span className="font-medium text-gray-900">{dashboardData.constituencies_count || 'N/A'}</span>
                     </div>
