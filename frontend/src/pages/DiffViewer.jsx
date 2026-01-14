@@ -150,16 +150,18 @@ export default function DiffViewer() {
   }, [stateUploads, stateComparison]);
 
   // Transform backend data into the flat structure expected by the UI
-  // Transform backend data into the flat structure expected by the UI
   // { date, constituencyId, constituencyName, changeType, count, riskLevel }
   const transformedData = useMemo(() => {
     const flatData = [];
 
     // Helper to process record list
     const processRecords = (records, type) => {
+      if (!Array.isArray(records)) return;
       records.forEach(rec => {
+        if (!rec) return;
         // Backend now returns 'constituency' field directly from CSV or address extraction
-        const constituencyName = rec.constituency || "Unknown Division";
+        // Defensive: Ensure constituency is a string (it might come as a number from some CSVs)
+        const constituencyName = String(rec.constituency || "Unknown Division");
         // Create an ID from the name (e.g. "Municipal Ward 10" -> "municipal-ward-10")
         const constituencyId = constituencyName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
@@ -181,10 +183,11 @@ export default function DiffViewer() {
 
     // Modification data structure is different: { voter_id, old: {}, new: {}, changes: {} }
     // We use new.registration_date for timeline placement
-    if (comparisonData.modified) {
+    if (comparisonData.modified && Array.isArray(comparisonData.modified)) {
       comparisonData.modified.forEach(mod => {
+        if (!mod || !mod.new) return;
         const rec = mod.new;
-        const constituencyName = rec.constituency || "Unknown Division";
+        const constituencyName = String(rec.constituency || "Unknown Division");
         const constituencyId = constituencyName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
         flatData.push({
