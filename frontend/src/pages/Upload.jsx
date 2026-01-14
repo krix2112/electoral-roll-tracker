@@ -38,7 +38,11 @@ function Upload() {
   const parseCSVPreview = (file) => {
     const reader = new FileReader()
     reader.onload = (e) => {
-      const text = e.target.result
+      let text = e.target.result
+      // Remove BOM if present
+      if (text.charCodeAt(0) === 0xFEFF) {
+        text = text.slice(1)
+      }
       const lines = text.split('\n').filter(line => line.trim() !== '').slice(0, 6) // Header + 5 rows
       if (lines.length > 0) {
         const headers = lines[0].split(',').map(h => h.trim())

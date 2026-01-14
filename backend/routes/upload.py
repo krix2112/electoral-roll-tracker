@@ -47,7 +47,7 @@ def process_single_file(file):
             return {'error': f'File too large. Maximum size is 50MB. Your file is {file_size / (1024*1024):.2f}MB', 'filename': file.filename}
         
         # Edge Case 5: Try multiple encodings for CSV parsing
-        encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
+        encodings = ['utf-8-sig', 'utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
         df = None
         encoding_used = None
         
