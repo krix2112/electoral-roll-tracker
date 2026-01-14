@@ -18,13 +18,69 @@ const Card = ({ children, className = "" }) => (
   </div>
 );
 
+// Internal Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("DiffViewer Crash:", error, errorInfo);
+    this.setState({ errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-8">
+          <div className="bg-white p-6 rounded-xl shadow-xl max-w-2xl w-full border border-red-100">
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <AlertTriangle className="h-8 w-8" />
+              <h2 className="text-xl font-bold">Something went wrong</h2>
+            </div>
+            <p className="text-gray-600 mb-4">The application encountered an unexpected error while processing the data.</p>
+            <div className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-64 mb-6">
+              <code className="text-xs text-red-800 font-mono whitespace-pre-wrap">
+                {this.state.error && this.state.error.toString()}
+                <br />
+                {this.state.errorInfo && this.state.errorInfo.componentStack}
+              </code>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={() => window.location.reload()}>Reload Page</Button>
+              <Link to="/compare">
+                <Button variant="outline">Back to Compare</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function DiffViewer() {
+  return (
+    <ErrorBoundary>
+      <DiffViewerContent />
+    </ErrorBoundary>
+  );
+}
+
+function DiffViewerContent() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comparisonData, setComparisonData] = useState({ added: [], deleted: [], modified: [] });
+  // ... (rest of state initialization remains same)
   const [comparisonStats, setComparisonStats] = useState(null);
   const [uploads, setUploads] = useState([]);
   const [loadingMessage, setLoadingMessage] = useState('Analyzing Electoral Differences...');
@@ -165,8 +221,15 @@ export default function DiffViewer() {
         // Create an ID from the name (e.g. "Municipal Ward 10" -> "municipal-ward-10")
         const constituencyId = constituencyName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
+        // Defensive: Check for valid date
+        let dateStr = rec.registration_date;
+        const testDate = new Date(dateStr);
+        if (isNaN(testDate.getTime())) {
+          dateStr = '2025-01-01'; // Fallback for invalid dates
+        }
+
         flatData.push({
-          date: rec.registration_date, // YYYY-MM-DD
+          date: dateStr, // YYYY-MM-DD
           constituencyId,
           constituencyName,
           changeType: type,
@@ -190,8 +253,15 @@ export default function DiffViewer() {
         const constituencyName = String(rec.constituency || "Unknown Division");
         const constituencyId = constituencyName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
+        // Defensive: Check for valid date
+        let dateStr = rec.registration_date;
+        const testDate = new Date(dateStr);
+        if (isNaN(testDate.getTime())) {
+          dateStr = '2025-01-01'; // Fallback for invalid dates
+        }
+
         flatData.push({
-          date: rec.registration_date,
+          date: dateStr,
           constituencyId,
           constituencyName,
           changeType: 'Modification',
@@ -249,10 +319,15 @@ export default function DiffViewer() {
   const timelineData = useMemo(() => {
     const dateMap = {};
     filteredData.forEach(item => {
+      // Safe Date Check for Map Key
+      if (!item.date || typeof item.date !== 'string') return;
+
       if (!dateMap[item.date]) {
         dateMap[item.date] = { Addition: 0, Deletion: 0, Modification: 0 };
       }
-      dateMap[item.date][item.changeType] += item.count;
+      if (dateMap[item.date][item.changeType] !== undefined) {
+        dateMap[item.date][item.changeType] += item.count;
+      }
     });
 
     const allDates = Object.keys(dateMap).sort();
@@ -265,8 +340,19 @@ export default function DiffViewer() {
       if (data.Deletion > data.Addition && data.Deletion > data.Modification) dominant = 'Deletion';
       else if (data.Modification > data.Addition) dominant = 'Modification';
 
+      // Robust Date Formatting
+      let label = date;
+      try {
+        const d = new Date(date);
+        if (!isNaN(d.getTime())) {
+          label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+      } catch (e) {
+        console.warn('Date parsing error', date);
+      }
+
       return {
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: label,
         dateKey: date,
         changes,
         dominant,
