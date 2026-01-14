@@ -1,8 +1,22 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link, NavLink } from 'react-router-dom';
 import { compareRolls, getUploads } from '../services/api';
 import { Button } from '../components/ui/Button'
-import { ChevronLeft, Home } from 'lucide-react'
+import {
+  ChevronLeft, Home, TrendingUp, LayoutDashboard, Upload as UploadIcon,
+  GitCompare, Activity, ArrowRight, ArrowLeft, ZoomIn, Plus, Trash2,
+  Edit2, Filter, Clock, MapPin, User, Search, FileText, ChevronDown, AlertTriangle
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid
+} from 'recharts';
+
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-xl border border-gray-100 shadow-sm ${className}`}>
+    {children}
+  </div>
+);
 
 export default function DiffViewer() {
   const navigate = useNavigate();
@@ -300,31 +314,13 @@ export default function DiffViewer() {
     });
   }, [filteredData]);
 
-  const maxChanges = useMemo(() => {
-    return Math.max(...timelineData.map(d => d.changes), 1);
-  }, [timelineData]);
-
-  const getHeatmapColorByRisk = (riskLevel) => {
-    if (riskLevel === 'Low') return 'bg-emerald-400 border-emerald-700';
-    if (riskLevel === 'Medium') return 'bg-amber-500 border-amber-800';
-    return 'bg-red-500 border-red-800';
-  };
-
-  const isSpike = (changes) => changes > 20; // Adjusted threshold for demo data
-
-  const getRiskColor = (risk) => {
-    if (risk === 'Low') return 'bg-blue-100 text-blue-700 border-blue-300';
-    if (risk === 'Medium') return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-    if (risk === 'High') return 'bg-red-100 text-red-700 border-red-300';
-    return 'bg-gray-100 text-gray-700';
-  };
-
   // Sample data list (first 100 rows for table)
   const listData = useMemo(() => {
     return filteredData.slice(0, 100).map((item, idx) => ({
       id: item.details?.voter_id || `VTR-${idx}`,
       type: item.changeType,
       timestamp: item.date,
+      constituencyName: item.constituencyName,
       risk: item.riskLevel
     }));
   }, [filteredData]);
@@ -354,299 +350,446 @@ export default function DiffViewer() {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-        <div className="fixed top-4 left-4 flex gap-2 z-50">
-          <Button variant="secondary" size="sm" className="bg-white/90 shadow-sm hover:bg-white" onClick={() => navigate(-1)}>
-            <ChevronLeft className="h-4 w-4 mr-1" /> Back
-          </Button>
-          <Link to="/">
-            <Button variant="secondary" size="sm" className="bg-white/90 shadow-sm hover:bg-white">
-              <Home className="h-4 w-4 mr-1" /> Home
-            </Button>
-          </Link>
-        </div>
-        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
-          <h2 className="text-red-600 text-xl font-bold mb-2">Comparison Failed</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <Button onClick={() => navigate('/compare')}>Go to Compare Page</Button>
+        <div className="bg-white p-8 rounded-xl shadow-xl text-center max-w-md border border-gray-100">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="h-8 w-8 text-red-600" />
+          </div>
+          <h2 className="text-gray-900 text-xl font-bold mb-2">Analysis Failed</h2>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="outline" onClick={() => navigate(-1)}>Go Back</Button>
+            <Button onClick={() => navigate('/compare')}>Try Again</Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-800 relative">
-
-      {/* Home Button Overlay */}
-      {/* Navigation Overlay */}
-      <div className="fixed top-4 left-4 flex gap-2 z-50">
-        <Button
-          variant="secondary"
-          size="sm"
-          className="bg-white/90 shadow-md backdrop-blur text-gray-700 hover:bg-white"
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" /> Back
-        </Button>
-        <Link to="/">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="bg-white/90 shadow-md backdrop-blur text-gray-700 hover:bg-white"
-          >
-            <Home className="h-4 w-4 mr-1" /> Home
-          </Button>
-        </Link>
-      </div>
-
-      <div className="bg-indigo-800 px-6 py-6 pt-16">
-        <h1 className="text-white text-3xl font-bold mb-2">Roll Change Analysis</h1>
-        <p className="text-indigo-200 text-sm">
-          Comparing <span className="font-mono text-white">{uploads[0]?.filename}</span> vs <span className="font-mono text-white">{uploads[1]?.filename}</span>
-        </p>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 -mt-8">
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded shadow-lg p-4 border-l-4 border-indigo-500">
-            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Changes</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{summaryStats.total}</p>
+    <div className="flex h-screen bg-gray-50 font-sans text-gray-900">
+      {/* Sidebar Navigation */}
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm fixed h-full z-10 hidden md:flex">
+        <div className="p-6 border-b border-gray-100 flex items-center gap-2">
+          <div className="bg-indigo-600 p-2 rounded-lg shadow-sm">
+            <TrendingUp className="h-5 w-5 text-white" />
           </div>
-          <div className="bg-white rounded shadow-lg p-4 border-l-4 border-green-500">
-            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Additions</h3>
-            <p className="text-3xl font-bold text-green-600 mt-1">+{summaryStats.additions}</p>
-          </div>
-          <div className="bg-white rounded shadow-lg p-4 border-l-4 border-red-500">
-            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Deletions</h3>
-            <p className="text-3xl font-bold text-red-600 mt-1">-{summaryStats.deletions}</p>
-          </div>
-          <div className="bg-white rounded shadow-lg p-4 border-l-4 border-amber-500">
-            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Modifications</h3>
-            <p className="text-3xl font-bold text-amber-600 mt-1">~{summaryStats.modifications}</p>
-          </div>
+          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-indigo-500">
+            RollDiff
+          </h1>
         </div>
 
-        <div className="bg-white border-2 border-blue-300 rounded p-6 mb-6">
-          <h2 className="text-gray-800 text-xl font-bold mb-4">Filter Analysis</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-gray-800 font-semibold text-sm mb-2">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                min={minDateStr}
-                max={maxDateStr}
-                className="w-full border-2 border-gray-300 rounded px-3 py-2 text-gray-800"
-              />
-            </div>
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <NavLink to="/" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+            <LayoutDashboard className="h-4 w-4" /> Dashboard
+          </NavLink>
+          <NavLink to="/upload" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+            <UploadIcon className="h-4 w-4" /> Upload Rolls
+          </NavLink>
+          <NavLink to="/compare" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+            <GitCompare className="h-4 w-4" /> Compare Versions
+          </NavLink>
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-indigo-50 text-indigo-700 shadow-sm">
+            <Activity className="h-4 w-4" /> Change Analysis
+          </div>
+        </nav>
 
-            <div>
-              <label className="block text-gray-800 font-semibold text-sm mb-2">End Date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate || minDateStr}
-                max={maxDateStr}
-                className="w-full border-2 border-gray-300 rounded px-3 py-2 text-gray-800"
-              />
+        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium text-sm shadow-md group-hover:scale-105 transition-transform">
+              A
             </div>
-
             <div>
-              <label className="block text-gray-800 font-semibold text-sm mb-2">Change Type</label>
-              <select
-                value={changeType}
-                onChange={(e) => setChangeType(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded px-3 py-2 text-gray-800"
+              <p className="text-sm font-medium text-gray-900 group-hover:text-indigo-700 transition-colors">Admin User</p>
+              <p className="text-xs text-gray-500">ECI Official</p>
+            </div>
+          </Link>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 md:ml-64 p-8 overflow-y-auto bg-gray-50">
+        <div className="max-w-7xl mx-auto space-y-8">
+
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Roll Change Analysis</h2>
+              <div className="text-sm text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+                <span className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-gray-200 shadow-sm text-xs font-mono text-gray-600">
+                  <FileText className="h-3 w-3 text-indigo-500" />
+                  {oldFile?.filename || 'File A'}
+                </span>
+                <ArrowRight className="h-3 w-3 text-gray-400" />
+                <span className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-gray-200 shadow-sm text-xs font-mono text-gray-600">
+                  <FileText className="h-3 w-3 text-emerald-500" />
+                  {newFile?.filename || 'File B'}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate('/compare')}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 transition-all shadow-sm text-sm font-medium active:scale-95"
               >
-                <option value="All">All Changes</option>
-                <option value="Addition">Additions Only</option>
-                <option value="Deletion">Deletions Only</option>
-                <option value="Modification">Modifications Only</option>
-              </select>
+                <ArrowLeft className="h-4 w-4" /> Back to Selection
+              </button>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-6"
+            >
+              {/* Stats Grid - Premium Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl p-5 text-white shadow-lg shadow-indigo-200/50 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <ZoomIn className="h-16 w-16" />
+                  </div>
+                  <p className="text-indigo-100 text-xs font-medium uppercase tracking-wider mb-1">Total Changes</p>
+                  <h3 className="text-3xl font-bold tracking-tight">{summaryStats.total}</h3>
+                  <p className="text-indigo-200 text-xs mt-2 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" /> Analysis complete
+                  </p>
+                </motion.div>
 
-          <div className="bg-white border-2 border-blue-400 rounded-b p-6 mb-4">
-            <h3 className="text-gray-800 font-bold text-base mb-4">Timeline of Changes</h3>
-            <div className="p-4">
-              {timelineData.length > 0 ? (
-                <>
-                  <div className="relative">
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-400"></div>
-                    <div className="flex items-end justify-between h-72 sm:h-56 gap-1 overflow-x-auto">
-                      {timelineData.map((item, index) => {
-                        const height = (item.changes / maxChanges) * 100;
-                        const spike = isSpike(item.changes);
-                        return (
-                          <div key={index} className="flex flex-col items-center flex-1 relative min-w-[10px]">
-                            <div
-                              className={`w-full ${spike ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-t relative group cursor-pointer transition-all`}
-                              style={{ height: `${height}%`, minHeight: '8px' }}
-                            >
-                              <div className="hidden group-hover:block absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-3 py-2 whitespace-nowrap z-20 shadow-lg">
-                                <div className="font-bold mb-1">{item.date}</div>
-                                <div className="text-gray-200">{item.changes} changes</div>
-                                <div className="text-gray-300 text-xs">Type: {item.dominant}</div>
-                              </div>
-                              {spike && (
-                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-1">
-                                  <div className="bg-red-600 text-white text-xs px-1 rounded font-bold">!</div>
-                                </div>
-                              )}
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 }} className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white shadow-lg shadow-emerald-200/50 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Plus className="h-16 w-16" />
+                  </div>
+                  <p className="text-emerald-100 text-xs font-medium uppercase tracking-wider mb-1">New Voters</p>
+                  <h3 className="text-3xl font-bold tracking-tight">+{summaryStats.additions}</h3>
+                  <p className="text-emerald-100 text-xs mt-2 bg-white/20 inline-block px-1.5 py-0.5 rounded">
+                    {(summaryStats.additions / (summaryStats.total || 1) * 100).toFixed(1)}% of total
+                  </p>
+                </motion.div>
+
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl p-5 text-white shadow-lg shadow-rose-200/50 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Trash2 className="h-16 w-16" />
+                  </div>
+                  <p className="text-rose-100 text-xs font-medium uppercase tracking-wider mb-1">Deletions</p>
+                  <h3 className="text-3xl font-bold tracking-tight">-{summaryStats.deletions}</h3>
+                  <p className="text-rose-100 text-xs mt-2 bg-white/20 inline-block px-1.5 py-0.5 rounded">
+                    {(summaryStats.deletions / (summaryStats.total || 1) * 100).toFixed(1)}% of total
+                  </p>
+                </motion.div>
+
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 }} className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white shadow-lg shadow-amber-200/50 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Edit2 className="h-16 w-16" />
+                  </div>
+                  <p className="text-amber-100 text-xs font-medium uppercase tracking-wider mb-1">Modifications</p>
+                  <h3 className="text-3xl font-bold tracking-tight">~{summaryStats.modifications}</h3>
+                  <p className="text-amber-100 text-xs mt-2 bg-white/20 inline-block px-1.5 py-0.5 rounded">
+                    {(summaryStats.modifications / (summaryStats.total || 1) * 100).toFixed(1)}% of total
+                  </p>
+                </motion.div>
+              </div>
+
+              {/* Filters Section */}
+              <Card className="shadow-sm border-0 ring-1 ring-gray-200/50 bg-white overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-indigo-500" />
+                    <h3 className="font-semibold text-gray-800 text-sm">Filter Results</h3>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-xs text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm">
+                      {filteredData.length} records found
+                    </span>
+                  </div>
+                </div>
+                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Start Date</label>
+                    <input
+                      type="date"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm text-sm"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      min={minDateStr}
+                      max={maxDateStr}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">End Date</label>
+                    <input
+                      type="date"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm text-sm"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={minDateStr}
+                      max={maxDateStr}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Change Type</label>
+                    <div className="relative">
+                      <select
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm appearance-none bg-white text-sm"
+                        value={changeType}
+                        onChange={(e) => setChangeType(e.target.value)}
+                      >
+                        <option value="All">All Changes</option>
+                        <option value="Addition">Additions Only</option>
+                        <option value="Deletion">Deletions Only</option>
+                        <option value="Modification">Modifications Only</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Timeline Chart */}
+                <Card className="shadow-sm border-0 ring-1 ring-gray-200/50 bg-white flex flex-col min-h-[420px]">
+                  <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-indigo-500" /> Timeline of Changes
+                    </h3>
+                  </div>
+                  <div className="p-6 flex-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                        <XAxis
+                          dataKey="date"
+                          stroke="#9CA3AF"
+                          fontSize={10}
+                          tickLine={false}
+                          axisLine={false}
+                          dy={10}
+                          minTickGap={20}
+                        />
+                        <YAxis
+                          stroke="#9CA3AF"
+                          fontSize={10}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                            fontSize: '12px'
+                          }}
+                          cursor={{ fill: '#f3f4f6' }}
+                        />
+                        <Bar dataKey="changes" name="Total Changes" radius={[4, 4, 0, 0]}>
+                          {timelineData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={
+                              entry.dominant === 'Addition' ? '#10B981' :
+                                entry.dominant === 'Deletion' ? '#F43F5E' : '#F59E0B'
+                            } />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="flex justify-center gap-6 mt-4 pt-4 border-t border-gray-50">
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Additions
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Deletions
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Modifications
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Heatmap Section */}
+                <Card className="shadow-sm border-0 ring-1 ring-gray-200/50 bg-white flex flex-col min-h-[420px]">
+                  <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2 text-sm">
+                      <MapPin className="h-4 w-4 text-indigo-500" /> Constituency Heatmap
+                    </h3>
+                  </div>
+                  <div className="p-6 flex-1 overflow-y-auto max-h-[400px] custom-scrollbar">
+                    {heatmapData.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                          <AlertTriangle className="h-6 w-6 text-gray-300" />
+                        </div>
+                        <p className="text-sm">No constituency data available</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {heatmapData.map((region) => (
+                          <motion.div
+                            key={region.region}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setSelectedConstituency(region)}
+                            className={`
+                                p-3 rounded-lg text-center border cursor-pointer transition-all relative overflow-hidden group
+                                ${region.risk === 'High' ? 'bg-rose-50 border-rose-100 hover:border-rose-300 shadow-sm' :
+                                region.risk === 'Medium' ? 'bg-amber-50 border-amber-100 hover:border-amber-300 shadow-sm' :
+                                  'bg-emerald-50 border-emerald-100 hover:border-emerald-300 shadow-sm'}
+                                `}
+                          >
+                            <div className={`absolute top-0 right-0 w-12 h-12 bg-gradient-to-br from-white/60 to-transparent rounded-bl-full -mr-6 -mt-6 pointer-events-none`}></div>
+
+                            <h4 className={`text-xs font-bold truncate mb-1
+                                ${region.risk === 'High' ? 'text-rose-700' :
+                                region.risk === 'Medium' ? 'text-amber-700' :
+                                  'text-emerald-700'}
+                                `}>{region.fullName}</h4>
+
+                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{region.changes} Changes</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-6 py-3 bg-gray-50/50 border-t border-gray-100 text-xs text-gray-500 flex justify-between items-center">
+                    <span className="font-medium">Intensity Scale</span>
+                    <div className="flex gap-4">
+                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded bg-emerald-500"></div> Low</div>
+                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded bg-amber-500"></div> Medium</div>
+                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded bg-rose-500"></div> High</div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Data Table */}
+              <Card className="shadow-sm border-0 ring-1 ring-gray-200/50 bg-white overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-indigo-500" />
+                    <h3 className="font-semibold text-gray-800 text-sm">Detailed Change Log</h3>
+                  </div>
+                  <span className="bg-white border border-gray-200 text-gray-500 text-xs px-2 py-1 rounded shadow-sm">
+                    top 100
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-gray-500 uppercase bg-gray-50/80 border-b border-gray-100">
+                      <tr>
+                        <th className="px-6 py-3 font-semibold tracking-wider">Voter ID</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider">Constituency</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider">Type</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider">Date</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider">Risk Status</th>
+                        <th className="px-6 py-3 font-semibold tracking-wider text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {listData.map((item, idx) => (
+                        <tr key={idx} className="bg-white hover:bg-gray-50/80 transition-colors group">
+                          <td className="px-6 py-3 font-medium text-gray-900 font-mono text-xs">{item.id}</td>
+                          <td className="px-6 py-3 text-gray-600 text-xs">{item.constituencyName || item.constituency}</td>
+                          <td className="px-6 py-3">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide border
+                                ${item.type === 'Addition' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                item.type === 'Deletion' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                  'bg-amber-50 text-amber-700 border-amber-100'}
+                              `}>
+                              {item.type}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-gray-500 text-xs">
+                            {new Date(item.timestamp).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-1.5 h-1.5 rounded-full ${item.risk === 'High' ? 'bg-rose-500' :
+                                item.risk === 'Medium' ? 'bg-amber-500' : 'bg-emerald-500'
+                                }`}></div>
+                              <span className={`text-xs font-medium ${item.risk === 'High' ? 'text-rose-700' :
+                                item.risk === 'Medium' ? 'text-amber-700' : 'text-emerald-700'
+                                }`}>{item.risk}</span>
                             </div>
-                          </div>
-                        );
-                      })}
+                          </td>
+                          <td className="px-6 py-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button className="text-indigo-600 hover:text-indigo-800 font-medium text-xs hover:underline">
+                              View Details
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {listData.length === 0 && (
+                    <div className="p-12 text-center flex flex-col items-center justify-center text-gray-400">
+                      <Search className="h-8 w-8 mb-2 opacity-20" />
+                      <p className="text-sm">No records found matching current filters</p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Selected Constituency Modal */}
+          <AnimatePresence>
+            {selectedConstituency && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                onClick={() => setSelectedConstituency(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-white rounded-xl p-0 max-w-sm w-full shadow-2xl overflow-hidden ring-1 ring-gray-200"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className={`p-4 text-white bg-gradient-to-r ${selectedConstituency.risk === 'High' ? 'from-rose-500 to-rose-600' :
+                    selectedConstituency.risk === 'Medium' ? 'from-amber-500 to-amber-600' :
+                      'from-emerald-500 to-emerald-600'
+                    }`}>
+                    <h3 className="text-lg font-bold">{selectedConstituency.fullName}</h3>
+                    <p className="text-white/80 text-xs font-mono opacity-80">{selectedConstituency.region}</p>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      <span className="font-medium text-gray-600 text-sm">Total Changes</span>
+                      <span className="font-bold text-gray-900 text-xl">{selectedConstituency.changes}</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <div className="text-emerald-600 font-bold text-xl">+{selectedConstituency.breakdown.Addition}</div>
+                        <div className="text-emerald-800 text-[10px] font-bold uppercase tracking-wide mt-1">Added</div>
+                      </div>
+                      <div className="text-center p-3 bg-rose-50 rounded-lg border border-rose-100">
+                        <div className="text-rose-600 font-bold text-xl">-{selectedConstituency.breakdown.Deletion}</div>
+                        <div className="text-rose-800 text-[10px] font-bold uppercase tracking-wide mt-1">Deleted</div>
+                      </div>
+                      <div className="text-center p-3 bg-amber-50 rounded-lg border border-amber-100">
+                        <div className="text-amber-600 font-bold text-xl">~{selectedConstituency.breakdown.Modification}</div>
+                        <div className="text-amber-800 text-[10px] font-bold uppercase tracking-wide mt-1">Modified</div>
+                      </div>
                     </div>
                   </div>
-                </>
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  No data available for selected filters
-                </div>
-              )}
-              <div className="mt-6 flex items-center justify-center gap-6">
-                {/* Legend code same as before */}
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-8 bg-blue-600 rounded-t"></div>
-                  <span className="text-gray-700 text-xs">Normal Volume</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-8 bg-red-600 rounded-t"></div>
-                  <span className="text-gray-700 text-xs">Spike (High Volume)</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white border-2 border-green-400 rounded p-6">
-            <h3 className="text-gray-800 font-bold text-base mb-4">Constituency/Region Heatmap</h3>
-            <div className="p-4">
-              {heatmapData.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                  {heatmapData.map((item, index) => (
-                    <div
-                      key={index}
-                      className={`${getHeatmapColorByRisk(item.risk)} border-2 rounded p-2 text-center hover:shadow-md relative group cursor-pointer transition-shadow overflow-hidden`}
-                      title={`${item.region}: ${item.changes} changes`}
-                      onClick={() => setSelectedConstituency(item)}
-                    >
-                      <div className="text-gray-900 text-xs font-bold leading-tight">{item.region}</div>
-                      {/* Tooltip logic simplified/kept */}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  No regional data available
-                </div>
-              )}
-              {/* Legend */}
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar Legends - reused */}
-        <div className="lg:col-span-1">
-          {/* Legend Blocks */}
-          <div className="bg-white border-2 border-gray-300 rounded p-4 mb-4">
-            <h3 className="text-gray-800 font-bold text-sm mb-4">Change Type Legend</h3>
-            <div className="space-y-3">
-              <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-green-600 mr-3"></div><span className="text-gray-800 text-sm">Additions</span></div>
-              <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-red-600 mr-3"></div><span className="text-gray-800 text-sm">Deletions</span></div>
-              <div className="flex items-center"><div className="w-4 h-4 rounded-full bg-amber-600 mr-3"></div><span className="text-gray-800 text-sm">Modifications</span></div>
-            </div>
-          </div>
-          {/* Risk Legend */}
-          <div className="bg-white border-2 border-gray-300 rounded p-4">
-            <h3 className="text-gray-800 font-bold text-sm mb-4">Risk Levels/Intensity</h3>
-            <div className="space-y-3">
-              <div className="flex items-center"><div className="w-4 h-4 rounded bg-emerald-400 border border-emerald-700 mr-3"></div><span className="text-gray-800 text-sm">Low (Normal)</span></div>
-              <div className="flex items-center"><div className="w-4 h-4 rounded bg-amber-500 border border-amber-800 mr-3"></div><span className="text-gray-800 text-sm">Medium (Watch)</span></div>
-              <div className="flex items-center"><div className="w-4 h-4 rounded bg-red-500 border border-red-800 mr-3"></div><span className="text-gray-800 text-sm">High (Anomalous)</span></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed List */}
-        <div className="bg-white border-2 border-gray-300 rounded p-6 mb-8">
-          <h3 className="text-gray-800 font-bold text-xl mb-4">Detailed Change Log</h3>
-          <p className="text-gray-500 text-sm mb-4">Showing first {Math.min(filteredData.length, 100)} records</p>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead className="bg-gray-100 border-b-2 border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-gray-700 font-bold text-sm uppercase">Voter ID</th>
-                  <th className="px-4 py-3 text-gray-700 font-bold text-sm uppercase">Type</th>
-                  <th className="px-4 py-3 text-gray-700 font-bold text-sm uppercase">Date</th>
-                  <th className="px-4 py-3 text-gray-700 font-bold text-sm uppercase">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {listData.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono text-sm text-gray-900">{row.id}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.type === 'Addition' ? 'bg-green-100 text-green-800' :
-                        row.type === 'Deletion' ? 'bg-red-100 text-red-800' :
-                          'bg-amber-100 text-amber-800'
-                        }`}>
-                        {row.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{row.timestamp}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded border text-xs font-medium ${getRiskColor(row.risk)}`}>
-                        {row.risk}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {selectedConstituency && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedConstituency(null)}>
-            <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedConstituency.fullName}</h3>
-              <p className="text-gray-600 mb-4">Region ID: {selectedConstituency.region}</p>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <span className="font-medium text-gray-700">Total Changes</span>
-                  <span className="font-bold text-indigo-600">{selectedConstituency.changes}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="text-center p-2 bg-green-50 rounded">
-                    <div className="text-green-600 font-bold text-lg">+{selectedConstituency.breakdown.Addition}</div>
-                    <div className="text-green-800 text-xs">Added</div>
+                  <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                    <Button variant="outline" size="sm" onClick={() => setSelectedConstituency(null)}>Close Details</Button>
                   </div>
-                  <div className="text-center p-2 bg-red-50 rounded">
-                    <div className="text-red-600 font-bold text-lg">-{selectedConstituency.breakdown.Deletion}</div>
-                    <div className="text-red-800 text-xs">Deleted</div>
-                  </div>
-                  <div className="text-center p-2 bg-amber-50 rounded">
-                    <div className="text-amber-600 font-bold text-lg">~{selectedConstituency.breakdown.Modification}</div>
-                    <div className="text-amber-800 text-xs">Modified</div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end">
-                <Button onClick={() => setSelectedConstituency(null)}>Close</Button>
-              </div>
-            </div>
-          </div>
-        )}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
