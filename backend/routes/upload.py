@@ -83,14 +83,18 @@ def process_single_file(file):
             return {'error': 'CSV file contains no valid data rows', 'filename': file.filename}
 
         # Clean data: strip whitespace from string columns BEFORE validation
+        # Convert to string and handle NaN values properly
         for col in ['voter_id', 'name', 'address', 'registration_date']:
-            df[col] = df[col].astype(str).str.strip()
+            # Replace NaN with empty string first, then convert to string
+            df[col] = df[col].fillna('').astype(str).str.strip()
+            # Remove 'nan' strings that might have been created
+            df[col] = df[col].replace('nan', '')
         
         # Edge Case 9: Validate data types and handle invalid values
         validation_errors = []
         
-        # Check voter_id: must be non-null string
-        null_voter_ids = df[df['voter_id'].isna() | (df['voter_id'] == '')]
+        # Check voter_id: must be non-null string (now properly converted)
+        null_voter_ids = df[df['voter_id'] == '']
         if not null_voter_ids.empty:
             validation_errors.append(f'{len(null_voter_ids)} rows have empty or null voter_id')
         
@@ -103,13 +107,13 @@ def process_single_file(file):
         except Exception:
             validation_errors.append('Age column contains non-numeric values')
         
-        # Check name: must be non-null string
-        null_names = df[df['name'].isna() | (df['name'] == '')]
+        # Check name: must be non-null string (already converted)
+        null_names = df[df['name'] == '']
         if not null_names.empty:
             validation_errors.append(f'{len(null_names)} rows have empty or null name')
         
-        # Check address: must be non-null string
-        null_addresses = df[df['address'].isna() | (df['address'] == '')]
+        # Check address: must be non-null string (already converted)
+        null_addresses = df[df['address'] == '']
         if not null_addresses.empty:
             validation_errors.append(f'{len(null_addresses)} rows have empty or null address')
         
