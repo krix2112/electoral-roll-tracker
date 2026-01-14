@@ -141,6 +141,9 @@ def process_single_file(file):
         # Convert age to int (already validated)
         df['age'] = df['age'].astype(int)
         
+        # Explicitly reorder columns to ensure consistent hashing
+        df = df[REQUIRED_COLUMNS]
+        
         upload_id = str(uuid.uuid4())
         
         # Calculate row hashes
