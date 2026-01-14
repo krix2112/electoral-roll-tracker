@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid
 } from 'recharts';
+import { IndiaMap } from '../components/IndiaMap';
 
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white rounded-xl border border-gray-100 shadow-sm ${className}`}>
@@ -661,6 +662,8 @@ function DiffViewerContent() {
                           fontSize={10}
                           tickLine={false}
                           axisLine={false}
+                          allowDecimals={false}
+                          domain={[0, 'auto']}
                         />
                         <Tooltip
                           contentStyle={{
@@ -705,38 +708,55 @@ function DiffViewerContent() {
                   </div>
                   <div className="p-6 flex-1 overflow-y-auto max-h-[400px] custom-scrollbar">
                     {heatmapData.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                      <div className="h-full flex flex-col items-center justify-center text-gray-400 relative min-h-[300px]">
+                        <div className="absolute inset-0 opacity-[0.03] flex items-center justify-center pointer-events-none">
+                          <IndiaMap className="h-full w-full max-h-[250px]" />
+                        </div>
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3 z-10">
                           <AlertTriangle className="h-6 w-6 text-gray-300" />
                         </div>
-                        <p className="text-sm">No constituency data available</p>
+                        <p className="text-sm z-10">No constituency data available</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {heatmapData.map((region) => (
-                          <motion.div
-                            key={region.region}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setSelectedConstituency(region)}
-                            className={`
-                                p-3 rounded-lg text-center border cursor-pointer transition-all relative overflow-hidden group
-                                ${region.risk === 'High' ? 'bg-rose-50 border-rose-100 hover:border-rose-300 shadow-sm' :
-                                region.risk === 'Medium' ? 'bg-amber-50 border-amber-100 hover:border-amber-300 shadow-sm' :
-                                  'bg-emerald-50 border-emerald-100 hover:border-emerald-300 shadow-sm'}
-                                `}
-                          >
-                            <div className={`absolute top-0 right-0 w-12 h-12 bg-gradient-to-br from-white/60 to-transparent rounded-bl-full -mr-6 -mt-6 pointer-events-none`}></div>
+                      <div className="relative min-h-[300px]">
+                        {/* Subtle Map Background */}
+                        <div className="absolute inset-0 opacity-[0.05] flex items-center justify-center pointer-events-none">
+                          <IndiaMap className="h-full w-full max-h-[280px]" />
+                        </div>
 
-                            <h4 className={`text-xs font-bold truncate mb-1
-                                ${region.risk === 'High' ? 'text-rose-700' :
-                                region.risk === 'Medium' ? 'text-amber-700' :
-                                  'text-emerald-700'}
-                                `}>{region.fullName}</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 relative z-10">
+                          {heatmapData.map((region) => (
+                            <motion.div
+                              key={region.region}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => setSelectedConstituency(region)}
+                              className={`
+                                  p-3 rounded-lg text-center border cursor-pointer transition-all relative overflow-hidden group bg-white/90 backdrop-blur-sm
+                                  ${region.risk === 'High' ? 'border-rose-200 hover:border-rose-400 shadow-sm hover:shadow-md' :
+                                  region.risk === 'Medium' ? 'border-amber-200 hover:border-amber-400 shadow-sm hover:shadow-md' :
+                                    'border-emerald-200 hover:border-emerald-400 shadow-sm hover:shadow-md'}
+                                  `}
+                            >
+                              {/* Stat Indicator Bar */}
+                              <div className={`absolute top-0 left-0 w-1 h-full
+                                    ${region.risk === 'High' ? 'bg-rose-500' :
+                                  region.risk === 'Medium' ? 'bg-amber-500' :
+                                    'bg-emerald-500'}
+                                `}></div>
 
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{region.changes} Changes</p>
-                          </motion.div>
-                        ))}
+                              <div className={`absolute top-0 right-0 w-12 h-12 bg-gradient-to-br from-gray-50 to-transparent rounded-bl-full -mr-6 -mt-6 pointer-events-none`}></div>
+
+                              <h4 className={`text-xs font-bold truncate mb-1 pl-2
+                                  ${region.risk === 'High' ? 'text-rose-700' :
+                                  region.risk === 'Medium' ? 'text-amber-700' :
+                                    'text-emerald-700'}
+                                  `}>{region.fullName}</h4>
+
+                              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide pl-2">{region.changes} Changes</p>
+                            </motion.div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
