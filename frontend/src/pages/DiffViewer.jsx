@@ -35,10 +35,19 @@ export default function DiffViewer() {
         // If no uploads passed via navigation, fetch from API
         if (uploadsToCompare.length < 2) {
           console.log('[DiffViewer] No uploads in state, fetching from API...');
-          const apiUploads = await getUploads();
+
+          let apiUploads;
+          try {
+            apiUploads = await getUploads();
+          } catch (fetchErr) {
+            console.error('[DiffViewer] Failed to fetch uploads:', fetchErr);
+            setError("Unable to fetch uploaded files. The database may not be initialized. Please upload files via the Compare page first.");
+            setLoading(false);
+            return;
+          }
 
           if (!apiUploads || apiUploads.length < 2) {
-            setError("No uploaded files found. Please upload at least two electoral rolls to compare.");
+            setError("No uploaded files found. Please upload at least two electoral rolls via the Compare page to compare.");
             setLoading(false);
             return;
           }
