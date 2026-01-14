@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { compareRolls } from '../services/api';
+import { compareRolls, getUploads } from '../services/api';
 import { Button } from '../components/ui/Button'
 import { ChevronLeft, Home } from 'lucide-react'
 
@@ -12,6 +12,7 @@ export default function DiffViewer() {
   const [error, setError] = useState(null);
   const [comparisonData, setComparisonData] = useState({ added: [], deleted: [], modified: [] });
   const [comparisonStats, setComparisonStats] = useState(null);
+  const [uploads, setUploads] = useState([]);
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -20,27 +21,46 @@ export default function DiffViewer() {
   const [hoveredBlock, setHoveredBlock] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
-  const uploads = location.state?.uploads || [];
+  // Get uploads from navigation state or fetch from API
+  const stateUploads = location.state?.uploads || [];
 
   useEffect(() => {
-    if (uploads.length < 2) {
-      // Redirect or show empty state if not enough files
-      // For now, if no data, we could just show loading or error
-      setError("Please upload at least two files to view differences.");
-      setLoading(false);
-      return;
-    }
+    const fetchAndCompare = async () => {
+      setLoading(true);
+      setError(null);
 
-    const fetchData = async () => {
       try {
-        setLoading(true);
-        // Compare the first two files found in the navigation state
-        // Sort by upload path or just take index 0 and 1
-        // Assuming index 0 is old, index 1 is new, or let backend decide? 
-        // Best guess: logic in Upload page puts them in order. 
-        // For distinct comparison, let's assume uploads[0] is Old, uploads[1] is New.
-        const oldFile = uploads[0];
-        const newFile = uploads[1];
+        let uploadsToCompare = stateUploads;
+
+        // If no uploads passed via navigation, fetch from API
+        if (uploadsToCompare.length < 2) {
+          console.log('[DiffViewer] No uploads in state, fetching from API...');
+          const apiUploads = await getUploads();
+
+          if (!apiUploads || apiUploads.length < 2) {
+            setError("No uploaded files found. Please upload at least two electoral rolls to compare.");
+            setLoading(false);
+            return;
+          }
+
+          // Use the two most recent uploads (sorted by uploaded_at desc)
+          // apiUploads is already sorted by uploaded_at desc from the backend
+          uploadsToCompare = apiUploads.slice(0, 2);
+          console.log('[DiffViewer] Using uploads from API:', uploadsToCompare);
+        }
+
+        setUploads(uploadsToCompare);
+
+        // Compare the files (older one first, newer one second)
+        // Sort by uploaded_at to ensure correct order
+        const sortedUploads = [...uploadsToCompare].sort((a, b) =>
+          new Date(a.uploaded_at) - new Date(b.uploaded_at)
+        );
+
+        const oldFile = sortedUploads[0];
+        const newFile = sortedUploads[1];
+
+        console.log('[DiffViewer] Comparing:', oldFile.filename, 'vs', newFile.filename);
 
         const result = await compareRolls(oldFile.upload_id, newFile.upload_id);
 
@@ -52,14 +72,14 @@ export default function DiffViewer() {
         setComparisonStats(result.stats);
         setLoading(false);
       } catch (err) {
-        console.error(err);
-        setError("Failed to compare files. Please try again.");
+        console.error('[DiffViewer] Error:', err);
+        setError(err.message || "Failed to compare files. Please try again.");
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [uploads]);
+    fetchAndCompare();
+  }, [stateUploads]);
 
   // Transform backend data into the flat structure expected by the UI
   // { date, constituencyId, constituencyName, changeType, count, riskLevel }
@@ -306,7 +326,7 @@ export default function DiffViewer() {
         <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
           <h2 className="text-red-600 text-xl font-bold mb-2">Comparison Failed</h2>
           <p className="text-gray-600 mb-6">{error}</p>
-          <Button onClick={() => navigate('/upload')}>Return to Upload</Button>
+          <Button onClick={() => navigate('/compare')}>Go to Compare Page</Button>
         </div>
       </div>
     );
