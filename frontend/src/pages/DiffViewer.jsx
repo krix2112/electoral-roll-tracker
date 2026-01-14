@@ -676,7 +676,8 @@ function DiffViewerContent() {
               </Card>
 
               {/* Charts Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Charts Section - Stacked Layout */}
+              <div className="flex flex-col gap-6">
                 {/* Timeline Chart */}
                 <Card className="shadow-sm border-0 ring-1 ring-gray-200/50 bg-white flex flex-col min-h-[420px]">
                   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -764,7 +765,7 @@ function DiffViewerContent() {
                           <IndiaMap className="h-full w-full max-h-[280px]" />
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 relative z-10">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 relative z-10">
                           {heatmapData.map((region) => (
                             <motion.div
                               key={region.region}
