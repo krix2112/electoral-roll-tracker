@@ -18,6 +18,7 @@ def compare_rolls(old_upload_id, new_upload_id):
         'name': r.name,
         'age': r.age,
         'address': r.address,
+        'constituency': r.constituency,
         'registration_date': r.registration_date,
         'row_hash': r.row_hash
     } for r in old_records])
@@ -27,6 +28,7 @@ def compare_rolls(old_upload_id, new_upload_id):
         'name': r.name,
         'age': r.age,
         'address': r.address,
+        'constituency': r.constituency,
         'registration_date': r.registration_date,
         'row_hash': r.row_hash
     } for r in new_records])
@@ -106,7 +108,7 @@ def compare_rolls(old_upload_id, new_upload_id):
 
 def calculate_row_hash(row_data):
     """Calculate MD5 hash for a row of voter data"""
-    row_string = f"{row_data['voter_id']}|{row_data['name']}|{row_data['age']}|{row_data['address']}|{row_data['registration_date']}"
+    row_string = f"{row_data['voter_id']}|{row_data['name']}|{row_data['age']}|{row_data['address']}|{row_data['registration_date']}|{row_data.get('constituency', 'Unknown')}"
     return hashlib.md5(row_string.encode('utf-8')).hexdigest()
 
 

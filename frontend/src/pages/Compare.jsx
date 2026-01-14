@@ -543,18 +543,7 @@ export default function Compare() {
               </button>
             </div>
 
-            {/* Secondary Actions */}
-            <div className="bg-[#f8fafc] rounded-2xl p-8 text-center">
-              <p className="text-gray-500 mb-5 font-medium">Ready for in-depth anomaly detection?</p>
-              <Link
-                to="/diffviewer"
-                className="inline-flex items-center gap-3 px-8 py-4 font-semibold text-indigo-700 hover:text-indigo-900 transition-all bg-white border border-gray-200 rounded-full hover:bg-indigo-50 hover:border-indigo-200 shadow-sm"
-              >
-                <span className="material-symbols-outlined">difference</span>
-                Go to Diff Viewer
-                <span className="material-symbols-outlined text-base">arrow_forward</span>
-              </Link>
-            </div>
+
           </div>
         </div>
       </div>

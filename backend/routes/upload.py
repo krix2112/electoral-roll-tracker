@@ -141,8 +141,40 @@ def process_single_file(file):
         # Convert age to int (already validated)
         df['age'] = df['age'].astype(int)
         
+        # Helper to find constituency info
+        # Check for constituency in columns (case insensitive) -> if not found check address
+        constituency_col = None
+        possible_names = ['constituency', 'pc_name', 'ac_name', 'assembly', 'parliamentary', 'ward', 'division', 'region']
+        
+        for col in df.columns:
+            if any(name in col.lower() for name in possible_names):
+                constituency_col = col
+                break
+        
+        # Prepare constituency series
+        if constituency_col:
+            df['constituency_extracted'] = df[constituency_col].astype(str).str.strip()
+            # If empty, fill with 'Unknown'
+            df['constituency_extracted'] = df['constituency_extracted'].replace('', 'Unknown').fillna('Unknown')
+        else:
+            # Try to extract "Ward X" from address
+            def extract_ward(addr):
+                import re
+                if not isinstance(addr, str): return 'Unknown'
+                match = re.search(r'Ward\s*[-:.]?\s*(\d+)', addr, re.IGNORECASE)
+                if match:
+                    return f"Ward {match.group(1)}"
+                return "General Division" # Default fallback
+            
+            df['constituency_extracted'] = df['address'].apply(extract_ward)
+
         # Explicitly reorder columns to ensure consistent hashing
-        df = df[REQUIRED_COLUMNS]
+        # We process row hash WITHOUT constituency to maintain compatibility if constituency changes but voter details don't
+        # OR we can include it. Let's include it to be precise - if you move constituency, that's a change or re-registration.
+        # However, to check for duplicates purely by identity, maybe not?
+        # Let's include it in hash for data integrity.
+        
+        df = df[REQUIRED_COLUMNS + ['constituency_extracted']]
         
         upload_id = str(uuid.uuid4())
         
@@ -152,10 +184,11 @@ def process_single_file(file):
             'name': row['name'],
             'age': row['age'],
             'address': row['address'],
-            'registration_date': row['registration_date']
+            'registration_date': row['registration_date'],
+            'constituency': row['constituency_extracted']
         }), axis=1)
         
-        dataset_hash = calculate_dataset_hash(df[REQUIRED_COLUMNS])
+        dataset_hash = calculate_dataset_hash(df[REQUIRED_COLUMNS]) # Keep dataset hash on core columns for now or include all? Let's keep core.
         
         electoral_roll = ElectoralRoll(
             upload_id=upload_id,
@@ -183,6 +216,7 @@ def process_single_file(file):
                             age=int(row['age']),
                             address=str(row['address']),
                             registration_date=str(row['registration_date']),
+                            constituency=str(row['constituency_extracted']),
                             row_hash=row['row_hash']
                         )
                     )

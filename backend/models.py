@@ -45,12 +45,14 @@ class VoterRecord(db.Model):
     name = db.Column(db.String(255), nullable=False)
     age = db.Column(db.Integer, nullable=False)
     address = db.Column(db.Text, nullable=False)
+    constituency = db.Column(db.String(100), default='Unknown')
     registration_date = db.Column(db.String(20), nullable=False)
     row_hash = db.Column(db.String(64), nullable=False, index=True)
     
     __table_args__ = (
         Index('idx_upload_voter', 'upload_id', 'voter_id'),
         Index('idx_upload_hash', 'upload_id', 'row_hash'),
+        Index('idx_upload_constituency', 'upload_id', 'constituency'),
     )
     
     def to_dict(self):
@@ -59,6 +61,7 @@ class VoterRecord(db.Model):
             'name': self.name,
             'age': self.age,
             'address': self.address,
+            'constituency': self.constituency,
             'registration_date': self.registration_date
         }
     

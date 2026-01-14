@@ -136,6 +136,7 @@ export default function DiffViewer() {
   }, [stateUploads, stateComparison]);
 
   // Transform backend data into the flat structure expected by the UI
+  // Transform backend data into the flat structure expected by the UI
   // { date, constituencyId, constituencyName, changeType, count, riskLevel }
   const transformedData = useMemo(() => {
     const flatData = [];
@@ -143,24 +144,10 @@ export default function DiffViewer() {
     // Helper to process record list
     const processRecords = (records, type) => {
       records.forEach(rec => {
-        // Backend record: { voter_id, name, age, address, registration_date, ... }
-        // We need to derive 'Constituency' from address or mock it if missing
-        // For visual demo, if address is missing, use "Unknown"
-        // Mocking constituency extraction from address string for demo purposes
-        // E.g. "123 Main St, Ward 15" -> "Ward 15"
-
-        let constituencyName = "General Division";
-        let constituencyId = "GEN-01";
-
-        // Simple extraction logic or default
-        if (rec.address && rec.address.toLowerCase().includes('ward')) {
-          const match = rec.address.match(/Ward\s*-?\s*(\d+)/i);
-          if (match) {
-            const wardNum = match[1];
-            constituencyName = `Municipal Ward ${wardNum}`;
-            constituencyId = `ward-${wardNum}`;
-          }
-        }
+        // Backend now returns 'constituency' field directly from CSV or address extraction
+        const constituencyName = rec.constituency || "Unknown Division";
+        // Create an ID from the name (e.g. "Municipal Ward 10" -> "municipal-ward-10")
+        const constituencyId = constituencyName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
         flatData.push({
           date: rec.registration_date, // YYYY-MM-DD
@@ -168,7 +155,7 @@ export default function DiffViewer() {
           constituencyName,
           changeType: type,
           count: 1, // Individual record
-          riskLevel: 'Low', // Default risk, can be upgraded if backend provided alerts
+          riskLevel: 'Low', // Will be recalculated based on volume aggregation
           // Include raw data for details view
           details: rec
         });
@@ -183,16 +170,8 @@ export default function DiffViewer() {
     if (comparisonData.modified) {
       comparisonData.modified.forEach(mod => {
         const rec = mod.new;
-        let constituencyName = "General Division";
-        let constituencyId = "GEN-01";
-        if (rec.address && rec.address.toLowerCase().includes('ward')) {
-          const match = rec.address.match(/Ward\s*-?\s*(\d+)/i);
-          if (match) {
-            const wardNum = match[1];
-            constituencyName = `Municipal Ward ${wardNum}`;
-            constituencyId = `ward-${wardNum}`;
-          }
-        }
+        const constituencyName = rec.constituency || "Unknown Division";
+        const constituencyId = constituencyName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
         flatData.push({
           date: rec.registration_date,
@@ -242,9 +221,7 @@ export default function DiffViewer() {
   // ---- AGGREGATION LOGIC (Reused from previous, updated dependencies) ----
 
   const summaryStats = useMemo(() => {
-    // If we have actual backend stats, use them for total accuracy? 
-    // Or aggregate from filteredData to respect filters.
-    // Let's aggregate from filteredData to make the UI dynamic.
+    // Aggregate from filteredData to make the UI dynamic based on real data
     const additions = filteredData.filter(d => d.changeType === 'Addition').reduce((sum, d) => sum + d.count, 0);
     const deletions = filteredData.filter(d => d.changeType === 'Deletion').reduce((sum, d) => sum + d.count, 0);
     const modifications = filteredData.filter(d => d.changeType === 'Modification').reduce((sum, d) => sum + d.count, 0);
@@ -283,32 +260,42 @@ export default function DiffViewer() {
 
   const heatmapData = useMemo(() => {
     const constituencyMap = {};
-    const constituencyRiskMap = {};
 
+    // First pass: Aggregate counts per constituency
     filteredData.forEach(item => {
       if (!constituencyMap[item.constituencyId]) {
-        constituencyMap[item.constituencyId] = { Addition: 0, Deletion: 0, Modification: 0 };
-        constituencyRiskMap[item.constituencyId] = { name: item.constituencyName, risks: [] };
+        constituencyMap[item.constituencyId] = {
+          name: item.constituencyName,
+          Addition: 0,
+          Deletion: 0,
+          Modification: 0,
+          Total: 0
+        };
       }
       constituencyMap[item.constituencyId][item.changeType] += item.count;
-      constituencyRiskMap[item.constituencyId].risks.push(item.riskLevel);
+      constituencyMap[item.constituencyId].Total += item.count;
     });
 
-    return Object.keys(constituencyMap).map(region => {
-      const data = constituencyMap[region];
-      const total = data.Addition + data.Deletion + data.Modification;
-      const risks = constituencyRiskMap[region].risks;
+    // Second pass: Calculate risk levels and format for UI
+    return Object.keys(constituencyMap).map(regionId => {
+      const data = constituencyMap[regionId];
 
+      // Real risk calculation based on volume thresholds
+      // These thresholds should be tuned based on expected data volume
       let riskLevel = 'Low';
-      if (risks.includes('High')) riskLevel = 'High';
-      else if (risks.includes('Medium')) riskLevel = 'Medium';
+      if (data.Total > 50) riskLevel = 'High';
+      else if (data.Total > 10) riskLevel = 'Medium';
 
       return {
-        region,
-        fullName: constituencyRiskMap[region].name,
-        changes: total,
+        region: regionId, // transformed ID
+        fullName: data.name,
+        changes: data.Total,
         risk: riskLevel,
-        breakdown: data
+        breakdown: {
+          Addition: data.Addition,
+          Deletion: data.Deletion,
+          Modification: data.Modification
+        }
       };
     });
   }, [filteredData]);
