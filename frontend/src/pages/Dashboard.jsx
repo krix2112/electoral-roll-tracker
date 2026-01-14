@@ -119,36 +119,73 @@ function Dashboard() {
 
   // ============================================
   // STATE-LEVEL CENTROIDS (for accurate map positioning)
-  // These are approximate centroids for major Indian states
-  // Positions are percentages relative to the India map SVG
+  // All 28 states + 8 UTs with positions as percentages
+  // relative to the India map SVG viewport
   // ============================================
   const stateCentroids = {
-    // Format: { top: %, left: % } - approximate visual centers
-    'Maharashtra': { top: 52, left: 35 },
-    'Delhi': { top: 28, left: 42 },
-    'Karnataka': { top: 65, left: 38 },
-    'Tamil Nadu': { top: 75, left: 42 },
+    // ----- NORTHERN STATES -----
+    'Jammu & Kashmir': { top: 12, left: 35 },
+    'Jammu And Kashmir': { top: 12, left: 35 },
+    'Ladakh': { top: 10, left: 45 },
+    'Himachal Pradesh': { top: 18, left: 40 },
+    'Punjab': { top: 22, left: 36 },
+    'Uttarakhand': { top: 22, left: 48 },
+    'Haryana': { top: 26, left: 40 },
+    'Delhi': { top: 27, left: 43 },
+    'NCT Of Delhi': { top: 27, left: 43 },
     'Uttar Pradesh': { top: 32, left: 50 },
-    'West Bengal': { top: 40, left: 70 },
-    'Gujarat': { top: 45, left: 28 },
-    'Rajasthan': { top: 35, left: 32 },
+
+    // ----- WESTERN STATES -----
+    'Rajasthan': { top: 32, left: 32 },
+    'Gujarat': { top: 42, left: 25 },
+    'Maharashtra': { top: 52, left: 35 },
+    'Goa': { top: 62, left: 32 },
+    'Dadra & Nagar Haveli': { top: 48, left: 30 },
+    'Dadra And Nagar Haveli And Daman And Diu': { top: 48, left: 28 },
+    'Daman & Diu': { top: 46, left: 28 },
+
+    // ----- CENTRAL STATES -----
     'Madhya Pradesh': { top: 42, left: 45 },
-    'Andhra Pradesh': { top: 62, left: 48 },
-    'Kerala': { top: 78, left: 38 },
-    'Punjab': { top: 22, left: 38 },
-    'Haryana': { top: 26, left: 42 },
-    'Bihar': { top: 38, left: 62 },
-    'Odisha': { top: 50, left: 60 },
-    'Jharkhand': { top: 42, left: 60 },
     'Chhattisgarh': { top: 48, left: 52 },
+
+    // ----- EASTERN STATES -----
+    'Bihar': { top: 36, left: 62 },
+    'Jharkhand': { top: 42, left: 60 },
+    'West Bengal': { top: 40, left: 70 },
+    'Odisha': { top: 50, left: 58 },
+
+    // ----- NORTHEASTERN STATES -----
+    'Sikkim': { top: 32, left: 72 },
     'Assam': { top: 32, left: 78 },
-    'Telangana': { top: 58, left: 45 },
-    'Andaman & Nicobar Islands': { top: 70, left: 80 },
-    // Default fallback regions for unknown states
-    'DEFAULT_NORTH': { top: 25, left: 40 },
+    'Meghalaya': { top: 36, left: 76 },
+    'Tripura': { top: 40, left: 80 },
+    'Mizoram': { top: 44, left: 80 },
+    'Manipur': { top: 38, left: 82 },
+    'Nagaland': { top: 34, left: 82 },
+    'Arunachal Pradesh': { top: 28, left: 82 },
+
+    // ----- SOUTHERN STATES -----
+    'Telangana': { top: 56, left: 45 },
+    'Andhra Pradesh': { top: 62, left: 48 },
+    'Karnataka': { top: 65, left: 38 },
+    'Kerala': { top: 78, left: 38 },
+    'Tamil Nadu': { top: 75, left: 45 },
+    'Puducherry': { top: 72, left: 48 },
+    'Pondicherry': { top: 72, left: 48 },
+    'Lakshadweep': { top: 72, left: 25 },
+
+    // ----- ISLAND TERRITORIES -----
+    'Andaman & Nicobar Islands': { top: 68, left: 82 },
+    'Andaman And Nicobar Islands': { top: 68, left: 82 },
+
+    // ----- CHANDIGARH -----
+    'Chandigarh': { top: 20, left: 38 },
+
+    // ----- DEFAULT FALLBACK REGIONS -----
+    'DEFAULT_NORTH': { top: 25, left: 42 },
     'DEFAULT_SOUTH': { top: 70, left: 42 },
-    'DEFAULT_EAST': { top: 40, left: 65 },
-    'DEFAULT_WEST': { top: 50, left: 30 },
+    'DEFAULT_EAST': { top: 40, left: 68 },
+    'DEFAULT_WEST': { top: 48, left: 30 },
     'DEFAULT_CENTRAL': { top: 45, left: 48 }
   }
 
@@ -162,33 +199,46 @@ function Dashboard() {
 
   // ============================================
   // MAP POINTS (derived from top_constituencies)
-  // Uses state centroids + jitter for accurate positioning
+  // Uses actual state from backend + jitter for accurate positioning
   // ============================================
   const mapPoints = useMemo(() => {
     const constituencies = dashboardData?.top_constituencies || []
 
     if (constituencies.length === 0) return []
 
-    // Determine which centroid to use based on selected state
-    const getBaseCentroid = (constituencyName, index) => {
-      // If a specific state is selected, cluster around that state's centroid
-      if (selectedState && selectedState !== 'ALL' && stateCentroids[selectedState]) {
-        return stateCentroids[selectedState]
+    // Determine which centroid to use based on constituency's actual state
+    const getBaseCentroid = (constituency) => {
+      // If a specific state filter is selected, only show pins for that state
+      if (selectedState && selectedState !== 'ALL') {
+        // Check if this constituency belongs to the selected state
+        if (constituency.state?.toUpperCase() !== selectedState.toUpperCase()) {
+          return null // Skip this constituency (filtered out)
+        }
+        return stateCentroids[constituency.state] || stateCentroids[selectedState] || stateCentroids['DEFAULT_CENTRAL']
       }
 
-      // For national view, distribute across multiple regions
+      // For national view, use the constituency's actual state
+      const state = constituency.state
+      if (state && stateCentroids[state]) {
+        return stateCentroids[state]
+      }
+
+      // Fallback: distribute across regions based on name hash
       const regions = ['DEFAULT_NORTH', 'DEFAULT_SOUTH', 'DEFAULT_EAST', 'DEFAULT_WEST', 'DEFAULT_CENTRAL']
-      const hash = constituencyName?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || index
+      const hash = constituency.constituency?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || 0
       return stateCentroids[regions[hash % regions.length]]
     }
 
     return constituencies.map((constituency, index) => {
-      const baseCentroid = getBaseCentroid(constituency.constituency, index)
+      const baseCentroid = getBaseCentroid(constituency)
 
-      // Apply jitter (±8% variance) for visual separation
+      // Skip if filtered out
+      if (!baseCentroid) return null
+
+      // Apply jitter (±5% variance) for visual separation within state cluster
       const hash = constituency.constituency?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || index
-      const jitterTop = ((hash * 7) % 16) - 8  // -8 to +8
-      const jitterLeft = ((hash * 13) % 16) - 8
+      const jitterTop = ((hash * 7) % 10) - 5  // -5 to +5 (tighter clustering)
+      const jitterLeft = ((hash * 13) % 10) - 5
 
       // Calculate anomaly score based on voter_count rank
       const percentile = (index / constituencies.length) * 100
@@ -200,15 +250,16 @@ function Dashboard() {
 
       return {
         id: index,
-        top: Math.max(5, Math.min(90, baseCentroid.top + jitterTop)) + '%',
-        left: Math.max(5, Math.min(85, baseCentroid.left + jitterLeft)) + '%',
+        top: Math.max(5, Math.min(92, baseCentroid.top + jitterTop)) + '%',
+        left: Math.max(5, Math.min(88, baseCentroid.left + jitterLeft)) + '%',
         anomalyScore,
         discoveryTime: Math.floor((index / constituencies.length) * 100),
         name: constituency.constituency || `Constituency ${index + 1}`,
+        state: constituency.state || 'Unknown',
         voterCount: constituency.voter_count,
         riskLevel: getRiskLevel(anomalyScore)
       }
-    })
+    }).filter(Boolean) // Remove null entries (filtered out)
   }, [dashboardData, selectedState])
 
   // Fetch dashboard aggregation data

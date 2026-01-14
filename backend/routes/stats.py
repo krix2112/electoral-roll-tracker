@@ -117,14 +117,16 @@ def get_dashboard_aggregation():
             # Count unique constituencies
             constituencies_count = df[constituency_col].astype(str).str.strip().nunique()
             
-            # Top 5 constituencies by voter count (row count per constituency)
-            constituency_counts = df.groupby(constituency_col).size().reset_index(name='voter_count')
+            # Top 100 constituencies by voter count (row count per constituency)
+            # Group by state AND constituency to preserve state info
+            constituency_counts = df.groupby([state_col, constituency_col]).size().reset_index(name='voter_count')
             constituency_counts = constituency_counts.sort_values('voter_count', ascending=False).head(100)
             
             top_constituencies = [
                 {
                     'constituency': str(row[constituency_col]).strip(),
-                    'voter_count': int(row['voter_count'])
+                    'voter_count': int(row['voter_count']),
+                    'state': str(row[state_col]).strip()
                 }
                 for _, row in constituency_counts.iterrows()
             ]
