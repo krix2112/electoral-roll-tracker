@@ -269,7 +269,7 @@ function Dashboard() {
   const getCurrentMonth = () => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     const index = Math.min(11, Math.floor((timelineProgress / 100) * 11))
-    return `${months[index]} 2024`
+    return `${months[index]} 2026`
   }
 
   return (
@@ -760,9 +760,9 @@ function Dashboard() {
               </div>
 
               <div className="flex justify-between text-xs font-medium text-gray-400">
-                <span>Jan 2024</span>
-                <span>Jun 2024</span>
-                <span>Dec 2024</span>
+                <span>Jan 2026</span>
+                <span>Jun 2026</span>
+                <span>Dec 2026</span>
               </div>
             </div>
           </Card>

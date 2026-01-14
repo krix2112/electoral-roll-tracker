@@ -1,12 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { uploadElectoralRoll } from '../services/api';
+import { uploadElectoralRoll, compareRolls } from '../services/api';
+import { Navbar } from '../components/Navbar';
 
-// Since we are not using the full tailwind config from the user snippet immediately,
-// and we want to ensure compatibility, we stick to standard Tailwind classes where possible,
-// or rely on arbitrary values. Ideally, we'd update tailwind.config.js, 
-// but inline styles/classes work faster for this single-file injection without restarting build/config.
-// However, I've added .matsetu-text to index.css.
+// LocalStorage keys for persistence
+const ACTIVITY_STORAGE_KEY = 'matsetu_recent_activity';
+const LAST_ANALYZED_KEY = 'matsetu_last_analyzed';
+const UPLOADER_NAME_KEY = 'matsetu_uploader_name';
 
 export default function Compare() {
   const navigate = useNavigate();
@@ -15,17 +15,156 @@ export default function Compare() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Activity tracking state
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [lastAnalyzed, setLastAnalyzed] = useState(null);
+  const [uploaderName, setUploaderName] = useState('');
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [tempName, setTempName] = useState('');
+
   const baseInputRef = useRef(null);
   const compareInputRef = useRef(null);
+
+  // Load persisted data on mount
+  useEffect(() => {
+    const savedActivity = localStorage.getItem(ACTIVITY_STORAGE_KEY);
+    if (savedActivity) {
+      try {
+        setRecentActivity(JSON.parse(savedActivity));
+      } catch (e) {
+        console.error('Failed to parse activity from localStorage');
+      }
+    }
+
+    const savedLastAnalyzed = localStorage.getItem(LAST_ANALYZED_KEY);
+    if (savedLastAnalyzed) {
+      try {
+        setLastAnalyzed(JSON.parse(savedLastAnalyzed));
+      } catch (e) {
+        console.error('Failed to parse last analyzed from localStorage');
+      }
+    }
+
+    const savedName = localStorage.getItem(UPLOADER_NAME_KEY);
+    if (savedName) {
+      setUploaderName(savedName);
+    }
+  }, []);
+
+  // Persist activity to localStorage
+  const addActivity = (activity) => {
+    const newActivity = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      ...activity
+    };
+    const updatedActivity = [newActivity, ...recentActivity].slice(0, 10); // Keep last 10
+    setRecentActivity(updatedActivity);
+    localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(updatedActivity));
+    return newActivity;
+  };
+
+  // Update last analyzed
+  const updateLastAnalyzed = (data) => {
+    const analyzedData = {
+      timestamp: new Date().toISOString(),
+      ...data
+    };
+    setLastAnalyzed(analyzedData);
+    localStorage.setItem(LAST_ANALYZED_KEY, JSON.stringify(analyzedData));
+  };
+
+  // Format relative time
+  const formatRelativeTime = (isoString) => {
+    if (!isoString) return 'Never';
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  };
+
+  // Format timestamp for display
+  const formatTimestamp = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
 
   // Helper for file handling
   const handleFileSelect = (file, type) => {
     if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
-      if (type === 'base') setBaseFile(file);
-      else setCompareFile(file);
+      // Check if we need uploader name
+      if (!uploaderName) {
+        setShowNamePrompt(true);
+        // Store file selection to apply after name is set
+        if (type === 'base') {
+          sessionStorage.setItem('pendingBaseFile', 'true');
+        } else {
+          sessionStorage.setItem('pendingCompareFile', 'true');
+        }
+      }
+
+      if (type === 'base') {
+        setBaseFile(file);
+        if (uploaderName) {
+          addActivity({
+            type: 'upload',
+            action: `uploaded base roll`,
+            fileName: file.name,
+            user: uploaderName
+          });
+        }
+      } else {
+        setCompareFile(file);
+        if (uploaderName) {
+          addActivity({
+            type: 'upload',
+            action: `uploaded comparison roll`,
+            fileName: file.name,
+            user: uploaderName
+          });
+        }
+      }
       setError(null);
     } else {
       setError('Please upload valid CSV files.');
+    }
+  };
+
+  // Save uploader name
+  const saveUploaderName = () => {
+    if (tempName.trim()) {
+      const name = tempName.trim();
+      setUploaderName(name);
+      localStorage.setItem(UPLOADER_NAME_KEY, name);
+      setShowNamePrompt(false);
+      setTempName('');
+
+      // Add pending file activities
+      if (baseFile && sessionStorage.getItem('pendingBaseFile')) {
+        addActivity({
+          type: 'upload',
+          action: `uploaded base roll`,
+          fileName: baseFile.name,
+          user: name
+        });
+        sessionStorage.removeItem('pendingBaseFile');
+      }
+      if (compareFile && sessionStorage.getItem('pendingCompareFile')) {
+        addActivity({
+          type: 'upload',
+          action: `uploaded comparison roll`,
+          fileName: compareFile.name,
+          user: name
+        });
+        sessionStorage.removeItem('pendingCompareFile');
+      }
     }
   };
 
@@ -40,8 +179,15 @@ export default function Compare() {
   const onDragOver = (e) => e.preventDefault();
 
   const handleInitiateAnalysis = async () => {
+    // Validation: Both files required
     if (!baseFile || !compareFile) {
       setError('Both Base Roll and Comparison Roll are required.');
+      return;
+    }
+
+    // Validation: Check uploader name
+    if (!uploaderName) {
+      setShowNamePrompt(true);
       return;
     }
 
@@ -49,134 +195,228 @@ export default function Compare() {
     setError(null);
 
     try {
-      // Create array for existing API
+      // Add activity for analysis start
+      addActivity({
+        type: 'analysis',
+        action: 'initiated comparison analysis',
+        user: uploaderName,
+        files: [baseFile.name, compareFile.name]
+      });
+
+      // Upload files
       const filesToUpload = [baseFile, compareFile];
-      // Hardcoded state for now as it wasn't in the new UI, default to Andaman or Generic
       const selectedState = "Andaman & Nicobar";
 
       const response = await uploadElectoralRoll(filesToUpload, selectedState);
       const resArray = response.results ? response.results : [response];
 
       if (resArray.length >= 2) {
-        navigate('/diffviewer', { state: { uploads: resArray } });
+        const baseUploadId = resArray[0].upload_id;
+        const compareUploadId = resArray[1].upload_id;
+
+        // Perform actual comparison
+        let comparisonResult = null;
+        try {
+          comparisonResult = await compareRolls(baseUploadId, compareUploadId);
+
+          // Update last analyzed on successful comparison
+          updateLastAnalyzed({
+            baseFile: baseFile.name,
+            compareFile: compareFile.name,
+            user: uploaderName,
+            stats: comparisonResult.stats || {}
+          });
+
+          // Add activity for successful analysis
+          addActivity({
+            type: 'analysis_complete',
+            action: 'completed comparison analysis',
+            user: uploaderName,
+            files: [baseFile.name, compareFile.name],
+            results: {
+              added: comparisonResult.stats?.total_added || 0,
+              deleted: comparisonResult.stats?.total_deleted || 0
+            }
+          });
+        } catch (compareErr) {
+          console.warn('Comparison API error, proceeding to viewer:', compareErr);
+          // Still proceed to diff viewer even if compare fails
+          updateLastAnalyzed({
+            baseFile: baseFile.name,
+            compareFile: compareFile.name,
+            user: uploaderName
+          });
+        }
+
+        // Navigate to diff viewer with results
+        navigate('/diffviewer', {
+          state: {
+            uploads: resArray,
+            comparison: comparisonResult
+          }
+        });
       } else {
         setError('Upload successful but did not return expected data.');
       }
     } catch (err) {
       console.error(err);
       setError(err.message || "Analysis initiation failed.");
+
+      // Add activity for failed analysis
+      addActivity({
+        type: 'error',
+        action: 'analysis failed',
+        user: uploaderName,
+        error: err.message || "Unknown error"
+      });
     } finally {
       setUploading(false);
     }
   };
 
-  // Common classes
-  const dragZoneClass = "border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 transition-all hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer text-center";
+  // Drag zone styling - consistent with app theme
+  const dragZoneClass = "border-2 border-dashed border-gray-200 rounded-xl p-8 transition-all hover:border-indigo-400 hover:bg-indigo-50/50 cursor-pointer text-center";
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200 font-sans">
+    <div className="min-h-screen bg-white">
+      <Navbar />
 
-      {/* Header */}
-      <header className="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-4xl text-blue-500">search_insights</span>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">
-                <div className="w-1 h-1 bg-white rounded-full"></div>
-              </div>
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-2xl font-bold matsetu-text">मतसेतु</span>
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">MatSetu</span>
-            </div>
-          </div>
-          <div className="hidden md:flex items-center border-l border-slate-200 dark:border-slate-700 pl-6 gap-2">
-            <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-blue-500 transition-colors">
-              <span className="material-symbols-outlined text-lg">arrow_back</span>
-              Back
-            </button>
-            <Link to="/">
-              <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-blue-500 transition-colors">
-                <span className="material-symbols-outlined text-lg">home</span>
-                Home
+      {/* Name Prompt Modal */}
+      {showNamePrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Enter Your Name</h3>
+            <p className="text-gray-500 mb-6">Your name will be associated with uploads and analysis actions.</p>
+            <input
+              type="text"
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              placeholder="Enter your name"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 mb-4"
+              onKeyDown={(e) => e.key === 'Enter' && saveUploaderName()}
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowNamePrompt(false)}
+                className="flex-1 px-4 py-3 border border-gray-200 rounded-lg font-medium hover:bg-gray-50 transition-colors text-gray-700"
+              >
+                Cancel
               </button>
-            </Link>
+              <button
+                onClick={saveUploaderName}
+                disabled={!tempName.trim()}
+                className="flex-1 px-4 py-3 bg-indigo-700 text-white rounded-lg font-medium hover:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-all shadow-sm">
-              <span className="material-symbols-outlined text-lg">dashboard</span>
-              Dashboard
-            </button>
-          </Link>
+      )}
+
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 pt-8 pb-4 text-center">
+        <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+          <span className="material-symbols-outlined text-lg">compare_arrows</span>
+          Roll Comparison Workspace
         </div>
-      </header>
+
+        <h1 className="text-4xl md:text-5xl font-extrabold text-[#0f172a] mb-4 tracking-tight">
+          Compare Electoral Rolls
+        </h1>
+
+        <p className="text-xl text-gray-500 mb-8 max-w-2xl mx-auto">
+          Upload and compare two electoral rolls to identify additions, deletions, and modifications
+        </p>
+
+        {uploaderName && (
+          <p className="text-sm text-gray-500 mb-4">
+            Logged in as: <span className="font-semibold text-indigo-700">{uploaderName}</span>
+          </p>
+        )}
+      </div>
 
       {/* Main Content */}
-      <main className="max-w-[1400px] mx-auto px-6 py-8 w-full flex flex-col md:flex-row gap-8">
+      <div className="container mx-auto px-4 pb-16">
+        <div className="flex flex-col lg:flex-row gap-8">
 
-        {/* Sidebar */}
-        <aside className="w-full md:w-72 flex-shrink-0 space-y-6">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Workspace Info</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Status</p>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  <span className="text-sm font-medium">Ready for Review</span>
+          {/* Sidebar */}
+          <aside className="w-full lg:w-72 flex-shrink-0 space-y-6">
+            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Workspace Info</h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[11px] text-gray-400 uppercase font-bold mb-1">Status</p>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span className="text-sm font-medium text-gray-900">Ready for Review</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-400 uppercase font-bold mb-1">Organization</p>
+                  <p className="text-sm font-medium text-gray-900">Election Commission Unit</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-400 uppercase font-bold mb-1">Last Uploader</p>
+                  <p className="text-sm font-medium text-indigo-600">{uploaderName || 'Not set'}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-400 uppercase font-bold mb-1">Last Analyzed</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {lastAnalyzed ? formatRelativeTime(lastAnalyzed.timestamp) : 'Never'}
+                  </p>
+                  {lastAnalyzed && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {lastAnalyzed.baseFile} vs {lastAnalyzed.compareFile}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Organization</p>
-                <p className="text-sm font-medium">Election Commission Unit</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Last Analyzed</p>
-                <p className="text-sm font-medium">2 hours ago</p>
-              </div>
             </div>
-          </div>
 
-          <div className="bg-slate-100 dark:bg-slate-800/50 rounded-2xl p-5 border border-transparent dark:border-slate-700">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Recent Activity</h3>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5 shrink-0"></div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed"><span className="font-semibold text-slate-900 dark:text-slate-200">Rahul M.</span> uploaded Revision_v2.csv</p>
+            {/* Recent Activity - Functional */}
+            <div className="bg-[#f8fafc] rounded-2xl p-5 border border-gray-100">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Recent Activity</h3>
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {recentActivity.length === 0 ? (
+                  <p className="text-xs text-gray-500">No activity yet. Upload files to get started.</p>
+                ) : (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-3">
+                      <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${activity.type === 'upload' ? 'bg-blue-500' :
+                        activity.type === 'analysis' ? 'bg-indigo-500' :
+                          activity.type === 'analysis_complete' ? 'bg-green-500' :
+                            activity.type === 'error' ? 'bg-red-500' : 'bg-gray-400'
+                        }`}></div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          <span className="font-semibold text-gray-900">{activity.user}</span>{' '}
+                          {activity.action}
+                          {activity.fileName && (
+                            <span className="text-gray-500"> "{activity.fileName}"</span>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          {formatTimestamp(activity.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 mt-1.5 shrink-0"></div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">Comparison session started for Sector 04</p>
-              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
 
-        {/* Content Area */}
-        <div className="flex-1 space-y-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="text-left">
-              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2 tracking-tight">MatSetu Comparison Workspace</h1>
-              <p className="text-base text-slate-500 dark:text-slate-400 max-w-2xl">Prepare and compare electoral rolls with your team. Review changes and collaborate on data integrity.</p>
-            </div>
-            <div className="flex gap-2">
-              {/* History button placeholder */}
-              <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
-                <span className="material-symbols-outlined text-lg">history</span>
-                History
-              </button>
-            </div>
-          </div>
+          {/* Content Area */}
+          <div className="flex-1 space-y-6">
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-12 bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700">
+            {/* Upload Card */}
+            <div className="bg-white p-8 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-gray-100">
 
               {/* Error Message */}
               {error && (
-                <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-600 border border-red-200 flex items-center gap-2">
+                <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-700 border border-red-200 flex items-center gap-2">
                   <span className="material-symbols-outlined">error</span>
                   <span>{error}</span>
                 </div>
@@ -188,10 +428,10 @@ export default function Compare() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-1 px-1">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-orange-50 text-orange-600 text-xs font-bold">1</span>
-                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Base Context</label>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-sm font-bold">1</span>
+                      <label className="block text-sm font-bold uppercase tracking-wider text-gray-500">Base Context</label>
                     </div>
-                    <span className="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase tracking-widest">Required</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Required</span>
                   </div>
 
                   <div
@@ -210,22 +450,22 @@ export default function Compare() {
                     <div className="flex flex-col items-center gap-4 py-4">
                       {baseFile ? (
                         <>
-                          <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
+                          <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center text-green-600">
                             <span className="material-symbols-outlined text-4xl">check_circle</span>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-700 dark:text-slate-200 text-lg">{baseFile.name}</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">{(baseFile.size / 1024).toFixed(1)} KB • Ready</p>
+                            <p className="font-bold text-gray-900 text-lg">{baseFile.name}</p>
+                            <p className="text-xs text-gray-500 mt-1 font-medium">{(baseFile.size / 1024).toFixed(1)} KB • Ready</p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 hover:text-orange-500 hover:bg-orange-50 transition-colors">
+                          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-400 hover:text-blue-600 hover:bg-blue-100 transition-colors">
                             <span className="material-symbols-outlined text-3xl">upload_file</span>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-700 dark:text-slate-200 text-base">Upload Base Roll (File 1)</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">Select source file or drag here</p>
+                            <p className="font-bold text-gray-900 text-base">Upload Base Roll (File 1)</p>
+                            <p className="text-xs text-gray-500 mt-1 font-medium">Select source file or drag here</p>
                           </div>
                         </>
                       )}
@@ -237,10 +477,10 @@ export default function Compare() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-1 px-1">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-green-50 text-green-600 text-xs font-bold">2</span>
-                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Comparison Data</label>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 text-sm font-bold">2</span>
+                      <label className="block text-sm font-bold uppercase tracking-wider text-gray-500">Comparison Data</label>
                     </div>
-                    <span className="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase tracking-widest">Required</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Required</span>
                   </div>
 
                   <div
@@ -259,22 +499,22 @@ export default function Compare() {
                     <div className="flex flex-col items-center gap-4 py-4">
                       {compareFile ? (
                         <>
-                          <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">
+                          <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center text-green-600">
                             <span className="material-symbols-outlined text-4xl">check_circle</span>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-700 dark:text-slate-200 text-lg">{compareFile.name}</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">{(compareFile.size / 1024).toFixed(1)} KB • Ready</p>
+                            <p className="font-bold text-gray-900 text-lg">{compareFile.name}</p>
+                            <p className="text-xs text-gray-500 mt-1 font-medium">{(compareFile.size / 1024).toFixed(1)} KB • Ready</p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 hover:text-green-600 hover:bg-green-50 transition-colors">
+                          <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center text-green-400 hover:text-green-600 hover:bg-green-100 transition-colors">
                             <span className="material-symbols-outlined text-3xl">description</span>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-700 dark:text-slate-200 text-base">Upload Comparison Roll (File 2)</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">Select target file or drag here</p>
+                            <p className="font-bold text-gray-900 text-base">Upload Comparison Roll (File 2)</p>
+                            <p className="text-xs text-gray-500 mt-1 font-medium">Select target file or drag here</p>
                           </div>
                         </>
                       )}
@@ -286,8 +526,8 @@ export default function Compare() {
 
               <button
                 onClick={handleInitiateAnalysis}
-                disabled={uploading}
-                className={`w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-5 rounded-2xl transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 group text-lg ${uploading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                disabled={uploading || !baseFile || !compareFile}
+                className={`w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-3 group text-lg ${(uploading || !baseFile || !compareFile) ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {uploading ? (
                   <>
@@ -302,51 +542,31 @@ export default function Compare() {
                 )}
               </button>
             </div>
-          </div>
 
-          <div className="pt-8 text-center bg-slate-50 dark:bg-slate-800/30 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
-            <p className="text-slate-500 dark:text-slate-400 mb-5 font-medium">Ready for in-depth anomaly detection?</p>
-            <Link
-              to="/diffviewer"
-              className="inline-flex items-center gap-3 px-8 py-4 font-semibold text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition-all bg-white dark:bg-slate-800 border-2 border-blue-500/10 rounded-full hover:bg-blue-500/5 hover:border-blue-500/30 shadow-sm"
-            >
-              <span className="material-symbols-outlined">difference</span>
-              Go to Diff Viewer
-              <span className="material-symbols-outlined text-base">arrow_forward</span>
-            </Link>
-          </div>
-        </div>
-      </main>
-
-      <footer className="mt-auto py-12 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold matsetu-text">मतसेतु</span>
-              <span className="text-[10px] uppercase font-bold text-slate-400">MatSetu</span>
-            </div>
-            <div className="text-sm text-slate-400">
-              © 2024 MatSetu Digital Workspace. All rights reserved.
+            {/* Secondary Actions */}
+            <div className="bg-[#f8fafc] rounded-2xl p-8 text-center">
+              <p className="text-gray-500 mb-5 font-medium">Ready for in-depth anomaly detection?</p>
+              <Link
+                to="/diffviewer"
+                className="inline-flex items-center gap-3 px-8 py-4 font-semibold text-indigo-700 hover:text-indigo-900 transition-all bg-white border border-gray-200 rounded-full hover:bg-indigo-50 hover:border-indigo-200 shadow-sm"
+              >
+                <span className="material-symbols-outlined">difference</span>
+                Go to Diff Viewer
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </Link>
             </div>
           </div>
-          <div className="flex gap-8 text-sm font-medium text-slate-500 dark:text-slate-400">
-            <a href="#" className="hover:text-orange-500 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-green-500 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-blue-500 transition-colors">Help Center</a>
-          </div>
         </div>
-      </footer>
-
-      <div className="fixed bottom-6 right-6">
-        <button
-          className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl text-slate-600 dark:text-slate-400 hover:scale-110 transition-all active:scale-95"
-          onClick={() => document.documentElement.classList.toggle('dark')}
-        >
-          <span className="material-symbols-outlined block dark:hidden">dark_mode</span>
-          <span className="material-symbols-outlined hidden dark:block">light_mode</span>
-        </button>
       </div>
 
-    </div >
+      {/* Footer - Consistent with Home.jsx */}
+      <footer className="bg-[#0f172a] text-white py-12 text-center">
+        <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-20 w-auto mx-auto mb-4" />
+        <p className="font-semibold text-lg mb-2">Matsetu</p>
+        <p className="text-gray-400 text-sm mb-8">Electoral Roll Forensic Audit System</p>
+        <p className="text-gray-600 text-xs">© 2026 Matsetu. A project for ensuring electoral transparency and integrity.</p>
+      </footer>
+
+    </div>
   );
 }

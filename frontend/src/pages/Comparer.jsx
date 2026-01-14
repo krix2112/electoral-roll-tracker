@@ -322,7 +322,7 @@ export default function Upload() {
               <span className="text-[10px] uppercase font-bold text-slate-400">MatSetu</span>
             </div>
             <div className="text-sm text-slate-400">
-              © 2024 MatSetu Digital Workspace. All rights reserved.
+              © 2026 MatSetu Digital Workspace. All rights reserved.
             </div>
           </div>
           <div className="flex gap-8 text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -333,15 +333,7 @@ export default function Upload() {
         </div>
       </footer>
 
-      <div className="fixed bottom-6 right-6">
-        <button
-          className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl text-slate-600 dark:text-slate-400 hover:scale-110 transition-all active:scale-95"
-          onClick={() => document.documentElement.classList.toggle('dark')}
-        >
-          <span className="material-symbols-outlined block dark:hidden">dark_mode</span>
-          <span className="material-symbols-outlined hidden dark:block">light_mode</span>
-        </button>
-      </div>
+      {/* Theme toggle button removed */}
 
     </div>
   );
