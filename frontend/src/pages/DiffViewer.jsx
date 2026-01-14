@@ -13,6 +13,7 @@ export default function DiffViewer() {
   const [comparisonData, setComparisonData] = useState({ added: [], deleted: [], modified: [] });
   const [comparisonStats, setComparisonStats] = useState(null);
   const [uploads, setUploads] = useState([]);
+  const [loadingMessage, setLoadingMessage] = useState('Analyzing Electoral Differences...');
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -24,7 +25,30 @@ export default function DiffViewer() {
   // Get uploads from navigation state or fetch from API
   const stateUploads = location.state?.uploads || [];
 
+  // Check if comparison data was already passed from Compare page
+  const stateComparison = location.state?.comparison;
+
   useEffect(() => {
+    // If comparison data was passed from Compare page, use it directly
+    if (stateComparison && stateUploads.length >= 2) {
+      console.log('[DiffViewer] Using pre-fetched comparison data from Compare page');
+      setUploads(stateUploads);
+      setComparisonData({
+        added: stateComparison.added || [],
+        deleted: stateComparison.deleted || [],
+        modified: stateComparison.modified || []
+      });
+      setComparisonStats(stateComparison.stats);
+      setLoading(false);
+      return;
+    }
+
+    // Timeout controller for API calls
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 30000); // 30 second timeout
+
     const fetchAndCompare = async () => {
       setLoading(true);
       setError(null);
@@ -35,13 +59,22 @@ export default function DiffViewer() {
         // If no uploads passed via navigation, fetch from API
         if (uploadsToCompare.length < 2) {
           console.log('[DiffViewer] No uploads in state, fetching from API...');
+          setLoadingMessage('Connecting to server...');
 
           let apiUploads;
           try {
-            apiUploads = await getUploads();
+            // Add a race between the API call and a timeout
+            const fetchPromise = getUploads();
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Server is taking too long to respond. It may be starting up - please try again in 30 seconds.')), 25000)
+            );
+            apiUploads = await Promise.race([fetchPromise, timeoutPromise]);
           } catch (fetchErr) {
             console.error('[DiffViewer] Failed to fetch uploads:', fetchErr);
-            setError("Unable to fetch uploaded files. The database may not be initialized. Please upload files via the Compare page first.");
+            const isTimeout = fetchErr.message.includes('taking too long') || fetchErr.message.includes('timeout');
+            setError(isTimeout
+              ? "Server is starting up. Please wait 30 seconds and try again, or upload files via the Compare page."
+              : "Unable to fetch uploaded files. The database may not be initialized. Please upload files via the Compare page first.");
             setLoading(false);
             return;
           }
@@ -59,6 +92,7 @@ export default function DiffViewer() {
         }
 
         setUploads(uploadsToCompare);
+        setLoadingMessage('Comparing files...');
 
         // Compare the files (older one first, newer one second)
         // Sort by uploaded_at to ensure correct order
@@ -71,7 +105,12 @@ export default function DiffViewer() {
 
         console.log('[DiffViewer] Comparing:', oldFile.filename, 'vs', newFile.filename);
 
-        const result = await compareRolls(oldFile.upload_id, newFile.upload_id);
+        // Add timeout for compare call as well
+        const comparePromise = compareRolls(oldFile.upload_id, newFile.upload_id);
+        const compareTimeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Comparison is taking too long. Please try again.')), 30000)
+        );
+        const result = await Promise.race([comparePromise, compareTimeoutPromise]);
 
         setComparisonData({
           added: result.added || [],
@@ -88,7 +127,13 @@ export default function DiffViewer() {
     };
 
     fetchAndCompare();
-  }, [stateUploads]);
+
+    // Cleanup timeout on unmount
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [stateUploads, stateComparison]);
 
   // Transform backend data into the flat structure expected by the UI
   // { date, constituencyId, constituencyName, changeType, count, riskLevel }
@@ -312,8 +357,8 @@ export default function DiffViewer() {
           </Link>
         </div>
         <div className="h-10 w-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-600 font-medium">Analyzing Electoral Differences...</p>
-        <p className="text-gray-400 text-sm mt-1">Comparing {uploads.length} files</p>
+        <p className="text-gray-600 font-medium">{loadingMessage}</p>
+        <p className="text-gray-400 text-sm mt-1">{uploads.length > 0 ? `Comparing ${uploads.length} files` : 'Please wait...'}</p>
       </div>
     );
   }
