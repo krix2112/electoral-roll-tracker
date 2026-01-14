@@ -92,6 +92,10 @@ function DiffViewerContent() {
   const [hoveredBlock, setHoveredBlock] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
+  // Store file references for display
+  const [oldFile, setOldFile] = useState(null);
+  const [newFile, setNewFile] = useState(null);
+
   // Get uploads from navigation state or fetch from API
   const stateUploads = location.state?.uploads || [];
 
@@ -103,6 +107,14 @@ function DiffViewerContent() {
     if (stateComparison && stateUploads.length >= 2) {
       console.log('[DiffViewer] Using pre-fetched comparison data from Compare page');
       setUploads(stateUploads);
+
+      // Sort uploads by date to determine old vs new
+      const sortedUploads = [...stateUploads].sort((a, b) =>
+        new Date(a.uploaded_at) - new Date(b.uploaded_at)
+      );
+      setOldFile(sortedUploads[0]);
+      setNewFile(sortedUploads[1]);
+
       setComparisonData({
         added: stateComparison.added || [],
         deleted: stateComparison.deleted || [],
@@ -170,13 +182,17 @@ function DiffViewerContent() {
           new Date(a.uploaded_at) - new Date(b.uploaded_at)
         );
 
-        const oldFile = sortedUploads[0];
-        const newFile = sortedUploads[1];
+        const oldFileData = sortedUploads[0];
+        const newFileData = sortedUploads[1];
 
-        console.log('[DiffViewer] Comparing:', oldFile.filename, 'vs', newFile.filename);
+        // Store in state for UI display
+        setOldFile(oldFileData);
+        setNewFile(newFileData);
+
+        console.log('[DiffViewer] Comparing:', oldFileData.filename, 'vs', newFileData.filename);
 
         // Add timeout for compare call as well
-        const comparePromise = compareRolls(oldFile.upload_id, newFile.upload_id);
+        const comparePromise = compareRolls(oldFileData.upload_id, newFileData.upload_id);
         const compareTimeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Comparison is taking too long. Please try again.')), 30000)
         );
