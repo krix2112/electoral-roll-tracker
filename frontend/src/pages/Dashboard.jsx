@@ -378,15 +378,6 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className="pt-6">
-              <Link to="/diffviewer">
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center gap-2">
-                  <FileSearch className="h-4 w-4" />
-                  View Diff Viewer
-                </Button>
-              </Link>
-            </div>
-
             <div className="pt-8 border-t border-gray-100">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Quick Stats</h3>
               <div className="space-y-3 text-sm">
