@@ -13,6 +13,7 @@ from routes.upload import upload_bp
 from routes.compare import compare_bp
 from routes.uploads import uploads_bp
 from routes.stats import stats_bp
+from routes.notifications import notifications_bp
 
 load_dotenv()
 
@@ -43,6 +44,7 @@ app.register_blueprint(upload_bp)
 app.register_blueprint(compare_bp)
 app.register_blueprint(uploads_bp)
 app.register_blueprint(stats_bp)
+app.register_blueprint(notifications_bp)
 
 @app.route('/health', methods=['GET'])
 def health_check():

@@ -262,3 +262,36 @@ export const getDashboardAggregation = async (state = 'ALL') => {
 
 // Export default for potential future use
 export default api
+
+/**
+ * Get Notifications
+ * Calls GET /api/notifications
+ * 
+ * @returns {Promise<Array>} List of notifications
+ */
+export const getNotifications = async () => {
+  try {
+    const response = await api.get('/api/notifications')
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}
+
+/**
+ * Mark Notification as Read
+ * Calls PATCH /api/notifications/:id/read
+ * 
+ * @param {number} id - Notification ID
+ * @returns {Promise<Object>} Success status
+ */
+export const markNotificationRead = async (id) => {
+  try {
+    const response = await api.patch(`/api/notifications/${id}/read`)
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}

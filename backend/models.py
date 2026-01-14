@@ -64,3 +64,31 @@ class VoterRecord(db.Model):
     
     def __repr__(self):
         return f'<VoterRecord {self.voter_id}: {self.name}>'
+
+class Notification(db.Model):
+    """Model for storing system notifications"""
+    __tablename__ = 'notifications'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    severity = db.Column(db.String(50), default='info') # info, success, warning, critical
+    related_entity = db.Column(db.String(100)) # e.g., "AC-103", "System"
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    is_read = db.Column(db.Boolean, default=False)
+    action_url = db.Column(db.String(255))
+    action_type = db.Column(db.String(50)) # navigate, download, none
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'message': self.message,
+            'severity': self.severity,
+            'relatedEntity': self.related_entity,
+            'timestamp': self.timestamp.isoformat(),
+            'read': self.is_read,
+            'action': 'View Details' if self.action_url else None,
+            'actionUrl': self.action_url,
+            'actionType': self.action_type
+        }

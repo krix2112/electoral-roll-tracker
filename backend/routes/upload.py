@@ -8,7 +8,7 @@ import traceback
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import db
-from models import ElectoralRoll, VoterRecord
+from models import ElectoralRoll, VoterRecord, Notification
 from diff_engine import calculate_row_hash, calculate_dataset_hash
 
 upload_bp = Blueprint('upload', __name__)
@@ -191,6 +191,18 @@ def process_single_file(file):
                     }
         
         db.session.bulk_save_objects(voter_records_all)
+        
+        # Create success notification
+        success_notification = Notification(
+            title='Electoral Roll Uploaded',
+            message=f'Successfully uploaded "{file.filename}" for state "{state}". {len(df)} records processed.',
+            severity='success',
+            related_entity=f'Upload-{upload_id[:8]}',
+            action_url='/dashboard',
+            action_type='navigate'
+        )
+        db.session.add(success_notification)
+        
         db.session.commit()
         
         return {

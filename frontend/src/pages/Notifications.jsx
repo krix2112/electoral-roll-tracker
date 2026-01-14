@@ -1,106 +1,64 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
 import { Bell, CheckCircle2, AlertTriangle, Info, XCircle } from 'lucide-react'
-
-// TEMP SAMPLE DATA — WILL BE REPLACED BY BACKEND
-const generateSampleNotifications = () => {
-  const now = new Date();
-  const sampleNotifications = [
-    {
-      id: 1,
-      title: 'Suspicious Activity Detected',
-      message: 'Unusual number of voter deletions detected in Assembly Constituency 103 - North District. A total of 189 deletions were recorded on January 11-12, 2026, which represents a 2.4× increase compared to the previous week. This requires immediate review and verification.',
-      severity: 'critical',
-      relatedEntity: 'AC-103',
-      timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
-      read: false,
-      action: 'View Details',
-      actionUrl: '/diffviewer',
-      actionType: 'navigate'
-    },
-    {
-      id: 3,
-      title: 'System Update Completed',
-      message: 'Matsetu engine has been updated to version 2.4. Performance improvements include a 15% reduction in processing time and enhanced data validation algorithms. All systems are operating normally.',
-      severity: 'info',
-      relatedEntity: 'System Maintenance',
-      timestamp: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
-      read: true
-    },
-    {
-      id: 4,
-      title: 'High Deletion Volume Alert',
-      message: 'Municipal Ward 13 - Central District has recorded 137 deletions in the past 48 hours. This exceeds the normal threshold and may require investigation.',
-      severity: 'warning',
-      relatedEntity: 'Ward-13',
-      timestamp: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
-      read: false,
-      action: 'View Details',
-      actionUrl: '/diffviewer',
-      actionType: 'navigate'
-    },
-    {
-      id: 6,
-      title: 'Backup Completed',
-      message: 'Daily database backup has been completed successfully. All electoral roll data has been securely archived.',
-      severity: 'info',
-      relatedEntity: 'System Backup',
-      timestamp: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(),
-      read: true
-    },
-    {
-      id: 7,
-      title: 'Constituency Analysis Available',
-      message: 'Detailed analysis report for Assembly Constituency 107 - Central District is now available. The report shows 203 total changes with high-risk deletion patterns detected.',
-      severity: 'warning',
-      relatedEntity: 'AC-107',
-      timestamp: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(),
-      read: false,
-      action: 'View Details',
-      actionUrl: '/diffviewer',
-      actionType: 'navigate'
-    },
-    {
-      id: 9,
-      title: 'Anomaly Detected in Booth-B46',
-      message: 'Polling Booth B46 - South District has shown unusual modification patterns. 132 modifications were recorded in a single day, which is significantly higher than the baseline.',
-      severity: 'critical',
-      relatedEntity: 'Booth-B46',
-      timestamp: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
-      read: false,
-      action: 'View Details',
-      actionUrl: '/diffviewer',
-      actionType: 'navigate'
-    },
-  ];
-  return sampleNotifications;
-};
+import { getNotifications, markNotificationRead } from '../services/api'
 
 function Notifications() {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState(() => generateSampleNotifications());
+  const [notifications, setNotifications] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await getNotifications();
+      setNotifications(data);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+      setError('Failed to load notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const unreadCount = useMemo(() => {
     return notifications.filter(n => !n.read).length;
   }, [notifications]);
 
-  const handleNotificationClick = (id) => {
-    setNotifications(prev => prev.map(n => 
+  const handleNotificationClick = async (id) => {
+    // Optimistic update
+    setNotifications(prev => prev.map(n =>
       n.id === id ? { ...n, read: true } : n
     ));
-    
+
+    // Toggle expand
     if (expandedId === id) {
       setExpandedId(null);
     } else {
       setExpandedId(id);
     }
+
+    // API Call
+    try {
+      const notification = notifications.find(n => n.id === id);
+      if (notification && !notification.read) {
+        await markNotificationRead(id);
+      }
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
   };
 
   const handleAction = (e, notification) => {
     e.stopPropagation();
-    
+
     if (notification.actionType === 'navigate' && notification.actionUrl) {
       navigate(notification.actionUrl);
     } else if (notification.actionType === 'download') {
@@ -197,13 +155,12 @@ function Notifications() {
               {notifications.map((notification) => {
                 const styles = getSeverityStyles(notification.severity);
                 const isExpanded = expandedId === notification.id;
-                
+
                 return (
                   <div
                     key={notification.id}
-                    className={`p-6 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                      !notification.read ? `${styles.border} bg-gray-50/50` : ''
-                    }`}
+                    className={`p-6 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? `${styles.border} bg-gray-50/50` : ''
+                      }`}
                     onClick={() => handleNotificationClick(notification.id)}
                   >
                     <div className="flex gap-4">
@@ -221,7 +178,7 @@ function Notifications() {
                           <span className="text-sm text-gray-400 whitespace-nowrap ml-2">{formatTimestamp(notification.timestamp)}</span>
                         </div>
                         <p className="text-gray-600 leading-relaxed">{notification.message}</p>
-                        
+
                         {isExpanded && (
                           <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                             <div className="text-sm">
