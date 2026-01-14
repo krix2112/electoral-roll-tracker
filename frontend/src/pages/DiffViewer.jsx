@@ -240,7 +240,20 @@ function DiffViewerContent() {
 
         // Defensive: Check for valid date
         let dateStr = rec.registration_date;
-        const testDate = new Date(dateStr);
+        let testDate = new Date(dateStr);
+
+        // Try parsing DD-MM-YYYY or DD/MM/YYYY if standard parsing fails
+        if (isNaN(testDate.getTime()) && typeof dateStr === 'string') {
+          const parts = dateStr.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+          if (parts) {
+            // Assume DD-MM-YYYY
+            testDate = new Date(`${parts[3]}-${parts[2]}-${parts[1]}`);
+            dateStr = testDate.toISOString().split('T')[0];
+          }
+        } else if (!isNaN(testDate.getTime())) {
+          dateStr = testDate.toISOString().split('T')[0];
+        }
+
         if (isNaN(testDate.getTime())) {
           dateStr = '2025-01-01'; // Fallback for invalid dates
         }
@@ -272,7 +285,20 @@ function DiffViewerContent() {
 
         // Defensive: Check for valid date
         let dateStr = rec.registration_date;
-        const testDate = new Date(dateStr);
+        let testDate = new Date(dateStr);
+
+        // Try parsing DD-MM-YYYY or DD/MM/YYYY if standard parsing fails
+        if (isNaN(testDate.getTime()) && typeof dateStr === 'string') {
+          const parts = dateStr.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+          if (parts) {
+            // Assume DD-MM-YYYY
+            testDate = new Date(`${parts[3]}-${parts[2]}-${parts[1]}`);
+            dateStr = testDate.toISOString().split('T')[0];
+          }
+        } else if (!isNaN(testDate.getTime())) {
+          dateStr = testDate.toISOString().split('T')[0];
+        }
+
         if (isNaN(testDate.getTime())) {
           dateStr = '2025-01-01'; // Fallback for invalid dates
         }
@@ -475,12 +501,10 @@ function DiffViewerContent() {
     <div className="flex h-screen bg-gray-50 font-sans text-gray-900">
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm fixed h-full z-10 hidden md:flex">
-        <div className="p-6 border-b border-gray-100 flex items-center gap-2">
-          <div className="bg-indigo-600 p-2 rounded-lg shadow-sm">
-            <TrendingUp className="h-5 w-5 text-white" />
-          </div>
+        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+          <img src="/assets/matsetu-logo.png" alt="MatheSetu Logo" className="h-8 w-8 object-contain" />
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-indigo-500">
-            RollDiff
+            MatheSetu
           </h1>
         </div>
 
@@ -519,7 +543,7 @@ function DiffViewerContent() {
           {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Roll Change Analysis</h2>
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">MatheSetu Analysis</h2>
               <div className="text-sm text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
                 <span className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-gray-200 shadow-sm text-xs font-mono text-gray-600">
                   <FileText className="h-3 w-3 text-indigo-500" />
