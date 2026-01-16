@@ -27,10 +27,21 @@ export default function ForensicDashboard() {
     const [uploads, setUploads] = useState([])
     const [selectedUploadId, setSelectedUploadId] = useState('')
 
-    // Auto-load demo data on mount and fetch uploads
+    // Auto-load latest upload if available, else demo
     useEffect(() => {
-        loadTopAnomaly()
-        fetchUploads()
+        const init = async () => {
+            const uploadedFiles = await fetchUploads()
+            if (uploadedFiles && uploadedFiles.length > 0) {
+                // Auto-select the most recent file (uploads are ordered by date desc from API)
+                const latest = uploadedFiles[0]
+                setSelectedUploadId(latest.upload_id)
+                runAnalysis(latest.upload_id)
+            } else {
+                // Fallback to demo
+                loadTopAnomaly()
+            }
+        }
+        init()
     }, [])
 
     const fetchUploads = async () => {
@@ -39,10 +50,12 @@ export default function ForensicDashboard() {
             if (res.ok) {
                 const data = await res.json()
                 setUploads(data)
+                return data
             }
         } catch (e) {
             console.error("Failed to load uploads", e)
         }
+        return []
     }
 
     const handleUploadSelect = (e) => {
