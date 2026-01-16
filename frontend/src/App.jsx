@@ -5,6 +5,7 @@ import Compare from './pages/Compare'
 import Dashboard from './pages/Dashboard'
 import DiffViewer from './pages/DiffViewer';
 import Notifications from './pages/Notifications';
+import ForensicDashboard from './pages/ForensicDashboard';
 
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/diffviewer" element={<DiffViewer />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/forensic" element={<ForensicDashboard />} />
       </Routes>
     </Router>
   )

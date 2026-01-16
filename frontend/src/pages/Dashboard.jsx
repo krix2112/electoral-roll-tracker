@@ -435,6 +435,12 @@ function Dashboard() {
               onInvestigate={handleInvestigate}
               isLoading={isInvestigationLoading}
             />
+            <Link to="/forensic">
+              <Button size="sm" variant="outline" className="gap-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50">
+                <Shield className="h-4 w-4" />
+                Forensic Analysis
+              </Button>
+            </Link>
             <Link to="/notifications" className="relative p-2 rounded-full hover:bg-gray-50 text-gray-500 hover:text-indigo-600 transition-colors">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
