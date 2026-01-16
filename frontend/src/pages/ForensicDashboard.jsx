@@ -135,6 +135,7 @@ export default function ForensicDashboard() {
     const runAnalysis = async (currentUploadId, previousUploadId = null) => {
         setLoading(true)
         setError(null)
+        setForensicData(null) // Clear previous data to avoid confusion
 
         try {
             const response = await fetch(`${API_BASE}/api/analyze`, {
