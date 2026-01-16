@@ -15,6 +15,7 @@ import { Button } from '../components/ui/Button'
 import { ForensicScoreGauge } from '../components/ForensicScoreGauge'
 import { ModuleBreakdownPanel } from '../components/ModuleBreakdownPanel'
 import { ForensicEvidenceCards } from '../components/ForensicEvidenceCards'
+import { ForensicNetworkGraph } from '../components/ForensicNetworkGraph'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
 
@@ -202,8 +203,8 @@ export default function ForensicDashboard() {
                                             {forensicData.constituency || 'Constituency Analysis'}
                                         </h2>
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${forensicData.final_anomaly_score > 70 ? 'bg-red-100 text-red-700' :
-                                                forensicData.final_anomaly_score > 30 ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-green-100 text-green-700'
+                                            forensicData.final_anomaly_score > 30 ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-green-100 text-green-700'
                                             }`}>
                                             {forensicData.verdict}
                                         </span>
