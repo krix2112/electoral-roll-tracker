@@ -43,6 +43,7 @@
 
 #### 1. **Core Components** (`frontend/src/components/`)
 - ✅ `ForensicScoreGauge.jsx` - Circular progress gauge with color-coded verdicts
+- ✅ `ForensicNetworkGraph.jsx` - Interactive force-directed graph for star clusters/island nodes
 - ✅ `ModuleBreakdownPanel.jsx` - Expandable cards showing module scores
 - ✅ `ForensicEvidenceCards.jsx` - Visual evidence display with severity indicators
 

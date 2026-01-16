@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Info, ZoomIn, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Card } from './ui/Card'
 
