@@ -197,10 +197,18 @@ export default function ForensicDashboard() {
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">
-                                        {forensicData.constituency || 'Constituency Analysis'}
-                                    </h2>
-                                    <p className="text-gray-500 mt-1">
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <h2 className="text-2xl font-bold text-gray-900">
+                                            {forensicData.constituency || 'Constituency Analysis'}
+                                        </h2>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${forensicData.final_anomaly_score > 70 ? 'bg-red-100 text-red-700' :
+                                                forensicData.final_anomaly_score > 30 ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-green-100 text-green-700'
+                                            }`}>
+                                            {forensicData.verdict}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-500">
                                         {forensicData.state || 'State'} • Analysis ID: {forensicData.analysis_id?.substring(0, 16)}...
                                     </p>
                                 </div>
@@ -213,13 +221,14 @@ export default function ForensicDashboard() {
                             </div>
                         </motion.div>
 
-                        {/* Main Score & Breakdown Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Top Section: Gauge & Network Graph */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[420px]">
                             {/* Central Score Gauge */}
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.2 }}
+                                transition={{ delay: 0.1 }}
+                                className="h-full"
                             >
                                 <Card className="p-8 bg-white shadow-xl border-none ring-1 ring-gray-100 flex flex-col items-center justify-center h-full">
                                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">
@@ -231,20 +240,36 @@ export default function ForensicDashboard() {
                                         confidenceLevel={forensicData.confidence_level}
                                         size="lg"
                                     />
-
-                                    {/* Summary */}
-                                    <div className="mt-6 text-center max-w-md">
-                                        <p className="text-sm text-gray-600 leading-relaxed">
-                                            {forensicData.summary || 'Analysis complete.'}
+                                    <div className="mt-6 text-center max-w-xs">
+                                        <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                                            {forensicData.summary?.split('.')[0] + '.'}
                                         </p>
                                     </div>
                                 </Card>
                             </motion.div>
 
-                            {/* Module Breakdown */}
-                            <div className="lg:col-span-2">
-                                <ModuleBreakdownPanel modules={forensicData.module_breakdowns || []} />
-                            </div>
+                            {/* Network Visualization */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="lg:col-span-2 h-full"
+                            >
+                                <ForensicNetworkGraph
+                                    anomalyType={
+                                        forensicData.triggered_modules?.some(m => m.includes('Network')) ? 'star_cluster' : 'all'
+                                    }
+                                />
+                            </motion.div>
+                        </div>
+
+                        {/* Module Breakdown */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <Shield className="h-5 w-5 text-indigo-600" />
+                                Detection Module Analysis
+                            </h3>
+                            <ModuleBreakdownPanel modules={forensicData.module_breakdowns || []} />
                         </div>
 
                         {/* Evidence Section */}
@@ -254,9 +279,9 @@ export default function ForensicDashboard() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.4 }}
                             >
-                                <div className="mb-4">
-                                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                        <FileSearch className="h-6 w-6 text-indigo-600" />
+                                <div className="mb-4 mt-8">
+                                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <FileSearch className="h-5 w-5 text-indigo-600" />
                                         Forensic Evidence ({forensicData.all_evidence.length})
                                     </h3>
                                     <p className="text-sm text-gray-500 mt-1">
@@ -264,35 +289,6 @@ export default function ForensicDashboard() {
                                     </p>
                                 </div>
                                 <ForensicEvidenceCards evidence={forensicData.all_evidence} />
-                            </motion.div>
-                        )}
-
-                        {/* Triggered Modules Highlight */}
-                        {forensicData.triggered_modules && forensicData.triggered_modules.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                            >
-                                <Card className="p-6 bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
-                                    <h4 className="font-bold text-red-900 mb-3 flex items-center gap-2">
-                                        <Shield className="h-5 w-5" />
-                                        High-Alert Modules
-                                    </h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {forensicData.triggered_modules.map((module, i) => (
-                                            <span
-                                                key={i}
-                                                className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium"
-                                            >
-                                                {module}
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <p className="text-sm text-red-700 mt-3">
-                                        These modules detected scores above 50, indicating significant anomalies.
-                                    </p>
-                                </Card>
                             </motion.div>
                         )}
                     </div>
