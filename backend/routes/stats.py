@@ -66,7 +66,55 @@ def get_dashboard_aggregation():
     try:
         # Get optional state filter (case-insensitive)
         state_filter = request.args.get('state', '').strip()
+
+        # ---------------------------------------------------------
+        # PRIORITY 1: USER UPLOADS (Dynamic Data)
+        # ---------------------------------------------------------
+        # Check if we have any uploads in the database
+        user_uploads_query = ElectoralRoll.query
+        if state_filter and state_filter.upper() not in ['ALL', '']:
+             user_uploads_query = user_uploads_query.filter(ElectoralRoll.state == state_filter)
         
+        user_uploads = user_uploads_query.all()
+        
+        # If user has uploaded data, use THAT instead of static CSV
+        # Exception: If specific state filter yields 0 results but we have uploads elsewhere, 
+        # we might want to show 0? Or fallback? 
+        # Logic: If GLOBAL uploads exist > 0, we serve Dynamic Mode.
+        global_upload_count = ElectoralRoll.query.count()
+        
+        if global_upload_count > 0:
+            # Aggregate from DB
+            total_voters = sum(u.row_count for u in user_uploads)
+            states = set(u.state for u in user_uploads if u.state)
+            states_count = len(states)
+            
+            # Treat each upload as a "Constituency" or "Roll Segment"
+            constituencies_count = len(user_uploads)
+            
+            # Sort by size to mimic "Top Constituencies"
+            sorted_uploads = sorted(user_uploads, key=lambda x: x.row_count, reverse=True)
+            top_constituencies = [
+                {
+                    'constituency': u.filename, 
+                    'voter_count': u.row_count,
+                    'state': u.state or 'Unknown'
+                }
+                for u in sorted_uploads[:100]
+            ]
+            
+            return jsonify({
+                'total_voters': total_voters,
+                'states_count': states_count,
+                'constituencies_count': constituencies_count,
+                'top_constituencies': top_constituencies,
+                'filter_applied': state_filter if state_filter else 'ALL',
+                'data_source': 'user_uploads'
+            }), 200
+
+        # ---------------------------------------------------------
+        # PRIORITY 2: STATIC CSV (Demo Data)
+        # ---------------------------------------------------------
         # Load CSV safely
         if not os.path.exists(NATIONAL_CSV_PATH):
             return jsonify({'error': 'National dataset file not found'}), 404
