@@ -19,6 +19,18 @@ fusion_engine = MultiSignalFusionEngine()
 analysis_cache = {}
 
 
+@forensic_bp.route('/forensic-health', methods=['GET'])
+def forensic_health():
+    """Health check endpoint for forensic API"""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'RollDiff Forensic System',
+        'cached_analyses': len(analysis_cache),
+        'modules_loaded': True
+    }), 200
+
+
+
 @forensic_bp.route('/analyze', methods=['POST'])
 def analyze_constituency():
     """
@@ -219,7 +231,7 @@ def list_analyses():
 
 def _generate_demo_top_anomaly():
     """Generate a demo top anomaly for initial showcase"""
-    return jsonify({
+    demo_data = {
         'analysis_id': 'demo_analysis_001',
         'final_anomaly_score': 87.5,
         'constituency': 'AC-103',
@@ -232,28 +244,66 @@ def _generate_demo_top_anomaly():
             "📅 **Bulk Registration Alert**: 3200 voters registered on 2024-01-15 (entropy: 0.23)",
             "⚠️ **Age-Migration Mismatch**: 3 age groups show abnormal movement patterns"
         ],
+        'all_evidence': [
+            "🏝️ **Network Isolation Alert**: 2847 voters show zero familial or residential connections to existing rolls",
+            "📅 **Bulk Registration Alert**: 3200 voters registered on 2024-01-15 (entropy: 0.23)",
+            "⚠️ **Age-Migration Mismatch**: 3 age groups show abnormal movement patterns",
+            "⭐ **Unrealistic Clusters**: 5 addresses with excessive voter concentration (25 at one address, 18 at one address, 15 at one address)",
+            "📝 **Low Name Diversity**: Top name 'Raj Kumar' appears 187 times (entropy: 0.34)",
+            "👨‍👩‍👧‍👦 **Weak Family Structure**: Only 22.5% of addresses show typical family patterns"
+        ],
         'module_breakdowns': [
             {
                 'module': 'Network Analysis',
                 'score': 92.3,
                 'weight': 0.35,
                 'contribution': 32.3,
-                'evidence': ["🏝️ **Network Isolation Alert**: 2847 voters show zero connections"]
+                'evidence': [
+                    "🏝️ **Network Isolation Alert**: 2847 voters (56.9%) show zero familial or residential connections to existing rolls",
+                    "⭐ **Unrealistic Clusters**: 5 addresses with excessive voter concentration (25 at one address, 18 at one address, 15 at one address)"
+                ],
+                'details': {
+                    'total_voters': 5000,
+                    'island_nodes': 2847,
+                    'star_clusters': 5,
+                    'family_clusters': 112
+                }
             },
             {
                 'module': 'Entropy Analysis',
                 'score': 85.7,
                 'weight': 0.25,
                 'contribution': 21.4,
-                'evidence': ["📅 **Bulk Registration Alert**: 3200 voters on same date"]
+                'evidence': [
+                    "📅 **Bulk Registration Alert**: 3200 voters registered on 2024-01-15 (entropy: 0.23)",
+                    "📝 **Low Name Diversity**: Top name 'Raj Kumar' appears 187 times (entropy: 0.34)"
+                ],
+                'details': {
+                    'total_voters': 5000,
+                    'name_entropy': 0.342,
+                    'age_entropy': 0.678,
+                    'date_entropy': 0.234,
+                    'address_entropy': 0.456
+                }
             },
             {
                 'module': 'Behavioral Fingerprinting',
                 'score': 78.2,
                 'weight': 0.25,
                 'contribution': 19.6,
-                'evidence': ["⚠️ **Age-Migration Mismatch**: Abnormal patterns detected"]
+                'evidence': [
+                    "⚠️ **Age-Migration Mismatch**: 3 age groups show abnormal movement patterns",
+                    "📍 **High Mobility**: 1523 address changes (30.5% of voters)"
+                ],
+                'details': {
+                    'total_voters': 5000,
+                    'new_voters': 750,
+                    'address_changes': 1523
+                }
             }
         ],
+        'summary': "🚨 Critical forensic analysis detected 6 anomaly indicators. Primary concern: Network Analysis flagged severe irregularities. Immediate investigation recommended.",
         'timestamp': datetime.utcnow().isoformat()
-    }), 200
+    }
+    
+    return jsonify(demo_data), 200

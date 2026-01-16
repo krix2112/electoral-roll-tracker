@@ -29,15 +29,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_UPLOAD_SIZE', 52428800))
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
 
-# CORS Configuration
-allowed_origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:5173').split(',')
-CORS(app, resources={
-    r"/api/*": {
-        "origins": allowed_origins,
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }
-})
+# CORS Configuration - Allow all origins for hackathon demo
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Initialize database
 init_db(app)
