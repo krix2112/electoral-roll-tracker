@@ -267,7 +267,7 @@ export default function ForensicDashboard() {
                         </motion.div>
 
                         {/* Top Section: Gauge & Network Graph */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[420px]">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Central Score Gauge */}
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -275,7 +275,7 @@ export default function ForensicDashboard() {
                                 transition={{ delay: 0.1 }}
                                 className="h-full"
                             >
-                                <Card className="p-8 bg-white shadow-xl border-none ring-1 ring-gray-100 flex flex-col items-center justify-center h-full">
+                                <Card className="p-8 bg-white shadow-xl border-none ring-1 ring-gray-100 flex flex-col items-center justify-center h-full min-h-[420px]">
                                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">
                                         Final Anomaly Score
                                     </h3>
@@ -298,7 +298,7 @@ export default function ForensicDashboard() {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="lg:col-span-2 h-full"
+                                className="lg:col-span-2"
                             >
                                 <ForensicNetworkGraph
                                     anomalyType={
@@ -309,11 +309,7 @@ export default function ForensicDashboard() {
                         </div>
 
                         {/* Module Breakdown */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <Shield className="h-5 w-5 text-indigo-600" />
-                                Detection Module Analysis
-                            </h3>
+                        <div className="space-y-4 pt-4">
                             <ModuleBreakdownPanel modules={forensicData.module_breakdowns || []} />
                         </div>
 
