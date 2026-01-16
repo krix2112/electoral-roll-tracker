@@ -1,3 +1,5 @@
+import { useState, useEffect, useMemo } from 'react'
+import { DASHBOARD_CONFIG } from '../config/constants'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import {
@@ -6,6 +8,15 @@ import {
   getConstituencyImpact,
   getAnomalySummary
 } from '../services/api'
+import { Card, CardContent } from '../components/ui/Card'
+import { StatCard } from '../components/ui/StatCard'
+import { Button } from '../components/ui/Button'
+import { Link } from 'react-router-dom'
+import {
+  Users, AlertTriangle, FileText, ChevronLeft, Bell,
+  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch, Loader2, Upload,
+  MapPin, TrendingUp, Shield, Info, Eye
+} from 'lucide-react'
 import { InvestigationButton, InvestigationBadge } from '../components/InvestigationButton'
 import { ImpactPanel } from '../components/ImpactPanel'
 import { DemoSteps } from '../components/DemoSteps'
