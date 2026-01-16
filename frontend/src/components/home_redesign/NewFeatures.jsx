@@ -47,8 +47,9 @@ export function NewFeatures() {
     ];
 
     return (
-        <section id="features" className="py-24 bg-gradient-to-b from-white via-gray-50/50 to-white">
-            <div className="max-w-7xl mx-auto px-6">
+        <section id="features" className="py-24 bg-white relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 {/* Section Header */}
                 <div className="text-center mb-16">
                     {/* Highlighted Features Badge */}

@@ -1,6 +1,7 @@
 import { LayoutDashboard, Upload, GitCompare, LineChart, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import logo from "../../assets/logo-new.png";
 
 export function Sidebar() {
   return (
@@ -25,23 +26,15 @@ export function Sidebar() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex items-center gap-2">
-          <motion.div
-            className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center"
-            whileHover={{ scale: 1.1, rotate: 5 }}
+        <Link to="/" className="flex items-center gap-2">
+          <motion.img
+            src={logo}
+            alt="MatSetu"
+            className="h-10"
+            whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400 }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" fillOpacity="0.9" />
-              <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </motion.div>
-          <div className="flex items-baseline">
-            <span className="text-2xl font-['Noto_Serif_Devanagari'] font-semibold text-indigo-600">मत</span>
-            <span className="text-2xl font-semibold text-gray-800">Setu</span>
-          </div>
-        </div>
+          />
+        </Link>
       </motion.div>
 
       {/* Navigation */}

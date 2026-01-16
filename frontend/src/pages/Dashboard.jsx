@@ -408,24 +408,38 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Dashboard App Bar */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      {/* Background Decorations */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 -left-40 w-[500px] h-[500px] bg-[#FF6B4A]/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 -right-40 w-[600px] h-[600px] bg-[#2D3E8F]/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-orange-50/30 to-blue-50/30 rounded-full opacity-50" />
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.015) 1px, transparent 1px)`,
+            backgroundSize: '32px 32px'
+          }}
+        />
+      </div>
+
+      {/* Dashboard Header - Glassmorphic */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-gray-500 hover:text-gray-900 flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-600 hover:text-[#2D3E8F] hover:bg-gray-100 transition-all">
               <ChevronLeft className="h-5 w-5" />
-              <span className="font-medium">Back</span>
+              <span className="font-medium text-sm">Back</span>
             </Link>
-            <div className="h-6 w-px bg-gray-200 mx-2"></div>
-            <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-12 w-auto" />
+            <div className="h-6 w-px bg-gray-200"></div>
+            <img src="/assets/logo-new.png" alt="MatSetu" className="h-10 w-auto" />
             <div>
               <h1 className="font-bold text-gray-900 leading-none">Matsetu</h1>
-              <p className="text-[10px] text-gray-500 font-medium">Electoral Roll Forensic Audit System</p>
+              <p className="text-[10px] text-gray-500 font-medium">Electoral Roll Forensic Audit</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <InvestigationBadge
               active={investigationMode}
               constituencyName={investigatedAnomaly?.constituency_name}
@@ -436,32 +450,28 @@ function Dashboard() {
               isLoading={isInvestigationLoading}
             />
             <Link to="/forensic">
-              <Button size="sm" variant="outline" className="gap-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50">
-                <Shield className="h-4 w-4" />
-                Forensic Analysis
-              </Button>
-            </Link>
-            <Link to="/notifications" className="relative p-2 rounded-full hover:bg-gray-50 text-gray-500 hover:text-indigo-600 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </Link>
-            <Link to="/upload">
-              <Button size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
-                <Upload className="h-4 w-4" />
-                Upload Data
+              <Button size="sm" className="group relative overflow-hidden gap-2 rounded-full border-2 border-[#2D3E8F] bg-transparent text-[#2D3E8F] hover:text-white transition-all duration-300 shadow-sm hover:shadow-md px-5 h-10">
+                <span className="absolute inset-0 w-full h-full bg-[#2D3E8F] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left ease-out"></span>
+                <span className="relative flex items-center gap-2 font-semibold">
+                  <Shield className="h-4 w-4 transition-transform group-hover:scale-110" />
+                  Forensic Analysis
+                </span>
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar Filters */}
-        <aside className="w-80 bg-white border-r border-gray-200 overflow-y-auto p-6 hidden lg:block">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2 font-semibold text-gray-900">
-              <SlidersHorizontal className="h-5 w-5 text-indigo-600" />
-              Filters
+      <div className="flex-1 flex overflow-hidden relative z-10">
+        {/* Sidebar Filters - Redesigned */}
+        <aside className="w-80 bg-white/70 backdrop-blur-sm border-r border-gray-100 overflow-y-auto p-6 hidden lg:block">
+          {/* Filter Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B4A] to-[#FF8F6B] flex items-center justify-center">
+                <SlidersHorizontal className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-semibold text-gray-900">Filters</span>
             </div>
             <button
               onClick={() => {
@@ -470,7 +480,7 @@ function Dashboard() {
                 setSelectedState('ALL')
                 setTimelineProgress(100)
               }}
-              className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
+              className="text-xs text-[#FF6B4A] font-medium hover:text-[#2D3E8F] flex items-center gap-1 transition-colors">
               <RotateCcw className="h-3 w-3" /> Reset
             </button>
           </div>
@@ -490,25 +500,27 @@ function Dashboard() {
             />
           </div>
 
-          <div className="mt-8 space-y-8">
-            <div className="flex items-center gap-3">
+          <div className="mt-8 space-y-6">
+            {/* Anomalies Toggle */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-orange-50/50 transition-colors">
               <input
                 type="checkbox"
                 id="anomalies"
                 checked={showAnomaliesOnly}
                 onChange={(e) => setShowAnomaliesOnly(e.target.checked)}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                className="rounded border-gray-300 text-[#FF6B4A] focus:ring-[#FF6B4A] h-4 w-4"
               />
               <label htmlFor="anomalies" className="text-sm font-medium text-gray-700 select-none cursor-pointer">Show Anomalies Only</label>
             </div>
 
+            {/* State Selector */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">State / UT</label>
               <div className="relative">
                 <select
                   value={selectedState}
                   onChange={(e) => setSelectedState(e.target.value)}
-                  className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
+                  className="w-full appearance-none bg-white border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-[#FF6B4A] focus:border-[#FF6B4A] block w-full p-3 hover:border-[#FF6B4A]/50 transition-colors">
                   <option value="ALL">ALL</option>
                   <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
                   <option value="Maharashtra">Maharashtra</option>
@@ -519,14 +531,15 @@ function Dashboard() {
                   <option value="West Bengal">West Bengal</option>
                   <option value="Gujarat">Gujarat</option>
                 </select>
-                <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-3.5 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
-            <div className="space-y-4">
+            {/* Threshold Slider */}
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <label className="text-sm font-medium text-gray-700">Anomaly Score Threshold</label>
-                <span className="text-xs text-indigo-600 font-medium">{anomalyThreshold}+</span>
+                <label className="text-sm font-medium text-gray-700">Anomaly Threshold</label>
+                <span className="text-xs font-semibold text-[#FF6B4A] bg-orange-50 px-2 py-0.5 rounded-full">{anomalyThreshold}+</span>
               </div>
               <input
                 type="range"
@@ -534,7 +547,7 @@ function Dashboard() {
                 max="100"
                 value={anomalyThreshold}
                 onChange={(e) => setAnomalyThreshold(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF6B4A]"
               />
               <div className="flex justify-between text-xs text-gray-400">
                 <span>0</span>
@@ -543,47 +556,53 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className="pt-8 border-t border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Quick Stats</h3>
-              <div className="space-y-3 text-sm">
-                {loading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
-                  </div>
-                ) : error ? (
-                  <div className="text-red-600 text-xs">{error}</div>
-                ) : dashboardData ? (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">States</span>
-                      <span className="font-medium text-gray-900">{DASHBOARD_CONFIG.STATES_COUNT}</span>
+            {/* Quick Stats Card */}
+            <div className="pt-6 border-t border-gray-100">
+              <div className="bg-gradient-to-br from-[#2D3E8F]/5 to-[#FF6B4A]/5 rounded-2xl p-4 border border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-[#2D3E8F]" />
+                  Quick Stats
+                </h3>
+                <div className="space-y-3 text-sm">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-[#FF6B4A]" />
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Union Territories</span>
-                      <span className="font-medium text-gray-900">{DASHBOARD_CONFIG.XX_UTS_COUNT}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
-                      <span className="text-gray-900 font-semibold">Total Admin Units</span>
-                      <span className="font-bold text-indigo-600">{DASHBOARD_CONFIG.TOTAL_ADMIN_UNITS}</span>
-                    </div>
+                  ) : error ? (
+                    <div className="text-red-600 text-xs">{error}</div>
+                  ) : dashboardData ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">States</span>
+                        <span className="font-semibold text-gray-900">{DASHBOARD_CONFIG.STATES_COUNT}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Union Territories</span>
+                        <span className="font-semibold text-gray-900">{DASHBOARD_CONFIG.XX_UTS_COUNT}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
+                        <span className="text-gray-900 font-semibold">Total Admin Units</span>
+                        <span className="font-bold text-[#2D3E8F]">{DASHBOARD_CONFIG.TOTAL_ADMIN_UNITS}</span>
+                      </div>
 
-                    <div className="flex justify-between mt-3">
-                      <span className="text-gray-500">Constituencies</span>
-                      <span className="font-medium text-gray-900">{dashboardData.constituencies_count || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Total Voters</span>
-                      <span className="font-medium text-gray-900">
-                        {dashboardData.total_voters ? dashboardData.total_voters.toLocaleString() : 'N/A'}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-gray-500 text-xs">No data available</div>
-                )}
-                <div className="pt-4">
-                  <span className="text-xs text-gray-400">Last updated</span>
-                  <div className="text-sm font-medium text-gray-900">Just now</div>
+                      <div className="flex justify-between mt-3">
+                        <span className="text-gray-500">Constituencies</span>
+                        <span className="font-semibold text-gray-900">{dashboardData.constituencies_count || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Total Voters</span>
+                        <span className="font-semibold text-gray-900">
+                          {dashboardData.total_voters ? dashboardData.total_voters.toLocaleString() : 'N/A'}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-gray-500 text-xs">No data available</div>
+                  )}
+                  <div className="pt-3 mt-3 border-t border-gray-100">
+                    <span className="text-xs text-gray-400">Last updated</span>
+                    <div className="text-sm font-medium text-[#10B981]">Just now</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -592,18 +611,17 @@ function Dashboard() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-y-auto">
-          {/* REMOVED: National Voter Statistics section - data now displayed in metric cards and charts below */}
 
           {/* State Context Indicator */}
           <motion.div
             key={selectedState}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 flex items-center gap-2"
+            className="mb-6 flex items-center gap-2"
           >
-            <Eye className="h-4 w-4 text-indigo-600" />
+            <Eye className="h-4 w-4 text-[#2D3E8F]" />
             <span className="text-sm text-gray-600">Viewing:</span>
-            <span className="text-sm font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+            <span className="text-sm font-semibold text-[#2D3E8F] bg-[#2D3E8F]/10 px-3 py-1 rounded-full">
               {selectedState === 'ALL' ? 'National (All States)' : selectedState}
             </span>
           </motion.div>
@@ -647,26 +665,26 @@ function Dashboard() {
             )}
           </AnimatePresence>
 
-          {/* Top Stats Row - ENHANCED WITH GRADIENTS */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {/* Top Stats Row - Homepage Color Palette */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
             {/* Total Voters Card */}
             <motion.div
               key={`voters-${selectedState}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-5 text-white shadow-lg"
+              className="bg-gradient-to-br from-[#2D3E8F] to-[#1e2d6b] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-indigo-100 text-sm font-medium">Total Voters</p>
+                  <p className="text-blue-200 text-sm font-medium">Total Voters</p>
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : formatVoterCount(dashboardData?.total_voters)}
                   </h3>
-                  <p className="text-indigo-200 text-xs mt-2 flex items-center gap-1">
+                  <p className="text-blue-300/70 text-xs mt-2 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" /> Live from electoral roll
                   </p>
                 </div>
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-3 bg-white/10 rounded-xl">
                   <Users className="h-6 w-6" />
                 </div>
               </div>
@@ -678,7 +696,7 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.05 }}
-              className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white shadow-lg"
+              className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -686,11 +704,11 @@ function Dashboard() {
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : (dashboardData?.constituencies_count || 0)}
                   </h3>
-                  <p className="text-emerald-200 text-xs mt-2 flex items-center gap-1">
+                  <p className="text-emerald-200/70 text-xs mt-2 flex items-center gap-1">
                     <MapPin className="h-3 w-3" /> Parliamentary seats
                   </p>
                 </div>
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-3 bg-white/10 rounded-xl">
                   <MapPin className="h-6 w-6" />
                 </div>
               </div>
@@ -702,15 +720,15 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl p-5 text-white shadow-lg"
+              className="bg-gradient-to-br from-[#FF6B4A] to-[#dc2626] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-1">
-                    <p className="text-rose-100 text-sm font-medium">Anomalies Detected</p>
+                    <p className="text-red-100 text-sm font-medium">Anomalies Detected</p>
                     <div className="group relative">
-                      <Info className="h-3 w-3 text-rose-200 cursor-help" />
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
+                      <Info className="h-3 w-3 text-red-200 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
                         Derived indicator: ~3% of constituencies based on statistical modeling
                       </div>
                     </div>
@@ -718,9 +736,9 @@ function Dashboard() {
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : anomaliesDetected}
                   </h3>
-                  <p className="text-rose-200 text-xs mt-2">~3% estimated flag rate</p>
+                  <p className="text-red-200/70 text-xs mt-2">~3% estimated flag rate</p>
                 </div>
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-3 bg-white/10 rounded-xl">
                   <AlertTriangle className="h-6 w-6" />
                 </div>
               </div>
@@ -732,7 +750,7 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.15 }}
-              className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white shadow-lg"
+              className="bg-gradient-to-br from-[#f59e0b] to-[#d97706] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -740,7 +758,7 @@ function Dashboard() {
                     <p className="text-amber-100 text-sm font-medium">Audits Required</p>
                     <div className="group relative">
                       <Info className="h-3 w-3 text-amber-200 cursor-help" />
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
                         Derived indicator: ~40% of anomalies require manual verification
                       </div>
                     </div>
@@ -748,9 +766,9 @@ function Dashboard() {
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : auditsRequired}
                   </h3>
-                  <p className="text-amber-200 text-xs mt-2">Manual review needed</p>
+                  <p className="text-amber-200/70 text-xs mt-2">Manual review needed</p>
                 </div>
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-3 bg-white/10 rounded-xl">
                   <FileText className="h-6 w-6" />
                 </div>
               </div>
@@ -759,23 +777,27 @@ function Dashboard() {
 
           {/* Risk Distribution Bar */}
           {!loading && dashboardData && (
-            <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100">
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
+            <Card className="mb-6 shadow-lg border-none rounded-2xl overflow-hidden">
+              {/* Gradient accent bar */}
+              <div className="h-1 bg-gradient-to-r from-[#10B981] via-[#f59e0b] to-[#FF6B4A]" />
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-indigo-600" />
+                    <div className="w-6 h-6 rounded-lg bg-[#2D3E8F]/10 flex items-center justify-center">
+                      <Shield className="h-3.5 w-3.5 text-[#2D3E8F]" />
+                    </div>
                     Risk Distribution
                   </h3>
-                  <span className="text-xs text-gray-500">Based on voter concentration analysis</span>
+                  <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">Based on voter concentration</span>
                 </div>
 
                 {/* Stacked Bar */}
-                <div className="h-4 rounded-full overflow-hidden flex bg-gray-100">
+                <div className="h-5 rounded-full overflow-hidden flex bg-gray-100 shadow-inner">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.normal.percent}%` }}
                     transition={{ duration: 0.5 }}
-                    className="bg-green-500 h-full"
+                    className="bg-[#10B981] h-full"
                     title={`Normal: ${riskDistribution.normal.percent}%`}
                   />
                   <motion.div
@@ -789,48 +811,51 @@ function Dashboard() {
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.high.percent}%` }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="bg-orange-500 h-full"
+                    className="bg-[#FF6B4A] h-full"
                     title={`High: ${riskDistribution.high.percent}%`}
                   />
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.critical.percent}%` }}
                     transition={{ duration: 0.5, delay: 0.3 }}
-                    className="bg-red-500 h-full"
+                    className="bg-red-600 h-full"
                     title={`Critical: ${riskDistribution.critical.percent}%`}
                   />
                 </div>
 
                 {/* Legend */}
-                <div className="flex justify-between mt-3 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-gray-600">Normal {riskDistribution.normal.percent}%</span>
+                <div className="flex justify-between mt-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-[#10B981]" />
+                    <span className="text-gray-600 font-medium">Normal {riskDistribution.normal.percent}%</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-amber-500" />
-                    <span className="text-gray-600">Warning {riskDistribution.warning.percent}%</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-amber-500" />
+                    <span className="text-gray-600 font-medium">Warning {riskDistribution.warning.percent}%</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-orange-500" />
-                    <span className="text-gray-600">High {riskDistribution.high.percent}%</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-[#FF6B4A]" />
+                    <span className="text-gray-600 font-medium">High {riskDistribution.high.percent}%</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-red-500" />
-                    <span className="text-gray-600">Critical {riskDistribution.critical.percent}%</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-600" />
+                    <span className="text-gray-600 font-medium">Critical {riskDistribution.critical.percent}%</span>
                   </div>
                 </div>
               </div>
             </Card>
           )}
 
-          {/* Insights Card */}
-
-          <Card className="mb-6 min-h-[650px] shadow-none border-none ring-1 ring-gray-100 flex flex-col">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          {/* Map Card */}
+          <Card className="mb-6 min-h-[650px] shadow-lg border-none rounded-2xl flex flex-col overflow-hidden">
+            {/* Gradient accent bar */}
+            <div className="h-1 bg-gradient-to-r from-[#2D3E8F] to-[#FF6B4A]" />
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50/50 to-white">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-indigo-600" />
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2D3E8F] to-[#1e2d6b] flex items-center justify-center">
+                    <MapPin className="h-4 w-4 text-white" />
+                  </div>
                   Constituency Risk Map
                 </h2>
                 {/* Enhanced Legend */}
@@ -995,7 +1020,7 @@ function Dashboard() {
                 <h3 className="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
                   Key Insights
-                  <span className="text-xs font-normal text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">Derived</span>
+                  <span className="text-xs font-normal text-[#2D3E8F] bg-[#2D3E8F]/10 px-2 py-0.5 rounded-full">Derived</span>
                 </h3>
                 <ul className="space-y-2">
                   {insights.map((insight, index) => (
@@ -1004,9 +1029,9 @@ function Dashboard() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="text-sm text-indigo-800 flex items-start gap-2"
+                      className="text-sm text-gray-700 flex items-start gap-2"
                     >
-                      <span className="text-indigo-500 mt-0.5">•</span>
+                      <span className="text-[#FF6B4A] mt-0.5">•</span>
                       {insight}
                     </motion.li>
                   ))}
@@ -1019,10 +1044,13 @@ function Dashboard() {
           {!loading && dashboardData && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Mini Bar Chart - Top 5 Constituencies */}
-              <Card className="shadow-none border-none ring-1 ring-gray-100">
-                <div className="p-4">
+              <Card className="shadow-lg border-none rounded-2xl overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-[#2D3E8F] to-[#10B981]" />
+                <div className="p-5">
                   <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-indigo-600" />
+                    <div className="w-6 h-6 rounded-lg bg-[#2D3E8F]/10 flex items-center justify-center">
+                      <TrendingUp className="h-3.5 w-3.5 text-[#2D3E8F]" />
+                    </div>
                     Top Constituencies by Voter Count
                   </h3>
                   <div className="space-y-3">

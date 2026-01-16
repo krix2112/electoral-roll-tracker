@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button } from './ui/Button'
 import { ArrowRight } from 'lucide-react'
+import logo from '../assets/logo-new.png'
 
 export function Navbar() {
     return (
@@ -8,10 +9,7 @@ export function Navbar() {
             <div className="container mx-auto px-6 h-20 flex items-center justify-between">
                 {/* Logo Section */}
                 <Link to="/" className="flex items-center gap-2 group">
-                    <div className="relative flex items-baseline">
-                        <span className="text-3xl font-bold text-white tracking-wide group-hover:text-[#D97706] transition-colors duration-300">मत</span>
-                        <span className="text-3xl font-light text-white group-hover:text-[#D97706] transition-colors duration-300">Setu</span>
-                    </div>
+                    <img src={logo} alt="MatSetu" className="h-12" />
                 </Link>
 
                 {/* Centered Navigation */}

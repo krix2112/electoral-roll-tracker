@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Menu, X, Bell, Upload } from 'lucide-react';
+import { Button } from '../ui/Button';
 import logo from '../../assets/logo-new.png';
 
 export function NewHeader() {
     const [scrolled, setScrolled] = useState(false);
+    const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const notificationRef = useRef(null);
@@ -54,16 +56,24 @@ export function NewHeader() {
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-8">
-                        {navItems.map((item) => (
-                            <a
-                                key={item.label}
-                                href={item.href}
-                                className="text-gray-600 hover:text-[#2D3E8F] transition-colors text-sm font-medium relative group"
-                            >
-                                {item.label}
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B] transition-all duration-300 group-hover:w-full" />
-                            </a>
-                        ))}
+                        {navItems.map((item) => {
+                            const isHashLink = item.href.startsWith('#');
+                            const isHome = location.pathname === '/';
+
+                            // If it's a hash link and we're not on home, prepend /
+                            const href = (isHashLink && !isHome) ? `/${item.href}` : item.href;
+
+                            return (
+                                <a
+                                    key={item.label}
+                                    href={href}
+                                    className="text-gray-600 hover:text-[#2D3E8F] transition-colors text-sm font-medium relative group"
+                                >
+                                    {item.label}
+                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B] transition-all duration-300 group-hover:w-full" />
+                                </a>
+                            );
+                        })}
                     </nav>
 
                     {/* Right Actions */}

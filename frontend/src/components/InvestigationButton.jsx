@@ -41,58 +41,43 @@ export function InvestigationButton({ onInvestigate, onAnomalyFound, isLoading =
         <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`relative ${className}`}
+            className={`relative group ${className}`}
         >
-            {/* Pulsing ring effect */}
-            <AnimatePresence>
-                {pulseActive && (
-                    <motion.div
-                        className="absolute inset-0 rounded-lg bg-gradient-to-r from-rose-500 to-orange-500"
-                        initial={{ opacity: 0.7, scale: 1 }}
-                        animate={{
-                            opacity: [0.7, 0, 0.7],
-                            scale: [1, 1.15, 1]
-                        }}
-                        transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                        }}
-                    />
-                )}
-            </AnimatePresence>
+            {/* Outer Glow Effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-full opacity-30 group-hover:opacity-60 blur-md transition duration-500 group-hover:duration-200" />
 
             <Button
                 onClick={handleClick}
                 disabled={loading}
                 className={`
-          relative z-10
-          bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500
-          hover:from-rose-700 hover:via-orange-600 hover:to-amber-600
-          text-white font-semibold
-          shadow-lg shadow-rose-500/25
-          hover:shadow-xl hover:shadow-rose-500/40
-          transition-all duration-300
-          px-6 py-3
-          ${loading ? 'cursor-wait' : 'cursor-pointer'}
-        `}
+                    relative z-10 
+                    bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B]
+                    hover:from-[#e55a3b] hover:to-[#ff7d57]
+                    text-white font-semibold tracking-wide
+                    shadow-[0_2px_15px_-3px_rgba(255,107,74,0.4)]
+                    hover:shadow-[0_8px_25px_-5px_rgba(255,107,74,0.6)]
+                    transition-all duration-300
+                    px-8 py-3 rounded-full border border-orange-400/30
+                    overflow-hidden
+                    ${loading ? 'cursor-wait' : 'cursor-pointer'}
+                `}
             >
-                <div className="flex items-center gap-2">
+                {/* Shine Effect */}
+                <div className="absolute inset-0 -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 ease-in-out" />
+
+                <div className="flex items-center gap-3 relative z-20">
                     {loading ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin text-white" />
                     ) : (
-                        <Search className="h-5 w-5" />
+                        <Search className="h-5 w-5 text-white stroke-[2.5]" />
                     )}
-                    <span className="text-sm md:text-base">
-                        {loading ? 'Investigating...' : '🔍 Investigate Top Anomaly'}
+
+                    <span className="text-sm md:text-base font-bold drop-shadow-sm">
+                        {loading ? 'Investigating...' : 'Investigate Top Anomaly'}
                     </span>
+
                     {!loading && (
-                        <motion.div
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                        >
-                            <Zap className="h-4 w-4 text-yellow-200" />
-                        </motion.div>
+                        <Zap className="h-4 w-4 text-yellow-300 fill-yellow-300 animate-pulse" />
                     )}
                 </div>
             </Button>
