@@ -31,12 +31,38 @@ export default function DiffViewer() {
   const [uploads, setUploads] = useState([]);
   const [comparisonData, setComparisonData] = useState({ added: [], deleted: [], modified: [] });
   const [comparisonStats, setComparisonStats] = useState(null);
+  const [forensicData, setForensicData] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const stateUploads = location.state?.uploads || [];
   const stateComparison = location.state?.comparison;
 
+  const runForensicAnalysis = async () => {
+    if (!uploads || uploads.length < 2) return;
+    setAnalyzing(true);
+    try {
+      // Sort: Oldest [0], Newest [1]
+      const sorted = [...uploads].sort((a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at));
+
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_upload_id: sorted[1].upload_id,
+          previous_upload_id: sorted[0].upload_id
+        })
+      });
+      const data = await res.json();
+      setForensicData(data);
+    } catch (e) { console.error(e); }
+    setAnalyzing(false);
+  };
+
+  // ... (useEffect logic remains same)
+
   // Data Fetching Logic (Preserved)
   useEffect(() => {
+    // ... (existing body)
     if (stateComparison && stateUploads.length >= 2) {
       setUploads(stateUploads);
       setComparisonData({
@@ -58,7 +84,6 @@ export default function DiffViewer() {
           const apiUploads = await getUploads();
           if (!apiUploads || apiUploads.length < 2) {
             // setError("Not enough files to compare");
-            // For now, allow rendering mock data even if fetch fails, or show loading
           } else {
             uploadsToCompare = apiUploads.slice(0, 2);
           }
@@ -66,16 +91,19 @@ export default function DiffViewer() {
 
         if (uploadsToCompare.length >= 2) {
           setUploads(uploadsToCompare);
+          // Sort by date ASC
           const sorted = [...uploadsToCompare].sort((a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at));
-          const result = await compareRolls(sorted[0].upload_id, sorted[1].upload_id);
+          // compareRolls(new, old) -> verify signature. 
+          // Usually compareRolls(current_id, previous_id).
+          // So sorted[1] (new), sorted[0] (old).
+          const result = await compareRolls(sorted[1].upload_id, sorted[0].upload_id);
           setComparisonData(result);
           setComparisonStats(result.stats);
         }
         setLoading(false);
       } catch (err) {
         console.error("Comparison error", err);
-        // setError(err.message);
-        setLoading(false); // Allow rendering even on error for now to show the UI
+        setLoading(false);
       }
     };
 
@@ -84,34 +112,68 @@ export default function DiffViewer() {
 
   return (
     <div className="flex h-screen bg-gray-50 relative overflow-hidden font-sans text-gray-900">
-      {/* Particle Background */}
       <ParticleBackground />
-
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content */}
       <div className="flex-1 overflow-auto relative z-10">
-        {/* Header */}
         <AnalysisHeader />
 
-        {/* Content Area */}
         <motion.div
           className="p-8 space-y-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          {/* Animated Metric Cards */}
+          {/* Forensic Trigger Section */}
+          <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Forensic Investigation</h2>
+              <p className="text-sm text-gray-500">Run advanced algorithms to detect suppression and anomalies</p>
+            </div>
+            <button
+              onClick={runForensicAnalysis}
+              disabled={analyzing}
+              className={`px-6 py-2 rounded-lg font-bold text-white transition-all ${analyzing ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200'}`}
+            >
+              {analyzing ? 'Analyzing...' : 'Run Forensic Analysis'}
+            </button>
+          </div>
+
+          {/* Forensic Results Display */}
+          {forensicData && (
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 rounded-xl p-6 relative overflow-hidden">
+              <div className="flex items-start justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
+                      {forensicData.verdict}
+                    </span>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Anomaly Score: {forensicData.final_anomaly_score}/100
+                    </h3>
+                  </div>
+                  <p className="text-gray-700 max-w-2xl font-medium leading-relaxed">
+                    {forensicData.summary}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {forensicData.triggered_modules?.map(m => (
+                      <span key={m} className="text-xs font-bold text-red-700 bg-red-100 px-2 py-1 rounded border border-red-200">
+                        ⚠️ {m} Detected
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500 font-mono">ID: {forensicData.analysis_id}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <AnimatedMetricCards />
-
-          {/* Investigation Triggers */}
           <InvestigationSlider />
-
-          {/* Live Anomaly Detector - Full Width */}
           <LiveAnomalyDetector />
 
-          {/* Grid Layout - First Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <ForensicComposition data={comparisonData} />

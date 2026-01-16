@@ -88,6 +88,29 @@ class BehavioralFingerprintEngine:
                 new_voters += 1
                 new_registrations_by_age[age_group] += 1
         
+        # Check for MASS DELETIONS
+        current_voter_ids = set(v['voter_id'] for v in current_voters)
+        deleted_voters = [v for v in previous_voters if v['voter_id'] not in current_voter_ids]
+        deleted_count = len(deleted_voters)
+        
+        deleted_registrations_by_age = {group: 0 for group in self.AGE_MIGRATION_BASELINE.keys()}
+        for dv in deleted_voters:
+            age = dv.get('age', 25)
+            age_group = self._get_age_group(age)
+            deleted_registrations_by_age[age_group] += 1
+
+        # Calculate deletion rate
+        deletion_rate = deleted_count / len(previous_voters) if previous_voters else 0
+        
+        # Flag Mass Deletion (> 5% of roll)
+        if deletion_rate > 0.05:
+            # Check for concentration
+             for age_group, count in deleted_registrations_by_age.items():
+                if count > 0 and (count / deleted_count > 0.7):
+                    suspicious_patterns.append(
+                        f"🚨 **Mass Deletion Alert**: {deleted_count} voters deleted ({(deletion_rate*100):.1f}%). {(count/deleted_count)*100:.0f}% were {age_group} (Targeted Deletion Pattern)."
+                    )
+        
         # Calculate deviation from expected patterns
         anomaly_indicators = []
         total_deviation = 0
