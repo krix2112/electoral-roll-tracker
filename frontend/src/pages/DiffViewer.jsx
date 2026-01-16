@@ -114,15 +114,15 @@ export default function DiffViewer() {
           {/* Grid Layout - First Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <ForensicComposition />
+              <ForensicComposition data={comparisonData} />
             </div>
             <div className="lg:col-span-1">
-              <CircularProgressDashboard />
+              <CircularProgressDashboard data={comparisonData} />
             </div>
           </div>
 
           {/* Data Explorer Panel - Full Width */}
-          <DataExplorerPanel />
+          <DataExplorerPanel data={comparisonData} />
 
           {/* Charts Row - Peak Detection & Intensity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -152,7 +152,7 @@ export default function DiffViewer() {
           </div>
 
           {/* Detailed Change Log - Full Width */}
-          <DetailedChangeLog />
+          <DetailedChangeLog data={comparisonData} />
 
           {/* Footer spacing */}
           <div className="h-8" />

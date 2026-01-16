@@ -1,19 +1,37 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-const data = [
-  { name: "New Voters", value: 600, color: "#10b981" },
-  { name: "Deletions", value: 800, color: "#ef4444" },
-];
+interface ForensicCompositionProps {
+  data: {
+    added: any[];
+    deleted: any[];
+    modified: any[];
+  };
+}
 
-export function ForensicComposition() {
+export function ForensicComposition({ data: comparisonData }: ForensicCompositionProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const chartData = useMemo(() => {
+    return [
+      { name: "New Voters", value: comparisonData.added.length, color: "#10b981" },
+      { name: "Deletions", value: comparisonData.deleted.length, color: "#ef4444" },
+    ];
+  }, [comparisonData]);
+
+  const totalEvents = comparisonData.added.length + comparisonData.deleted.length + comparisonData.modified.length;
+  const growthType = comparisonData.added.length > comparisonData.deleted.length ? "GROWTH-ORIENTED" : "CLEANUP-SKEWED";
+  const growthColor = comparisonData.added.length > comparisonData.deleted.length ? "text-emerald-600" : "text-red-600";
+
+  const additionsPct = totalEvents > 0 ? ((comparisonData.added.length / totalEvents) * 100).toFixed(1) : "0.0";
+  const deletionsPct = totalEvents > 0 ? ((comparisonData.deleted.length / totalEvents) * 100).toFixed(1) : "0.0";
+  const modificationsPct = totalEvents > 0 ? ((comparisonData.modified.length / totalEvents) * 100).toFixed(1) : "0.0";
 
   return (
     <motion.div
-      className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 relative overflow-hidden"
+      className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 relative overflow-hidden h-full flex flex-col"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{
@@ -24,27 +42,27 @@ export function ForensicComposition() {
       {/* Animated gradient background */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-red-100 to-emerald-100 rounded-full blur-3xl opacity-30" />
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex-1 flex flex-col">
         <h3 className="text-lg font-semibold text-gray-900 mb-1">Forensic Composition Signature</h3>
         <p className="text-sm text-gray-600 mb-6">
           Our forensic engine has analyzed the electoral roll snapshot. The distribution exhibits a{" "}
           <motion.span
-            className="font-semibold text-red-600"
+            className={`font-semibold ${growthColor}`}
             animate={{ opacity: [1, 0.7, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            CLEANUP-SKEWED
+            {growthType}
           </motion.span>{" "}
           profile. Modification patterns are within the expected administrative margin.
         </p>
 
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid grid-cols-2 gap-8 flex-1 items-center">
           {/* Donut Chart */}
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={240}>
+          <div className="relative h-64 md:h-auto min-h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data}
+                  data={chartData}
                   cx="50%"
                   cy="50%"
                   innerRadius={70}
@@ -54,7 +72,7 @@ export function ForensicComposition() {
                   onMouseEnter={(_, index) => setActiveIndex(index)}
                   onMouseLeave={() => setActiveIndex(null)}
                 >
-                  {data.map((entry, index) => (
+                  {chartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={entry.color}
@@ -74,7 +92,7 @@ export function ForensicComposition() {
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <div className="text-4xl font-bold text-gray-900">1,400</div>
+              <div className="text-4xl font-bold text-gray-900">{totalEvents.toLocaleString()}</div>
               <div className="text-xs text-gray-500 uppercase tracking-wide">Events</div>
             </motion.div>
           </div>
@@ -97,10 +115,10 @@ export function ForensicComposition() {
                 </motion.div>
                 <div>
                   <div className="text-xs text-emerald-600 font-medium uppercase tracking-wide">New Voters</div>
-                  <div className="text-2xl font-bold text-emerald-700">600</div>
+                  <div className="text-2xl font-bold text-emerald-700">{comparisonData.added.length.toLocaleString()}</div>
                 </div>
               </div>
-              <div className="text-sm font-medium text-emerald-600">42.9%</div>
+              <div className="text-sm font-medium text-emerald-600">{additionsPct}%</div>
             </motion.div>
 
             <motion.div
@@ -119,10 +137,10 @@ export function ForensicComposition() {
                 </motion.div>
                 <div>
                   <div className="text-xs text-red-600 font-medium uppercase tracking-wide">Deletions</div>
-                  <div className="text-2xl font-bold text-red-700">800</div>
+                  <div className="text-2xl font-bold text-red-700">{comparisonData.deleted.length.toLocaleString()}</div>
                 </div>
               </div>
-              <div className="text-sm font-medium text-red-600">57.1%</div>
+              <div className="text-sm font-medium text-red-600">{deletionsPct}%</div>
             </motion.div>
 
             <motion.div
@@ -135,10 +153,10 @@ export function ForensicComposition() {
                 </div>
                 <div>
                   <div className="text-xs text-amber-600 font-medium uppercase tracking-wide">Modifications</div>
-                  <div className="text-2xl font-bold text-amber-700">~0</div>
+                  <div className="text-2xl font-bold text-amber-700">{comparisonData.modified.length.toLocaleString()}</div>
                 </div>
               </div>
-              <div className="text-sm font-medium text-amber-600">0.0%</div>
+              <div className="text-sm font-medium text-amber-600">{modificationsPct}%</div>
             </motion.div>
           </div>
         </div>

@@ -2,18 +2,32 @@ import { motion } from "framer-motion";
 import { Database, Search, Filter, Download, Eye, TrendingUp } from "lucide-react";
 import { useState } from "react";
 
-const dataCategories = [
-  { name: "Additions", count: 600, change: "+12.5%", trend: "up", color: "emerald" },
-  { name: "Deletions", count: 800, change: "+28.3%", trend: "up", color: "red" },
-  { name: "Modifications", count: 0, change: "0.0%", trend: "neutral", color: "amber" },
-  { name: "Verified", count: 1200, change: "+15.2%", trend: "up", color: "blue" },
-];
+interface DataExplorerPanelProps {
+  data: {
+    added: any[];
+    deleted: any[];
+    modified: any[];
+  };
+}
 
-export function DataExplorerPanel() {
+export function DataExplorerPanel({ data }: DataExplorerPanelProps) {
   const [activeTab, setActiveTab] = useState(0);
 
+  const dataCategories = [
+    { name: "Additions", count: data.added.length, change: "+12.5%", trend: "up", color: "emerald" },
+    { name: "Deletions", count: data.deleted.length, change: "+28.3%", trend: "up", color: "red" },
+    { name: "Modifications", count: data.modified.length, change: "0.0%", trend: "neutral", color: "amber" },
+    { name: "Verified", count: 1200, change: "+15.2%", trend: "up", color: "blue" },
+  ];
+
+  const totalProcessing = data.added.length + data.deleted.length + data.modified.length;
+
+  const handleAction = (action: string) => {
+    alert(`${action} functionality initiated`);
+  };
+
   return (
-    <motion.div 
+    <motion.div
       className="bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 rounded-xl shadow-2xl border border-indigo-500/30 p-6 relative overflow-hidden"
       initial={{ opacity: 0, rotateX: 15 }}
       animate={{ opacity: 1, rotateX: 0 }}
@@ -22,10 +36,10 @@ export function DataExplorerPanel() {
     >
       {/* Glassmorphism overlay */}
       <div className="absolute inset-0 bg-white/5 backdrop-blur-sm" />
-      
+
       {/* Animated grid background */}
       <div className="absolute inset-0 opacity-20">
-        <div 
+        <div
           className="absolute inset-0"
           style={{
             backgroundImage: "linear-gradient(rgba(99, 102, 241, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.3) 1px, transparent 1px)",
@@ -37,7 +51,7 @@ export function DataExplorerPanel() {
       {/* Floating orbs */}
       <motion.div
         className="absolute top-10 right-10 w-32 h-32 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-full blur-3xl"
-        animate={{ 
+        animate={{
           y: [0, -20, 0],
           x: [0, 10, 0],
           scale: [1, 1.1, 1]
@@ -46,7 +60,7 @@ export function DataExplorerPanel() {
       />
       <motion.div
         className="absolute bottom-10 left-10 w-24 h-24 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full blur-3xl"
-        animate={{ 
+        animate={{
           y: [0, 20, 0],
           x: [0, -10, 0],
           scale: [1, 1.2, 1]
@@ -76,6 +90,7 @@ export function DataExplorerPanel() {
               className="p-2 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm border border-white/20"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => handleAction('Search')}
             >
               <Search className="text-white" size={18} />
             </motion.button>
@@ -83,6 +98,7 @@ export function DataExplorerPanel() {
               className="p-2 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm border border-white/20"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => handleAction('Filter')}
             >
               <Filter className="text-white" size={18} />
             </motion.button>
@@ -90,6 +106,7 @@ export function DataExplorerPanel() {
               className="p-2 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm border border-white/20"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => handleAction('Download')}
             >
               <Download className="text-white" size={18} />
             </motion.button>
@@ -105,7 +122,7 @@ export function DataExplorerPanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ 
+              whileHover={{
                 scale: 1.05,
                 backgroundColor: "rgba(255, 255, 255, 0.15)"
               }}
@@ -177,7 +194,7 @@ export function DataExplorerPanel() {
         </div>
 
         {/* Footer stats */}
-        <motion.div 
+        <motion.div
           className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -185,12 +202,12 @@ export function DataExplorerPanel() {
         >
           <div className="text-white/70">
             <span className="font-medium">Processing: </span>
-            <motion.span 
+            <motion.span
               className="text-emerald-400"
               animate={{ opacity: [1, 0.5, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              1,400 records
+              {totalProcessing.toLocaleString()} records
             </motion.span>
           </div>
           <div className="flex items-center gap-2">

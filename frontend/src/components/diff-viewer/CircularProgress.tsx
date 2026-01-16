@@ -1,47 +1,67 @@
 import { motion } from "framer-motion";
 import { Shield, AlertTriangle, CheckCircle2, Activity } from "lucide-react";
 
-const metrics = [
-  {
-    icon: Shield,
-    label: "Integrity Score",
-    value: 85,
-    color: "indigo",
-    gradient: "from-indigo-500 to-purple-600",
-  },
-  {
-    icon: Activity,
-    label: "Anomaly Index",
-    value: 62,
-    color: "amber",
-    gradient: "from-amber-500 to-orange-600",
-  },
-  {
-    icon: CheckCircle2,
-    label: "Verification Rate",
-    value: 96,
-    color: "emerald",
-    gradient: "from-emerald-500 to-teal-600",
-  },
-  {
-    icon: AlertTriangle,
-    label: "Risk Level",
-    value: 43,
-    color: "red",
-    gradient: "from-red-500 to-pink-600",
-  },
-];
+import { useMemo } from "react";
 
-export function CircularProgressDashboard() {
+interface CircularProgressProps {
+  data: {
+    added: any[];
+    deleted: any[];
+    modified: any[];
+  };
+}
+
+export function CircularProgressDashboard({ data }: CircularProgressProps) {
+  const metrics = useMemo(() => {
+    const total = data.added.length + data.deleted.length + data.modified.length || 1;
+    const deletionRatio = (data.deleted.length / total) * 100;
+
+    // Heuristics for demo purposes
+    const integrityScore = Math.max(0, Math.min(100, 100 - (deletionRatio * 0.5))).toFixed(0);
+    const riskLevel = Math.min(100, Math.max(0, deletionRatio * 1.2)).toFixed(0);
+    const anomalyIndex = Math.min(100, (data.modified.length / total) * 500 + 20).toFixed(0); // Arbitrary scale
+
+    return [
+      {
+        icon: Shield,
+        label: "Integrity Score",
+        value: parseInt(integrityScore),
+        color: "indigo",
+        gradient: "from-indigo-500 to-purple-600",
+      },
+      {
+        icon: Activity,
+        label: "Anomaly Index",
+        value: parseInt(anomalyIndex),
+        color: "amber",
+        gradient: "from-amber-500 to-orange-600",
+      },
+      {
+        icon: CheckCircle2,
+        label: "Verification Rate",
+        value: 96, // Mock for now
+        color: "emerald",
+        gradient: "from-emerald-500 to-teal-600",
+      },
+      {
+        icon: AlertTriangle,
+        label: "Risk Level",
+        value: parseInt(riskLevel),
+        color: "red",
+        gradient: "from-red-500 to-pink-600",
+      },
+    ];
+  }, [data]);
+
   return (
-    <motion.div 
-      className="bg-white rounded-xl shadow-lg border border-gray-200 p-6"
+    <motion.div
+      className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 h-full flex flex-col justify-center"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       <h3 className="text-lg font-semibold text-gray-900 mb-6">Real-Time Quality Metrics</h3>
-      
+
       <div className="grid grid-cols-4 gap-6">
         {metrics.map((metric, index) => (
           <CircularProgress key={index} metric={metric} index={index} />
@@ -57,7 +77,7 @@ function CircularProgress({ metric, index }: { metric: typeof metrics[0]; index:
   const strokeDashoffset = circumference - (metric.value / 100) * circumference;
 
   return (
-    <motion.div 
+    <motion.div
       className="flex flex-col items-center"
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -104,7 +124,7 @@ function CircularProgress({ metric, index }: { metric: typeof metrics[0]; index:
           >
             <Icon className={`text-${metric.color}-600 mb-1`} size={24} />
           </motion.div>
-          <motion.div 
+          <motion.div
             className={`text-2xl font-bold text-${metric.color}-600`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
