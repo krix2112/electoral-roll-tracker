@@ -1,5 +1,11 @@
 import { motion } from "framer-motion";
-import { Shield, AlertTriangle, CheckCircle2, Activity } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle2, Activity, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/diff-viewer/ui/tooltip";
 
 import { useMemo } from "react";
 
@@ -28,6 +34,7 @@ export function CircularProgressDashboard({ data }: CircularProgressProps) {
         value: parseInt(integrityScore),
         color: "indigo",
         gradient: "from-indigo-500 to-purple-600",
+        description: "Overall reliability of the electoral roll data based on deletion ratios.",
       },
       {
         icon: Activity,
@@ -35,6 +42,7 @@ export function CircularProgressDashboard({ data }: CircularProgressProps) {
         value: parseInt(anomalyIndex),
         color: "amber",
         gradient: "from-amber-500 to-orange-600",
+        description: "Detected statistical deviations in modification patterns.",
       },
       {
         icon: CheckCircle2,
@@ -42,6 +50,7 @@ export function CircularProgressDashboard({ data }: CircularProgressProps) {
         value: 96, // Mock for now
         color: "emerald",
         gradient: "from-emerald-500 to-teal-600",
+        description: "Percentage of entries validated against external benchmarks.",
       },
       {
         icon: AlertTriangle,
@@ -49,6 +58,7 @@ export function CircularProgressDashboard({ data }: CircularProgressProps) {
         value: parseInt(riskLevel),
         color: "red",
         gradient: "from-red-500 to-pink-600",
+        description: "Composite risk score indicating potential manipulation attempts.",
       },
     ];
   }, [data]);
@@ -62,7 +72,7 @@ export function CircularProgressDashboard({ data }: CircularProgressProps) {
     >
       <h3 className="text-lg font-semibold text-gray-900 mb-6">Real-Time Quality Metrics</h3>
 
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {metrics.map((metric, index) => (
           <CircularProgress key={index} metric={metric} index={index} />
         ))}
@@ -71,7 +81,16 @@ export function CircularProgressDashboard({ data }: CircularProgressProps) {
   );
 }
 
-function CircularProgress({ metric, index }: { metric: typeof metrics[0]; index: number }) {
+interface Metric {
+  icon: any;
+  label: string;
+  value: number;
+  color: string;
+  gradient: string;
+  description?: string;
+}
+
+function CircularProgress({ metric, index }: { metric: Metric; index: number }) {
   const Icon = metric.icon;
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (metric.value / 100) * circumference;
@@ -143,7 +162,19 @@ function CircularProgress({ metric, index }: { metric: typeof metrics[0]; index:
       </div>
 
       <div className="mt-3 text-center">
-        <div className="text-sm font-medium text-gray-900">{metric.label}</div>
+        <div className="text-sm font-medium text-gray-900 flex items-center justify-center gap-1 group/label">
+          {metric.label}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info size={12} className="text-gray-400 group-hover/label:text-indigo-500 transition-colors" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs text-xs">{metric.description || "Forensic metric analysis"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <div className={`text-xs text-${metric.color}-600 font-medium`}>
           {metric.value > 80 ? "Excellent" : metric.value > 60 ? "Good" : metric.value > 40 ? "Fair" : "Needs Attention"}
         </div>

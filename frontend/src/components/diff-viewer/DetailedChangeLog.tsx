@@ -1,5 +1,3 @@
-import { FileDown, Share2, Filter } from "lucide-react";
-import { Button } from "@/components/diff-viewer/ui/button";
 
 import { FileDown, Share2, Filter } from "lucide-react";
 import { Button } from "@/components/diff-viewer/ui/button";
@@ -38,7 +36,8 @@ export function DetailedChangeLog({ data }: DetailedChangeLogProps) {
   };
 
   const handleView = (id: string) => {
-    alert(`Viewing details for Voter ID: ${id}`);
+    // alert(`Viewing details for Voter ID: ${id}`);
+    console.log(`Viewing details for Voter ID: ${id}`);
   };
 
   return (
@@ -49,11 +48,11 @@ export function DetailedChangeLog({ data }: DetailedChangeLogProps) {
           <p className="text-sm text-gray-600">Records sorted by risk priority</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => alert("Filter functionality")}>
+          <Button variant="outline" size="sm" className="gap-2 opacity-50 cursor-not-allowed" title="Filter coming soon">
             <Filter size={16} />
             Filter
           </Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => alert("Share functionality")}>
+          <Button variant="outline" size="sm" className="gap-2 opacity-50 cursor-not-allowed" title="Share coming soon">
             <Share2 size={16} />
             Share
           </Button>
@@ -69,19 +68,19 @@ export function DetailedChangeLog({ data }: DetailedChangeLogProps) {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Voter ID
+                Subject ID
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Constituency
+                Sector / Constituency
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Type
+                Delta Type
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Date
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Risk Status
+                Risk Classification
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Action
@@ -99,8 +98,8 @@ export function DetailedChangeLog({ data }: DetailedChangeLogProps) {
                 </td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${log.type === "DELETION" ? "bg-red-100 text-red-700" :
-                      log.type === "ADDITION" ? "bg-emerald-100 text-emerald-700" :
-                        "bg-amber-100 text-amber-700"
+                    log.type === "ADDITION" ? "bg-emerald-100 text-emerald-700" :
+                      "bg-amber-100 text-amber-700"
                     }`}>
                     {log.type}
                   </span>
@@ -110,14 +109,14 @@ export function DetailedChangeLog({ data }: DetailedChangeLogProps) {
                 </td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${log.risk === "High" ? "bg-red-100 text-red-700" :
-                      log.risk === "Medium" ? "bg-amber-100 text-amber-700" :
-                        "bg-emerald-100 text-emerald-700"
+                    log.risk === "Medium" ? "bg-amber-100 text-amber-700" :
+                      "bg-emerald-100 text-emerald-700"
                     }`}>
                     {log.risk}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700" onClick={() => handleView(log.voter_id || log.id)}>
+                  <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700 opacity-50 cursor-not-allowed" title="View details coming soon">
                     View
                   </Button>
                 </td>

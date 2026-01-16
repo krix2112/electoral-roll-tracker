@@ -172,7 +172,8 @@ export default function DiffViewer() {
 
           <AnimatedMetricCards />
           <InvestigationSlider />
-          <LiveAnomalyDetector />
+          {/* Live Anomaly Detector - Full Width */}
+          <LiveAnomalyDetector data={comparisonData} />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
@@ -188,7 +189,7 @@ export default function DiffViewer() {
 
           {/* Charts Row - Peak Detection & Intensity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PeakDetectionChart />
+            <PeakDetectionChart data={comparisonData} />
             <ForensicIntensitySignal />
           </div>
 
@@ -204,7 +205,7 @@ export default function DiffViewer() {
           {/* Treemap & Timeline */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ConstituencyTreemap />
-            <TimelineAnimation />
+            <TimelineAnimation data={comparisonData} />
           </div>
 
           {/* Heatmap & Observations */}

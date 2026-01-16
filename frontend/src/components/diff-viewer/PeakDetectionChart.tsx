@@ -27,14 +27,31 @@ const intensityData = [
   { date: "Feb", value: 520 },
 ];
 
-export function PeakDetectionChart() {
+// interface Props implicit
+interface PeakDetectionChartProps {
+  data: {
+    added: any[];
+    deleted: any[];
+    modified: any[];
+  };
+}
+
+export function PeakDetectionChart({ data }: PeakDetectionChartProps) {
+  const total = data ? (data.added.length + data.deleted.length + data.modified.length) : 0;
+
+  // Update last data point to reflect real total
+  const currentPeakData = [...peakData];
+  currentPeakData[currentPeakData.length - 1] = {
+    ...currentPeakData[currentPeakData.length - 1],
+    value: total > 0 ? total : 350
+  };
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-semibold text-gray-900">Peak Event Detection</h3>
           <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-medium">
-            PEAK: 350 CHANGES (FEB 1)
+            PEAK: {total > 0 ? total : 350} CHANGES (CURRENT)
           </span>
         </div>
         <p className="text-sm text-gray-600">
@@ -43,35 +60,35 @@ export function PeakDetectionChart() {
       </div>
 
       <ResponsiveContainer width="100%" height={200}>
-        <AreaChart data={peakData}>
+        <AreaChart data={currentPeakData}>
           <defs>
             <linearGradient id="peakGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis 
-            dataKey="date" 
+          <XAxis
+            dataKey="date"
             tick={{ fontSize: 11, fill: '#6b7280' }}
             stroke="#e5e7eb"
           />
-          <YAxis 
+          <YAxis
             tick={{ fontSize: 11, fill: '#6b7280' }}
             stroke="#e5e7eb"
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#fff', 
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#fff',
               border: '1px solid #e5e7eb',
               borderRadius: '8px',
               fontSize: '12px'
             }}
           />
-          <Area 
-            type="monotone" 
-            dataKey="value" 
-            stroke="#6366f1" 
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#6366f1"
             strokeWidth={2}
             fill="url(#peakGradient)"
           />
@@ -95,32 +112,32 @@ export function ForensicIntensitySignal() {
         <AreaChart data={intensityData}>
           <defs>
             <linearGradient id="intensityGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
-              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis 
-            dataKey="date" 
+          <XAxis
+            dataKey="date"
             tick={{ fontSize: 11, fill: '#6b7280' }}
             stroke="#e5e7eb"
           />
-          <YAxis 
+          <YAxis
             tick={{ fontSize: 11, fill: '#6b7280' }}
             stroke="#e5e7eb"
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#fff', 
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#fff',
               border: '1px solid #e5e7eb',
               borderRadius: '8px',
               fontSize: '12px'
             }}
           />
-          <Area 
-            type="monotone" 
-            dataKey="value" 
-            stroke="#8b5cf6" 
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#8b5cf6"
             strokeWidth={3}
             fill="url(#intensityGradient)"
           />

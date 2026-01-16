@@ -22,9 +22,10 @@ export function DataExplorerPanel({ data }: DataExplorerPanelProps) {
 
   const totalProcessing = data.added.length + data.deleted.length + data.modified.length;
 
-  const handleAction = (action: string) => {
-    alert(`${action} functionality initiated`);
-  };
+  // Placeholder for future functionality
+  // const handleAction = (action: string) => {
+  //   console.log(`${action} functionality initiated`);
+  // };
 
   return (
     <motion.div
@@ -87,34 +88,28 @@ export function DataExplorerPanel({ data }: DataExplorerPanelProps) {
 
           <div className="flex items-center gap-2">
             <motion.button
-              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm border border-white/20"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleAction('Search')}
+              className="p-2 bg-white/5 rounded-lg border border-white/10 opacity-50 cursor-not-allowed"
+              title="Search functionality coming soon"
             >
-              <Search className="text-white" size={18} />
+              <Search className="text-white/50" size={18} />
             </motion.button>
             <motion.button
-              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm border border-white/20"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleAction('Filter')}
+              className="p-2 bg-white/5 rounded-lg border border-white/10 opacity-50 cursor-not-allowed"
+              title="Filter functionality coming soon"
             >
-              <Filter className="text-white" size={18} />
+              <Filter className="text-white/50" size={18} />
             </motion.button>
             <motion.button
-              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm border border-white/20"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleAction('Download')}
+              className="p-2 bg-white/5 rounded-lg border border-white/10 opacity-50 cursor-not-allowed"
+              title="Download functionality coming soon"
             >
-              <Download className="text-white" size={18} />
+              <Download className="text-white/50" size={18} />
             </motion.button>
           </div>
         </div>
 
         {/* Data Categories Grid */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {dataCategories.map((category, index) => (
             <motion.div
               key={index}

@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
@@ -56,7 +56,7 @@ export function ForensicComposition({ data: comparisonData }: ForensicCompositio
           profile. Modification patterns are within the expected administrative margin.
         </p>
 
-        <div className="grid grid-cols-2 gap-8 flex-1 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 items-center">
           {/* Donut Chart */}
           <div className="relative h-64 md:h-auto min-h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -85,6 +85,11 @@ export function ForensicComposition({ data: comparisonData }: ForensicCompositio
                     />
                   ))}
                 </Pie>
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  itemStyle={{ color: '#374151', fontSize: '12px', fontWeight: 600 }}
+                  formatter={(value: number) => [value.toLocaleString(), 'Records']}
+                />
               </PieChart>
             </ResponsiveContainer>
             <motion.div

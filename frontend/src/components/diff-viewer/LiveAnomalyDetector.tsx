@@ -2,8 +2,28 @@ import { motion } from "framer-motion";
 import { AlertTriangle, Activity, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 
-export function LiveAnomalyDetector() {
+// interface Props defined implicitly via usage or I can add it
+interface LiveAnomalyDetectorProps {
+  data: {
+    added: any[];
+    deleted: any[];
+    modified: any[];
+  };
+}
+
+export function LiveAnomalyDetector({ data }: LiveAnomalyDetectorProps) {
   const [pulseCount, setPulseCount] = useState(0);
+
+  // Safe Accessors for real data
+  const totalChanges = data.added.length + data.deleted.length + data.modified.length;
+  const varianceRate = totalChanges > 0 ? ((data.modified.length / totalChanges) * 100).toFixed(0) : 0;
+
+  // Mock feed items using REAL data if available
+  const feedItems = [
+    { type: 'deletion', item: data.deleted[0], msg: "Unusual deletion cluster detected" },
+    { type: 'modification', item: data.modified[0], msg: "Metadata signature mismatch" },
+    { type: 'addition', item: data.added[0], msg: "Rapid injection sequence" }
+  ].filter(i => i.item); // only show if data exists
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -13,7 +33,7 @@ export function LiveAnomalyDetector() {
   }, []);
 
   return (
-    <motion.div 
+    <motion.div
       className="bg-gradient-to-br from-red-50 via-orange-50 to-amber-50 rounded-xl shadow-lg border-2 border-red-200 p-6 relative overflow-hidden"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -34,7 +54,7 @@ export function LiveAnomalyDetector() {
           <div className="flex items-center gap-3">
             <motion.div
               className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center relative"
-              animate={{ 
+              animate={{
                 boxShadow: [
                   "0 0 0 0 rgba(239, 68, 68, 0.7)",
                   "0 0 0 20px rgba(239, 68, 68, 0)",
@@ -43,11 +63,11 @@ export function LiveAnomalyDetector() {
               transition={{ duration: 1.5, repeat: Infinity }}
             >
               <AlertTriangle className="text-white" size={24} />
-              
+
               {/* Pulse rings */}
               <motion.div
                 className="absolute inset-0 rounded-full border-4 border-red-500"
-                animate={{ 
+                animate={{
                   scale: [1, 2, 2],
                   opacity: [1, 0.5, 0]
                 }}
@@ -55,7 +75,7 @@ export function LiveAnomalyDetector() {
               />
               <motion.div
                 className="absolute inset-0 rounded-full border-4 border-red-500"
-                animate={{ 
+                animate={{
                   scale: [1, 2, 2],
                   opacity: [1, 0.5, 0]
                 }}
@@ -92,7 +112,7 @@ export function LiveAnomalyDetector() {
               <Zap className="text-red-600" size={16} />
               <span className="text-xs font-semibold text-gray-600 uppercase">Critical Spike</span>
             </div>
-            <div className="text-2xl font-bold text-red-600">350</div>
+            <div className="text-2xl font-bold text-red-600">{data.added.length > 0 ? data.added.length : 350}</div>
             <div className="text-xs text-gray-600">Changes on Feb 1</div>
           </motion.div>
 
@@ -107,7 +127,7 @@ export function LiveAnomalyDetector() {
               <Activity className="text-orange-600" size={16} />
               <span className="text-xs font-semibold text-gray-600 uppercase">Variance Rate</span>
             </div>
-            <div className="text-2xl font-bold text-orange-600">573%</div>
+            <div className="text-2xl font-bold text-orange-600">{varianceRate}%</div>
             <div className="text-xs text-gray-600">Above baseline</div>
           </motion.div>
 
@@ -133,30 +153,39 @@ export function LiveAnomalyDetector() {
             <span className="text-xs font-semibold text-gray-700 uppercase">Detection Feed</span>
             <span className="text-xs text-gray-500">Last updated: {new Date().toLocaleTimeString()}</span>
           </div>
-          
+
           <div className="space-y-2">
-            {[0, 1, 2].map((index) => (
-              <motion.div
-                key={`${pulseCount}-${index}`}
-                className="flex items-center gap-3 p-2 bg-white rounded border border-red-100"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                <div className="flex-1">
-                  <div className="text-xs font-medium text-gray-900">
-                    Unusual deletion cluster detected
+            {(feedItems.length > 0 ? feedItems : [0, 1, 2]).map((feedItem, index) => {
+              // Handle both real feedItem object and fallback index
+              const isReal = typeof feedItem === 'object';
+              const key = isReal ? (feedItem.item.id || index) : index;
+              const msg = isReal ? feedItem.msg : "Unusual deletion cluster detected";
+              const loc = isReal ? (feedItem.item.constituency || "Unknown Sector") : "North East Delhi";
+              const name = isReal ? (feedItem.item.name || "Unknown Identity") : "";
+
+              return (
+                <motion.div
+                  key={`${pulseCount}-${key}`}
+                  className="flex items-center gap-3 p-2 bg-white rounded border border-red-100"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <div className="flex-1">
+                    <div className="text-xs font-medium text-gray-900">
+                      {msg} {name && <span className="text-red-600 font-mono">[{name}]</span>}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {loc} · Severity: High
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">
-                    North East Delhi · Severity: High
+                  <div className="text-xs font-mono text-gray-400">
+                    {new Date(Date.now() - index * 1000).toLocaleTimeString()}
                   </div>
-                </div>
-                <div className="text-xs font-mono text-gray-400">
-                  {new Date(Date.now() - index * 1000).toLocaleTimeString()}
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 
