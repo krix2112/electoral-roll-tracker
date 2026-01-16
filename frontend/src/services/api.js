@@ -264,6 +264,61 @@ export const getDashboardAggregation = async (state = 'ALL') => {
 export default api
 
 /**
+ * Get Top Anomaly
+ * Calls GET /api/top-anomaly
+ * Returns the constituency with the highest anomaly score
+ * 
+ * @returns {Promise<Object>} Top anomaly data with constituency info, score, impact facts
+ */
+export const getTopAnomaly = async () => {
+  try {
+    const response = await api.get('/api/top-anomaly')
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}
+
+/**
+ * Get Constituency Impact Data
+ * Calls GET /api/constituency/:id/impact-data
+ * 
+ * @param {string} constituencyId - Constituency ID (e.g., "AC-042")
+ * @returns {Promise<Object>} Detailed impact analysis data
+ */
+export const getConstituencyImpact = async (constituencyId) => {
+  if (!constituencyId) {
+    throw new Error('Constituency ID is required')
+  }
+  
+  try {
+    const response = await api.get(`/api/constituency/${constituencyId}/impact-data`)
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}
+
+/**
+ * Get Anomaly Summary
+ * Calls GET /api/anomaly-summary
+ * Returns summary of all anomalies across constituencies
+ * 
+ * @returns {Promise<Object>} Anomaly distribution and key metrics
+ */
+export const getAnomalySummary = async () => {
+  try {
+    const response = await api.get('/api/anomaly-summary')
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}
+
+/**
  * Get Notifications
  * Calls GET /api/notifications
  * 
@@ -295,85 +350,3 @@ export const markNotificationRead = async (id) => {
     throw error
   }
 }
-
-/**
- * Get Top Anomaly
- * Calls GET /api/top-anomaly
- * 
- * Returns the constituency-period combination with highest anomaly score
- * 
- * @returns {Promise<Object>} Top anomaly data with:
- *   - constituency_id: string
- *   - constituency_name: string
- *   - state: string
- *   - period: string
- *   - score: number
- *   - voter_count: number
- *   - deletion_count: number
- *   - zoom_coordinates: { lat, lng, zoom }
- *   - impact_facts: { swing_seats, equivalent_town, statistical_certainty, confidence_level }
- */
-export const getTopAnomaly = async () => {
-  try {
-    const url = '/api/top-anomaly'
-    console.debug('[api] GET', `${API_BASE_URL}${url}`)
-    const response = await api.get(url)
-    console.debug('[api] Top anomaly response', response.data)
-    return response.data
-  } catch (error) {
-    handleError(error)
-    throw error
-  }
-}
-
-/**
- * Get Constituency Impact Data
- * Calls GET /api/constituency/:id/impact-data
- * 
- * Returns detailed impact analysis for a specific constituency
- * 
- * @param {string} constituencyId - Constituency ID (e.g., "AC-042")
- * @returns {Promise<Object>} Impact data
- */
-export const getConstituencyImpact = async (constituencyId) => {
-  if (!constituencyId) {
-    throw new Error('Constituency ID is required')
-  }
-
-  try {
-    const url = `/api/constituency/${encodeURIComponent(constituencyId)}/impact-data`
-    console.debug('[api] GET', `${API_BASE_URL}${url}`)
-    const response = await api.get(url)
-    console.debug('[api] Constituency impact response', response.data)
-    return response.data
-  } catch (error) {
-    handleError(error)
-    throw error
-  }
-}
-
-/**
- * Get Anomaly Summary
- * Calls GET /api/anomaly-summary
- * 
- * Returns overall anomaly statistics for the dashboard
- * 
- * @returns {Promise<Object>} Anomaly summary with:
- *   - total_constituencies: number
- *   - anomaly_distribution: { critical, high, medium, low }
- *   - total_unexplained_deletions: number
- *   - potential_swing_seats: number
- */
-export const getAnomalySummary = async () => {
-  try {
-    const url = '/api/anomaly-summary'
-    console.debug('[api] GET', `${API_BASE_URL}${url}`)
-    const response = await api.get(url)
-    console.debug('[api] Anomaly summary response', response.data)
-    return response.data
-  } catch (error) {
-    handleError(error)
-    throw error
-  }
-}
-

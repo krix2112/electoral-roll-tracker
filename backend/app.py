@@ -70,6 +70,8 @@ def root():
             'uploads': '/api/uploads',
             'stats': '/api/stats',
             'dashboard': '/api/dashboard',
+            'top-anomaly': '/api/top-anomaly',
+            'anomaly-summary': '/api/anomaly-summary',
             'health': '/health'
         }
     }), 200
