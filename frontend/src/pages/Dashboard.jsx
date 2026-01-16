@@ -1,17 +1,16 @@
-import { useState, useEffect, useMemo } from 'react'
-import { DASHBOARD_CONFIG } from '../config/constants'
-import { getDashboardAggregation } from '../services/api'
-import { Card, CardContent } from '../components/ui/Card'
-import { StatCard } from '../components/ui/StatCard'
-import { Button } from '../components/ui/Button'
-import { Link } from 'react-router-dom'
-import {
-  Users, AlertTriangle, FileText, ChevronLeft, Bell,
-  RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch, Loader2, Upload,
-  MapPin, TrendingUp, Shield, Info, Eye
-} from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
+import {
+  getDashboardAggregation,
+  getTopAnomaly,
+  getConstituencyImpact,
+  getAnomalySummary
+} from '../services/api'
+import { InvestigationButton, InvestigationBadge } from '../components/InvestigationButton'
+import { ImpactPanel } from '../components/ImpactPanel'
+import { DemoSteps } from '../components/DemoSteps'
+import { MapLegend } from '../components/MapLegend'
+import { AnomalyBadge } from '../components/AnomalyBadge'
 
 function Dashboard() {
 
@@ -27,6 +26,14 @@ function Dashboard() {
   const [showAnomaliesOnly, setShowAnomaliesOnly] = useState(false)
   const [anomalyThreshold, setAnomalyThreshold] = useState(0)
   const [selectedState, setSelectedState] = useState('ALL')
+
+  // Investigation / Demo States
+  const [investigationMode, setInvestigationMode] = useState(false)
+  const [investigatedAnomaly, setInvestigatedAnomaly] = useState(null)
+  const [currentStep, setCurrentStep] = useState(-1)
+  const [completedSteps, setCompletedSteps] = useState({})
+  const [anomalySummary, setAnomalySummary] = useState(null)
+  const [isInvestigationLoading, setIsInvestigationLoading] = useState(false)
 
   // ============================================
   // DERIVED METRICS (from /api/dashboard response)
@@ -282,6 +289,70 @@ function Dashboard() {
     fetchDashboardData()
   }, [selectedState])
 
+  // Fetch Anomaly Summary
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const summary = await getAnomalySummary()
+        setAnomalySummary(summary)
+      } catch (err) {
+        console.error("Failed to load anomaly summary", err)
+      }
+    }
+    fetchSummary()
+  }, [])
+
+  // Investigation Logic
+  const handleInvestigate = async () => {
+    setIsInvestigationLoading(true)
+    try {
+      // 1. Fetch top anomaly
+      const topAnomaly = await getTopAnomaly()
+      setInvestigatedAnomaly(topAnomaly)
+      setInvestigationMode(true)
+
+      // 2. Start demo flow
+      setCurrentStep(0)
+      setCompletedSteps({ heatmap: true })
+
+      // 3. Automated progression
+      // Step 1 -> Step 2: Select Constituency
+      setTimeout(() => {
+        setCurrentStep(1)
+        setCompletedSteps(prev => ({ ...prev, constituency: true }))
+        setSelectedState(topAnomaly.state)
+
+        // Step 2 -> Step 3: Timeline Slide
+        setTimeout(() => {
+          setCurrentStep(2)
+          setCompletedSteps(prev => ({ ...prev, timeline: true }))
+          setTimelineProgress(75) // Move to Oct 2023 approx
+
+          // Step 3 -> Step 4: Analyze
+          setTimeout(() => {
+            setCurrentStep(3)
+            setCompletedSteps(prev => ({ ...prev, analyze: true }))
+          }, 1000)
+        }, 1500)
+      }, 1500)
+
+    } catch (err) {
+      console.error("Investigation failed", err)
+      setError("Failed to trigger investigation. Please try again.")
+    } finally {
+      setIsInvestigationLoading(false)
+    }
+  }
+
+  const resetInvestigation = () => {
+    setInvestigationMode(false)
+    setInvestigatedAnomaly(null)
+    setCurrentStep(-1)
+    setCompletedSteps({})
+    setTimelineProgress(100)
+    setSelectedState('ALL')
+  }
+
   // Playback Logic
   useEffect(() => {
     let interval;
@@ -344,6 +415,15 @@ function Dashboard() {
           </div>
 
           <div className="flex items-center gap-4">
+            <InvestigationBadge
+              active={investigationMode}
+              constituencyName={investigatedAnomaly?.constituency_name}
+              onClose={resetInvestigation}
+            />
+            <InvestigationButton
+              onInvestigate={handleInvestigate}
+              isLoading={isInvestigationLoading}
+            />
             <Link to="/notifications" className="relative p-2 rounded-full hover:bg-gray-50 text-gray-500 hover:text-indigo-600 transition-colors">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
@@ -378,7 +458,22 @@ function Dashboard() {
             </button>
           </div>
 
-          <div className="space-y-8">
+          {/* Guided Steps Panel */}
+          <div className="mt-6">
+            <DemoSteps
+              currentStep={currentStep}
+              completedSteps={completedSteps}
+              onStepClick={(action) => {
+                if (action === 'heatmap') {
+                  resetInvestigation()
+                } else if (action === 'timeline') {
+                  setTimelineProgress(75)
+                }
+              }}
+            />
+          </div>
+
+          <div className="mt-8 space-y-8">
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -495,6 +590,45 @@ function Dashboard() {
               {selectedState === 'ALL' ? 'National (All States)' : selectedState}
             </span>
           </motion.div>
+
+          {/* Anomaly Intelligence Section (Visible during investigation) */}
+          <AnimatePresence>
+            {investigationMode && investigatedAnomaly && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-8 overflow-hidden"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Score Badge */}
+                  <Card className="lg:col-span-1 p-6 flex flex-col items-center justify-center bg-white shadow-xl border-none ring-1 ring-gray-100">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Anomaly Score</h3>
+                    <AnomalyBadge
+                      score={investigatedAnomaly.score}
+                      confidenceLevel={investigatedAnomaly.impact_facts.confidence_level}
+                      size="lg"
+                    />
+                    <div className="mt-6 text-center">
+                      <p className="text-sm font-semibold text-gray-900">{investigatedAnomaly.constituency_name}</p>
+                      <p className="text-xs text-gray-500">{investigatedAnomaly.state}</p>
+                    </div>
+                  </Card>
+
+                  {/* Impact Panel */}
+                  <div className="lg:col-span-2">
+                    <ImpactPanel
+                      visible={true}
+                      anomalyScore={investigatedAnomaly.score}
+                      deletionCount={investigatedAnomaly.deletion_count}
+                      impactFacts={investigatedAnomaly.impact_facts}
+                      className="h-full"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Top Stats Row - ENHANCED WITH GRADIENTS */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -717,6 +851,9 @@ function Dashboard() {
             </div>
 
             <div className="flex-1 bg-white relative flex items-center justify-center p-2 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
+              {/* Map Legend */}
+              <MapLegend position="bottom-right" />
+
               {/* Map Wrapper: Constraints the visual area to match the map's aspect ratio */}
               <div className="relative h-full w-auto aspect-[612/696] max-h-[80vh]">
                 {/* Dynamic India Map Shape */}
@@ -775,8 +912,8 @@ function Dashboard() {
             <div className="p-6 border-t border-gray-100 bg-white">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900">Time Travel <span className="text-xs font-normal text-amber-600 ml-2 bg-amber-50 px-2 py-0.5 rounded-full">(Simulation)</span></h3>
-                  <p className="text-sm text-gray-500">Illustrative visualization of roll change behavior over time</p>
+                  <h3 className="font-semibold text-gray-900">Timeline Analysis</h3>
+                  <p className="text-sm text-gray-500">Unexplained deletions and roll changes relative to 2024 General Election</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => {
                   if (timelineProgress >= 100) setTimelineProgress(0);
@@ -813,12 +950,26 @@ function Dashboard() {
               </div>
 
               <div className="flex justify-between text-xs font-medium text-gray-400">
-                <span>Jan 2026</span>
-                <span>Jun 2026</span>
-                <span>Dec 2026</span>
+                <div className="flex flex-col">
+                  <span>Viewing state as of:</span>
+                  <span className="text-indigo-600 font-bold">{getCurrentMonth()}</span>
+                </div>
+                <div className="text-right">
+                  <span className="block text-amber-600 font-semibold">T-minus 6 months</span>
+                  <span>to 2024 General Election</span>
+                </div>
               </div>
             </div>
           </Card>
+
+          {/* Data Source Footnote */}
+          <div className="mb-6 px-2">
+            <p className="text-[10px] text-gray-400 italic flex items-center gap-1">
+              <Info className="h-3 w-3" />
+              Analysis based on synthetic data simulating ECI publication formats.
+              Unexplained deletions flagged based on statistical drift thresholds.
+            </p>
+          </div>
 
           {/* Insights Card */}
           {!loading && insights.length > 0 && (

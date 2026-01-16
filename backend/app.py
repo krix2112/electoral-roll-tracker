@@ -15,6 +15,7 @@ from routes.uploads import uploads_bp
 from routes.stats import stats_bp
 from routes.notifications import notifications_bp
 from routes.diffviewer import diffviewer_bp
+from routes.investigation import investigation_bp
 
 load_dotenv()
 
@@ -47,6 +48,7 @@ app.register_blueprint(uploads_bp)
 app.register_blueprint(stats_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(diffviewer_bp)
+app.register_blueprint(investigation_bp)
 
 @app.route('/health', methods=['GET'])
 def health_check():

@@ -816,7 +816,7 @@ function DiffViewerContent() {
                       <div className="p-1.5 bg-rose-100 rounded-lg text-rose-600">
                         <Trash2 className="h-4 w-4" />
                       </div>
-                      <p className="text-rose-900/60 text-[10px] font-black uppercase tracking-widest">Deletions</p>
+                      <p className="text-rose-900/60 text-[10px] font-black uppercase tracking-widest">Unexplained Deletions</p>
                     </div>
                     <h3 className="text-5xl font-black text-rose-950 tracking-tighter mb-1">
                       -<CountUp value={summaryStats.deletions} />
@@ -924,7 +924,7 @@ function DiffViewerContent() {
                       >
                         <option value="All">All Changes</option>
                         <option value="Addition">Additions Only</option>
-                        <option value="Deletion">Deletions Only</option>
+                        <option value="Deletion">Unexplained Deletions Only</option>
                         <option value="Modification">Modifications Only</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -1100,7 +1100,7 @@ function DiffViewerContent() {
                         <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', paddingBottom: '20px' }} />
                         <Bar dataKey="full.Addition" name="Additions" stackId="a" fill="#10B981" radius={[0, 0, 0, 0]} barSize={40} />
                         <Bar dataKey="full.Modification" name="Modifications" stackId="a" fill="#F59E0B" radius={[0, 0, 0, 0]} barSize={40} />
-                        <Bar dataKey="full.Deletion" name="Deletions" stackId="a" fill="#F43F5E" radius={[6, 6, 0, 0]} barSize={40} />
+                        <Bar dataKey="full.Deletion" name="Unexplained Deletions" stackId="a" fill="#F43F5E" radius={[6, 6, 0, 0]} barSize={40} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1429,8 +1429,8 @@ function DiffViewerContent() {
             )}
           </AnimatePresence>
 
-        </div >
-      </main >
-    </div >
+        </div>
+      </main>
+    </div>
   );
 }
