@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
     ChevronLeft, Loader2, Search, RefreshCw, FileSearch,
-    Shield, Bell, Upload
+    Shield, Bell, Upload, ChevronDown
 } from 'lucide-react'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -24,15 +24,39 @@ export default function ForensicDashboard() {
     const [error, setError] = useState(null)
     const [forensicData, setForensicData] = useState(null)
     const [investigating, setInvestigating] = useState(false)
+    const [uploads, setUploads] = useState([])
+    const [selectedUploadId, setSelectedUploadId] = useState('')
 
-    // Auto-load demo data on mount
+    // Auto-load demo data on mount and fetch uploads
     useEffect(() => {
         loadTopAnomaly()
+        fetchUploads()
     }, [])
+
+    const fetchUploads = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/api/uploads`)
+            if (res.ok) {
+                const data = await res.json()
+                setUploads(data)
+            }
+        } catch (e) {
+            console.error("Failed to load uploads", e)
+        }
+    }
+
+    const handleUploadSelect = (e) => {
+        const uploadId = e.target.value
+        setSelectedUploadId(uploadId)
+        if (uploadId) {
+            runAnalysis(uploadId)
+        }
+    }
 
     const loadTopAnomaly = async () => {
         setInvestigating(true)
         setError(null)
+        setSelectedUploadId('')
 
         try {
             console.log("Fetching from:", `${API_BASE}/api/top-anomaly`)
@@ -142,6 +166,26 @@ export default function ForensicDashboard() {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        {/* Upload Selector */}
+                        <div className="hidden md:flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200">
+                            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Analyze:</span>
+                            <div className="relative">
+                                <select
+                                    className="appearance-none bg-transparent text-sm font-medium text-gray-700 pr-8 focus:outline-none cursor-pointer"
+                                    value={selectedUploadId}
+                                    onChange={handleUploadSelect}
+                                >
+                                    <option value="">Demo Anomaly (Default)</option>
+                                    {uploads.map(u => (
+                                        <option key={u.upload_id} value={u.upload_id}>
+                                            {u.filename}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+
                         <Button
                             onClick={loadTopAnomaly}
                             disabled={investigating}
