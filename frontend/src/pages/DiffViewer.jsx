@@ -10,7 +10,7 @@ import { SegmentDistribution } from "@/components/diff-viewer/SegmentDistributio
 import { ConstituencyHeatmap } from "@/components/diff-viewer/ConstituencyHeatmap";
 import { ForensicAuditObservations } from "@/components/diff-viewer/ForensicAuditObservations";
 import { DetailedChangeLog } from "@/components/diff-viewer/DetailedChangeLog";
-import { RadarChart as ForensicRadarChart } from "@/components/diff-viewer/RadarChart";
+import { ForensicRadarChart } from "@/components/diff-viewer/RadarChart";
 import { VolumeRiskScatter } from "@/components/diff-viewer/ScatterPlot";
 import { ConstituencyTreemap } from "@/components/diff-viewer/TreemapChart";
 import { CircularProgressDashboard } from "@/components/diff-viewer/CircularProgress";
@@ -31,7 +31,7 @@ export default function DiffViewer() {
   const [uploads, setUploads] = useState([]);
   const [comparisonData, setComparisonData] = useState({ added: [], deleted: [], modified: [] });
   const [comparisonStats, setComparisonStats] = useState(null);
-  
+
   const stateUploads = location.state?.uploads || [];
   const stateComparison = location.state?.comparison;
 
@@ -60,16 +60,16 @@ export default function DiffViewer() {
             // setError("Not enough files to compare");
             // For now, allow rendering mock data even if fetch fails, or show loading
           } else {
-             uploadsToCompare = apiUploads.slice(0, 2);
+            uploadsToCompare = apiUploads.slice(0, 2);
           }
         }
-        
+
         if (uploadsToCompare.length >= 2) {
-            setUploads(uploadsToCompare);
-            const sorted = [...uploadsToCompare].sort((a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at));
-            const result = await compareRolls(sorted[0].upload_id, sorted[1].upload_id);
-            setComparisonData(result);
-            setComparisonStats(result.stats);
+          setUploads(uploadsToCompare);
+          const sorted = [...uploadsToCompare].sort((a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at));
+          const result = await compareRolls(sorted[0].upload_id, sorted[1].upload_id);
+          setComparisonData(result);
+          setComparisonStats(result.stats);
         }
         setLoading(false);
       } catch (err) {
@@ -96,7 +96,7 @@ export default function DiffViewer() {
         <AnalysisHeader />
 
         {/* Content Area */}
-        <motion.div 
+        <motion.div
           className="p-8 space-y-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
