@@ -177,6 +177,27 @@ def get_top_anomaly():
         return jsonify({'error': str(e)}), 500
 
 
+@investigation_bp.route('/api/constituencies', methods=['GET'])
+def get_all_constituencies():
+    """List all constituencies and their available snapshots"""
+    try:
+        if not os.path.exists(CONSTITUENCIES_JSON):
+            return jsonify([])
+            
+        with open(CONSTITUENCIES_JSON, 'r') as f:
+            constituencies = json.load(f)
+            
+        # Add snapshot counts
+        for const in constituencies:
+            snapshots = [f for f in os.listdir(SNAPSHOTS_DIR) if f.startswith(const['id'])]
+            const['snapshot_count'] = len(snapshots)
+            const['periods'] = sorted([f.replace(f"{const['id']}_", "").replace(".json", "").replace("_", "-") for f in snapshots])
+            
+        return jsonify(constituencies), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @investigation_bp.route('/api/anomaly-summary', methods=['GET'])
 def get_anomaly_summary():
     """Summary of all constituencies using JSON data if available"""
