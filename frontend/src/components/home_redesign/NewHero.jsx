@@ -6,8 +6,8 @@ import Particles from '../ui/Particles';
 
 export function NewHero() {
     const [stats, setStats] = useState({
-        constituencies: '543',
-        voters: '450M+',
+        constituencies: '0',
+        voters: '0',
         anomalies: '0'
     });
     const [loading, setLoading] = useState(true);

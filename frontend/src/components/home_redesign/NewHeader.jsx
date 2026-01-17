@@ -206,7 +206,7 @@ export function NewHeader() {
                         )}
 
                         {/* Upload Data Button */}
-                        <Link to="/compare">
+                        <Link to="/upload">
                             <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all">
                                 <Upload className="w-4 h-4" />
                                 Upload Data
@@ -256,7 +256,7 @@ export function NewHeader() {
                                     <Bell className="w-5 h-5" /> Notifications
                                     <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">3</span>
                                 </button>
-                                <Link to="/compare">
+                                <Link to="/upload">
                                     <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#FF6B4A] text-white rounded-lg text-sm font-medium">
                                         <Upload className="w-4 h-4" /> Upload Data
                                     </button>
