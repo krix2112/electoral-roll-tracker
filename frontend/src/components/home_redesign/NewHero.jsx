@@ -5,6 +5,8 @@ import logo from '../../assets/logo-new.png';
 import api, { getDashboardAggregation } from '../../services/api';
 import Particles from '../ui/Particles';
 
+import heroBg from '../../assets/hero-bg-eci.png';
+
 export function NewHero() {
     const [stats, setStats] = useState({
         constituencies: '0',
@@ -54,6 +56,15 @@ export function NewHero() {
 
     return (
         <section id="home" className="relative min-h-screen pt-24 pb-12 lg:pt-32 overflow-hidden flex items-center">
+            {/* Background Image with Blending */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src={heroBg}
+                    alt="Background"
+                    className="w-full h-full object-cover opacity-[0.27]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-white/90"></div>
+            </div>
             {/* Particle Animation Background */}
             <Particles
                 particleCount={150}
