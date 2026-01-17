@@ -27,19 +27,13 @@ export default function ForensicDashboard() {
     const [uploads, setUploads] = useState([])
     const [selectedUploadId, setSelectedUploadId] = useState('')
 
-    // Auto-load latest upload if available, else demo
+    // Always load top anomaly from national dataset by default
     useEffect(() => {
         const init = async () => {
-            const uploadedFiles = await fetchUploads()
-            if (uploadedFiles && uploadedFiles.length > 0) {
-                // Auto-select the most recent file (uploads are ordered by date desc from API)
-                const latest = uploadedFiles[0]
-                setSelectedUploadId(latest.upload_id)
-                runAnalysis(latest.upload_id)
-            } else {
-                // Fallback to demo
-                loadTopAnomaly()
-            }
+            // Load uploads for the dropdown selector only
+            await fetchUploads()
+            // Default to the static top anomaly analysis
+            loadTopAnomaly()
         }
         init()
     }, [])
