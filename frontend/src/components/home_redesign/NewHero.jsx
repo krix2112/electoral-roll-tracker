@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import logo from '../../assets/logo-new.png';
+import api, { getDashboardAggregation } from '../../services/api';
 import Particles from '../ui/Particles';
 
 export function NewHero() {
@@ -15,36 +16,31 @@ export function NewHero() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                // Fetch from dashboard API
-                const response = await fetch('http://localhost:5000/api/dashboard');
-                if (response.ok) {
-                    const data = await response.json();
+                // Fetch from dashboard API using centralized service
+                const data = await getDashboardAggregation();
 
-                    // Format voters count
-                    let votersDisplay = data.total_voters?.toString() || '0';
-                    if (data.total_voters > 1000000) {
-                        votersDisplay = `${(data.total_voters / 1000000).toFixed(1)}M+`;
-                    } else if (data.total_voters > 1000) {
-                        votersDisplay = `${(data.total_voters / 1000).toFixed(0)}K+`;
-                    }
-
-                    setStats({
-                        constituencies: data.constituencies_count?.toString() || '543',
-                        voters: votersDisplay,
-                        anomalies: Math.floor(data.total_voters * 0.001)?.toString() || '0' // Mock anomalies for now
-                    });
+                // Format voters count
+                let votersDisplay = data.total_voters?.toString() || '0';
+                if (data.total_voters > 1000000) {
+                    votersDisplay = `${(data.total_voters / 1000000).toFixed(1)}M+`;
+                } else if (data.total_voters > 1000) {
+                    votersDisplay = `${(data.total_voters / 1000).toFixed(0)}K+`;
                 }
 
-                // Also try /api/stats for anomalies
-                const statsResponse = await fetch('http://localhost:5000/api/stats');
-                if (statsResponse.ok) {
-                    const statsData = await statsResponse.json();
-                    if (statsData.anomalies?.value) {
-                        setStats(prev => ({
-                            ...prev,
-                            anomalies: statsData.anomalies.value
-                        }));
-                    }
+                setStats(prev => ({
+                    ...prev,
+                    constituencies: data.constituencies_count?.toString() || '0',
+                    voters: votersDisplay,
+                    anomalies: Math.floor(data.total_voters * 0.001)?.toString() || '0' // Mock anomalies for now
+                }));
+
+                // Also try /api/stats for anomalies if available
+                const statsResponse = await api.get('/api/stats');
+                if (statsResponse.data?.anomalies?.value) {
+                    setStats(prev => ({
+                        ...prev,
+                        anomalies: statsResponse.data.anomalies.value
+                    }));
                 }
             } catch (error) {
                 console.log('Using default stats - backend not available:', error.message);
