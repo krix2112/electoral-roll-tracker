@@ -117,7 +117,15 @@ def get_dashboard_aggregation():
         # ---------------------------------------------------------
         # Load CSV safely
         if not os.path.exists(NATIONAL_CSV_PATH):
-            return jsonify({'error': 'National dataset file not found'}), 404
+            # If no DB data AND no CSV, return 0s (Empty State) instead of 404
+            return jsonify({
+                'total_voters': 0,
+                'states_count': 0,
+                'constituencies_count': 0,
+                'top_constituencies': [],
+                'filter_applied': state_filter if state_filter else 'ALL',
+                'data_source': 'empty'
+            }), 200
         
         try:
             # Try reading with common encodings
