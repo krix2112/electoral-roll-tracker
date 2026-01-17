@@ -68,49 +68,59 @@ def get_dashboard_aggregation():
         state_filter = request.args.get('state', '').strip()
 
         # ---------------------------------------------------------
+        # ---------------------------------------------------------
         # PRIORITY 1: USER UPLOADS (Dynamic Data)
         # ---------------------------------------------------------
         # Check if we have any uploads in the database
-        user_uploads_query = ElectoralRoll.query
-        if state_filter and state_filter.upper() not in ['ALL', '']:
-             user_uploads_query = user_uploads_query.filter(ElectoralRoll.state == state_filter)
-        
-        user_uploads = user_uploads_query.all()
-        
-        # If user has uploaded data, use THAT instead of static CSV
-        # Exception: If specific state filter yields 0 results but we have uploads elsewhere, 
-        # we might want to show 0? Or fallback? 
-        # Logic: If GLOBAL uploads exist > 0, we serve Dynamic Mode.
-        global_upload_count = ElectoralRoll.query.count()
-        
-        if global_upload_count > 0:
-            # Aggregate from DB
-            total_voters = sum(u.row_count for u in user_uploads)
-            states = set(u.state for u in user_uploads if u.state)
-            states_count = len(states)
+        # Wrap in try/except to handle DB connection failures
+        try:
+            print(f"DEBUG: Checking stats...")
+            print(f"DEBUG: CSV Path: {NATIONAL_CSV_PATH}")
+            print(f"DEBUG: CSV Exists: {os.path.exists(NATIONAL_CSV_PATH)}")
+
+            user_uploads_query = ElectoralRoll.query
+            if state_filter and state_filter.upper() not in ['ALL', '']:
+                 user_uploads_query = user_uploads_query.filter(ElectoralRoll.state == state_filter)
             
-            # Treat each upload as a "Constituency" or "Roll Segment"
-            constituencies_count = len(user_uploads)
+            user_uploads = user_uploads_query.all()
             
-            # Sort by size to mimic "Top Constituencies"
-            sorted_uploads = sorted(user_uploads, key=lambda x: x.row_count, reverse=True)
-            top_constituencies = [
-                {
-                    'constituency': u.filename, 
-                    'voter_count': u.row_count,
-                    'state': u.state or 'Unknown'
-                }
-                for u in sorted_uploads[:100]
-            ]
+            # If user has uploaded data, use THAT instead of static CSV
+            # Exception: If specific state filter yields 0 results but we have uploads elsewhere, 
+            # we might want to show 0? Or fallback? 
+            # Logic: If GLOBAL uploads exist > 0, we serve Dynamic Mode.
+            global_upload_count = ElectoralRoll.query.count()
             
-            return jsonify({
-                'total_voters': total_voters,
-                'states_count': states_count,
-                'constituencies_count': constituencies_count,
-                'top_constituencies': top_constituencies,
-                'filter_applied': state_filter if state_filter else 'ALL',
-                'data_source': 'user_uploads'
-            }), 200
+            if global_upload_count > 0:
+                # Aggregate from DB
+                total_voters = sum(u.row_count for u in user_uploads)
+                states = set(u.state for u in user_uploads if u.state)
+                states_count = len(states)
+                
+                # Treat each upload as a "Constituency" or "Roll Segment"
+                constituencies_count = len(user_uploads)
+                
+                # Sort by size to mimic "Top Constituencies"
+                sorted_uploads = sorted(user_uploads, key=lambda x: x.row_count, reverse=True)
+                top_constituencies = [
+                    {
+                        'constituency': u.filename, 
+                        'voter_count': u.row_count,
+                        'state': u.state or 'Unknown'
+                    }
+                    for u in sorted_uploads[:100]
+                ]
+                
+                return jsonify({
+                    'total_voters': total_voters,
+                    'states_count': states_count,
+                    'constituencies_count': constituencies_count,
+                    'top_constituencies': top_constituencies,
+                    'filter_applied': state_filter if state_filter else 'ALL',
+                    'data_source': 'user_uploads'
+                }), 200
+        except Exception as e:
+            print(f"DEBUG: DB Error (falling back to CSV): {e}")
+            # Proceed to Priority 2 (CSV)
 
         # ---------------------------------------------------------
         # PRIORITY 2: STATIC CSV (Demo Data)
