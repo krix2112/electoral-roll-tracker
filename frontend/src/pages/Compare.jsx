@@ -550,7 +550,7 @@ export default function Compare() {
 
       {/* Footer - Consistent with Home.jsx */}
       <footer className="bg-[#0f172a] text-white py-12 text-center">
-        <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-20 w-auto mx-auto mb-4" />
+        <img src="/assets/logo-new.png" alt="MatSetu" className="h-20 w-auto mx-auto mb-4" />
         <p className="font-semibold text-lg mb-2">Matsetu</p>
         <p className="text-gray-400 text-sm mb-8">Electoral Roll Forensic Audit System</p>
         <p className="text-gray-600 text-xs">© 2026 Matsetu. A project for ensuring electoral transparency and integrity.</p>
