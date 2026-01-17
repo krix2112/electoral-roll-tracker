@@ -1,57 +1,31 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 
-const peakData = [
-  { date: "Apr 4", value: 0 },
-  { date: "Feb 5", value: 0 },
-  { date: "Jan 3", value: 0 },
-  { date: "Oct 7", value: 0 },
-  { date: "Aug 7", value: 0 },
-  { date: "Jul 5", value: 0 },
-  { date: "Apr 3", value: 0 },
-  { date: "Mar 9", value: 0 },
-  { date: "Nov 12", value: 2 },
-  { date: "Dec 29", value: 0 },
-  { date: "Feb 1", value: 350 },
-];
-
-const intensityData = [
-  { date: "May", value: 15 },
-  { date: "Jun", value: 22 },
-  { date: "Jul", value: 18 },
-  { date: "Aug", value: 28 },
-  { date: "Sep", value: 35 },
-  { date: "Oct", value: 42 },
-  { date: "Nov", value: 95 },
-  { date: "Dec", value: 180 },
-  { date: "Jan", value: 320 },
-  { date: "Feb", value: 520 },
-];
-
-// interface Props implicit
 interface PeakDetectionChartProps {
   data: {
     added: any[];
     deleted: any[];
     modified: any[];
   };
+  temporalData: Array<{ date: string; value: number; additions: number; deletions: number }>;
+  metrics: {
+    totalChanges: number;
+  };
 }
 
-export function PeakDetectionChart({ data }: PeakDetectionChartProps) {
-  const total = data ? (data.added.length + data.deleted.length + data.modified.length) : 0;
+export function PeakDetectionChart({ data, temporalData, metrics }: PeakDetectionChartProps) {
+  // Use temporal data if available, otherwise create fallback
+  const chartData = temporalData.length > 0 ? temporalData : [
+    { date: "Start", value: 0 },
+    { date: "Current", value: metrics.totalChanges }
+  ];
 
-  // Update last data point to reflect real total
-  const currentPeakData = [...peakData];
-  currentPeakData[currentPeakData.length - 1] = {
-    ...currentPeakData[currentPeakData.length - 1],
-    value: total > 0 ? total : 350
-  };
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-semibold text-gray-900">Peak Event Detection</h3>
           <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-medium">
-            PEAK: {total > 0 ? total : 350} CHANGES (CURRENT)
+            PEAK: {metrics.totalChanges.toLocaleString()} CHANGES (CURRENT)
           </span>
         </div>
         <p className="text-sm text-gray-600">
@@ -60,7 +34,7 @@ export function PeakDetectionChart({ data }: PeakDetectionChartProps) {
       </div>
 
       <ResponsiveContainer width="100%" height={200}>
-        <AreaChart data={currentPeakData}>
+        <AreaChart data={chartData}>
           <defs>
             <linearGradient id="peakGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -91,6 +65,9 @@ export function PeakDetectionChart({ data }: PeakDetectionChartProps) {
             stroke="#6366f1"
             strokeWidth={2}
             fill="url(#peakGradient)"
+            isAnimationActive={true}
+            animationDuration={1200}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -99,6 +76,20 @@ export function PeakDetectionChart({ data }: PeakDetectionChartProps) {
 }
 
 export function ForensicIntensitySignal() {
+  // Hardcoded intensity progression for now - can be enhanced with real temporal patterns
+  const intensityData = [
+    { date: "May", value: 15 },
+    { date: "Jun", value: 22 },
+    { date: "Jul", value: 18 },
+    { date: "Aug", value: 28 },
+    { date: "Sep", value: 35 },
+    { date: "Oct", value: 42 },
+    { date: "Nov", value: 95 },
+    { date: "Dec", value: 180 },
+    { date: "Jan", value: 320 },
+    { date: "Feb", value: 520 },
+  ];
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="mb-4">
@@ -140,6 +131,9 @@ export function ForensicIntensitySignal() {
             stroke="#8b5cf6"
             strokeWidth={3}
             fill="url(#intensityGradient)"
+            isAnimationActive={true}
+            animationDuration={1200}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>

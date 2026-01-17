@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 interface ForensicCompositionProps {
   data: {
@@ -13,6 +13,7 @@ interface ForensicCompositionProps {
 
 export function ForensicComposition({ data: comparisonData }: ForensicCompositionProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [displayTotal, setDisplayTotal] = useState(0);
 
   const chartData = useMemo(() => {
     return [
@@ -22,6 +23,31 @@ export function ForensicComposition({ data: comparisonData }: ForensicCompositio
   }, [comparisonData]);
 
   const totalEvents = comparisonData.added.length + comparisonData.deleted.length + comparisonData.modified.length;
+
+  // Count-up animation for center value
+  useEffect(() => {
+    let startTime: number;
+    const duration = 1000;
+    const startValue = 0;
+    const endValue = totalEvents;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const current = Math.floor(startValue + (endValue - startValue) * easeOut);
+
+      setDisplayTotal(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [totalEvents]);
   const growthType = comparisonData.added.length > comparisonData.deleted.length ? "GROWTH-ORIENTED" : "CLEANUP-SKEWED";
   const growthColor = comparisonData.added.length > comparisonData.deleted.length ? "text-emerald-600" : "text-red-600";
 
@@ -71,6 +97,9 @@ export function ForensicComposition({ data: comparisonData }: ForensicCompositio
                   dataKey="value"
                   onMouseEnter={(_, index) => setActiveIndex(index)}
                   onMouseLeave={() => setActiveIndex(null)}
+                  isAnimationActive={true}
+                  animationDuration={1000}
+                  animationEasing="ease-out"
                 >
                   {chartData.map((entry, index) => (
                     <Cell
@@ -97,7 +126,7 @@ export function ForensicComposition({ data: comparisonData }: ForensicCompositio
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <div className="text-4xl font-bold text-gray-900">{totalEvents.toLocaleString()}</div>
+              <div className="text-4xl font-bold text-gray-900">{displayTotal.toLocaleString()}</div>
               <div className="text-xs text-gray-500 uppercase tracking-wide">Events</div>
             </motion.div>
           </div>
