@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Menu, X, Bell, Upload } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -6,11 +6,14 @@ import logo from '../../assets/logo-new.png';
 
 export function NewHeader() {
     const [scrolled, setScrolled] = useState(false);
+    const [activeSection, setActiveSection] = useState('home');
     const location = useLocation();
+    const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const notificationRef = useRef(null);
 
+    // Scroll listener for header background
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 50);
@@ -18,6 +21,33 @@ export function NewHeader() {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // ScrollSpy Logic - Track active section
+    useEffect(() => {
+        if (location.pathname !== '/') {
+            setActiveSection(''); // No active section if not on home
+            return;
+        }
+
+        const handleScrollSpy = () => {
+            const sections = ['home', 'features', 'about'];
+
+            // Find the current section
+            for (const sectionId of sections) {
+                const element = document.getElementById(sectionId);
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    // If element is roughly in view (top 1/3 of viewport)
+                    if (rect.top <= 150 && rect.bottom >= 150) {
+                        setActiveSection(sectionId);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleScrollSpy);
+        return () => window.removeEventListener('scroll', handleScrollSpy);
+    }, [location.pathname]);
 
     // Close notifications when clicking outside
     useEffect(() => {
@@ -32,11 +62,35 @@ export function NewHeader() {
         };
     }, [notificationRef]);
 
+    const scrollToSection = (sectionId) => {
+        if (location.pathname !== '/') {
+            navigate('/');
+            // Wait for navigation then scroll
+            setTimeout(() => {
+                const element = document.getElementById(sectionId);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    setActiveSection(sectionId);
+                }
+            }, 100);
+        } else {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                setActiveSection(sectionId);
+            } else if (sectionId === 'home') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setActiveSection('home');
+            }
+        }
+        setMobileMenuOpen(false);
+    };
+
     const navItems = [
-        { label: 'Home', href: '/' },
-        { label: 'Features', href: '#features' },
-        { label: 'About', href: '#about' },
-        { label: 'Dashboard', href: '/dashboard' },
+        { label: 'Home', id: 'home', type: 'scroll' },
+        { label: 'Features', id: 'features', type: 'scroll' },
+        { label: 'About', id: 'about', type: 'scroll' },
+        { label: 'Dashboard', href: '/dashboard', type: 'link' },
     ];
 
     return (
@@ -47,31 +101,50 @@ export function NewHeader() {
             <div className="max-w-7xl mx-auto px-6">
                 <div className="flex items-center justify-between">
                     {/* Logo - ALWAYS VISIBLE now */}
-                    <Link
-                        to="/"
-                        className="flex items-center gap-3 transition-opacity duration-300"
+                    <div
+                        onClick={() => scrollToSection('home')}
+                        className="flex items-center gap-3 transition-opacity duration-300 cursor-pointer"
                     >
                         <img src={logo} alt="MatSetu" className="h-10" />
-                    </Link>
+                    </div>
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-8">
                         {navItems.map((item) => {
-                            const isHashLink = item.href.startsWith('#');
-                            const isHome = location.pathname === '/';
+                            const isActive = activeSection === item.id;
 
-                            // If it's a hash link and we're not on home, prepend /
-                            const href = (isHashLink && !isHome) ? `/${item.href}` : item.href;
+                            if (item.type === 'link') {
+                                return (
+                                    <Link
+                                        key={item.label}
+                                        to={item.href}
+                                        className={`text-sm font-medium transition-colors relative group ${location.pathname === item.href
+                                            ? 'text-[#2D3E8F] font-semibold'
+                                            : 'text-gray-600 hover:text-[#2D3E8F]'
+                                            }`}
+                                    >
+                                        {item.label}
+                                        {/* Hover Underline */}
+                                        <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B] transition-all duration-300 ${location.pathname === item.href ? 'w-full' : 'w-0 group-hover:w-full'
+                                            }`} />
+                                    </Link>
+                                );
+                            }
 
                             return (
-                                <a
+                                <button
                                     key={item.label}
-                                    href={href}
-                                    className="text-gray-600 hover:text-[#2D3E8F] transition-colors text-sm font-medium relative group"
+                                    onClick={() => scrollToSection(item.id)}
+                                    className={`text-sm font-medium transition-all relative group ${isActive
+                                        ? 'text-[#2D3E8F] font-semibold'
+                                        : 'text-gray-600 hover:text-[#2D3E8F]'
+                                        }`}
                                 >
                                     {item.label}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B] transition-all duration-300 group-hover:w-full" />
-                                </a>
+                                    {/* Active/Hover Underline */}
+                                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B] transition-all duration-300 ${isActive ? 'w-full shadow-[0_0_8px_rgba(255,107,74,0.5)]' : 'w-0 group-hover:w-full'
+                                        }`} />
+                                </button>
                             );
                         })}
                     </nav>
@@ -127,7 +200,7 @@ export function NewHeader() {
                                     </div>
                                 </div>
                                 <div className="p-3 border-t border-gray-50 text-center bg-gray-50/50">
-                                    <Link to="/dashboard" className="text-xs font-medium text-gray-600 hover:text-[#FF6B4A]">View all notifications</Link>
+                                    <Link to="/notifications" className="text-xs font-medium text-gray-600 hover:text-[#FF6B4A]">View all notifications</Link>
                                 </div>
                             </div>
                         )}
@@ -154,16 +227,30 @@ export function NewHeader() {
                 {mobileMenuOpen && (
                     <div className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 bg-white rounded-xl p-4 shadow-xl">
                         <nav className="flex flex-col gap-4">
-                            {navItems.map((item) => (
-                                <a
-                                    key={item.label}
-                                    href={item.href}
-                                    className="text-gray-600 hover:text-[#2D3E8F] transition-colors block py-2"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    {item.label}
-                                </a>
-                            ))}
+                            {navItems.map((item) => {
+                                if (item.type === 'link') {
+                                    return (
+                                        <Link
+                                            key={item.label}
+                                            to={item.href}
+                                            className="text-gray-600 hover:text-[#2D3E8F] transition-colors block py-2"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    );
+                                }
+                                return (
+                                    <button
+                                        key={item.label}
+                                        onClick={() => scrollToSection(item.id)}
+                                        className={`text-left block py-2 transition-colors ${activeSection === item.id ? 'text-[#2D3E8F] font-semibold' : 'text-gray-600 hover:text-[#2D3E8F]'
+                                            }`}
+                                    >
+                                        {item.label}
+                                    </button>
+                                );
+                            })}
                             <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
                                 <button className="flex items-center gap-2 text-gray-600 font-medium py-2">
                                     <Bell className="w-5 h-5" /> Notifications

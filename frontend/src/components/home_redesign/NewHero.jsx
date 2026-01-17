@@ -57,7 +57,7 @@ export function NewHero() {
     }, []);
 
     return (
-        <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-white via-gray-50 to-white pt-24 md:pt-32">
+        <section id="home" className="relative min-h-screen pt-24 pb-12 lg:pt-32 overflow-hidden flex items-center">
             {/* Particle Animation Background */}
             <Particles
                 particleCount={150}

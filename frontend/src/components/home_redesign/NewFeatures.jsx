@@ -5,7 +5,7 @@ export function NewFeatures() {
         {
             icon: Search,
             title: 'Anomaly Detection',
-            description: 'AI-powered detection of suspicious voter roll changes across all constituencies.',
+            description: 'AI-powered detection of suspicious voter roll changes across 543 constituencies.',
             gradient: 'from-blue-500 to-cyan-500',
             bgGradient: 'from-blue-500/10 to-cyan-500/5'
         },
@@ -19,7 +19,7 @@ export function NewFeatures() {
         {
             icon: Users,
             title: 'Real-time Monitoring',
-            description: 'Track 450M+ registered voters across all Indian states and territories.',
+            description: 'Track 450M+ registered voters across all Indian states and union territories.',
             gradient: 'from-amber-500 to-orange-500',
             bgGradient: 'from-amber-500/10 to-orange-500/5'
         },
@@ -50,6 +50,11 @@ export function NewFeatures() {
         <section id="features" className="py-24 bg-white relative overflow-hidden">
             {/* Background Decorations */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-50/50 rounded-full blur-3xl -translate-y-1/2" />
+                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-50/50 rounded-full blur-3xl translate-y-1/2" />
+            </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto px-6">
                 {/* Section Header */}
                 <div className="text-center mb-16">
                     {/* Highlighted Features Badge */}

@@ -43,22 +43,23 @@ export function InvestigationButton({ onInvestigate, onAnomalyFound, isLoading =
             animate={{ opacity: 1, y: 0 }}
             className={`relative group ${className}`}
         >
-            {/* Outer Glow Effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-full opacity-30 group-hover:opacity-60 blur-md transition duration-500 group-hover:duration-200" />
+            {/* Outer Glow Effect - Updated to Indigo/Purple */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full opacity-30 group-hover:opacity-60 blur-md transition duration-500 group-hover:duration-200" />
 
             <Button
                 onClick={handleClick}
                 disabled={loading}
                 className={`
                     relative z-10 
-                    bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B]
-                    hover:from-[#e55a3b] hover:to-[#ff7d57]
+                    bg-gradient-to-r from-indigo-600 to-purple-600
+                    hover:from-indigo-500 hover:to-purple-500
                     text-white font-semibold tracking-wide
-                    shadow-[0_2px_15px_-3px_rgba(255,107,74,0.4)]
-                    hover:shadow-[0_8px_25px_-5px_rgba(255,107,74,0.6)]
-                    transition-all duration-300
-                    px-8 py-3 rounded-full border border-orange-400/30
+                    shadow-[0_4px_15px_-3px_rgba(79,70,229,0.4)]
+                    hover:shadow-[0_10px_30px_-5px_rgba(79,70,229,0.6)]
+                    transition-all duration-300 ease-out
+                    px-8 py-3 rounded-full border border-indigo-400/30
                     overflow-hidden
+                    transform hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0.5
                     ${loading ? 'cursor-wait' : 'cursor-pointer'}
                 `}
             >

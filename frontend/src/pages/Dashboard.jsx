@@ -15,13 +15,27 @@ import { Link } from 'react-router-dom'
 import {
   Users, AlertTriangle, FileText, ChevronLeft, Bell,
   RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch, Loader2, Upload,
-  MapPin, TrendingUp, Shield, Info, Eye
+  MapPin, TrendingUp, Shield, Info, Eye, Home
 } from 'lucide-react'
 import { InvestigationButton, InvestigationBadge } from '../components/InvestigationButton'
 import { ImpactPanel } from '../components/ImpactPanel'
 import { DemoSteps } from '../components/DemoSteps'
 import { MapLegend } from '../components/MapLegend'
 import { AnomalyBadge } from '../components/AnomalyBadge'
+
+const FilterCard = ({ title, icon: Icon, children, className = '', gradient = 'from-gray-50 to-white', iconColor = 'text-indigo-600', iconBg = 'bg-indigo-50' }) => (
+  <div className={`group bg-white/70 backdrop-blur-xl rounded-3xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 overflow-hidden ${className}`}>
+    <div className={`px-5 py-4 bg-gradient-to-r ${gradient} border-b border-white/40 flex items-center gap-3`}>
+      <div className={`w-8 h-8 rounded-xl ${iconBg} shadow-sm border border-white/60 flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>
+        <Icon className={`h-4 w-4 ${iconColor}`} />
+      </div>
+      <span className="text-[11px] font-extrabold text-gray-600 uppercase tracking-[0.2em]">{title}</span>
+    </div>
+    <div className="p-5">
+      {children}
+    </div>
+  </div>
+)
 
 function Dashboard() {
 
@@ -37,6 +51,13 @@ function Dashboard() {
   const [showAnomaliesOnly, setShowAnomaliesOnly] = useState(false)
   const [anomalyThreshold, setAnomalyThreshold] = useState(0)
   const [selectedState, setSelectedState] = useState('ALL')
+
+  // Advanced Filters
+  const [timeRange, setTimeRange] = useState('ALL') // 'TODAY', '7_DAYS', '30_DAYS', 'CUSTOM'
+  const [anomalyType, setAnomalyType] = useState('ALL') // 'SPIKE', 'DROP', 'IRREGULAR', 'MISSING'
+  const [severityLevel, setSeverityLevel] = useState('ALL') // 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'
+  const [minConfidence, setMinConfidence] = useState(0) // 0.0 - 1.0
+  const [regionType, setRegionType] = useState('STATE') // 'STATE', 'DISTRICT', 'CITY', 'PIN'
 
   // Investigation / Demo States
   const [investigationMode, setInvestigationMode] = useState(false)
@@ -268,12 +289,28 @@ function Dashboard() {
       else if (percentile < 60) anomalyScore = 31 + Math.floor((hash * 7) % 40) // Warning
       else anomalyScore = Math.floor((hash * 11) % 31) // Normal
 
+      // MOCK DATA GENERATION FOR ADVANCED FILTERS
+      // Deterministic generation based on hash to keep it consistent
+      const anomalyTypes = ['Spike', 'Drop', 'Irregular Pattern', 'Missing Data']
+      const typeIndex = hash % 4
+      const mockType = anomalyTypes[typeIndex]
+
+      const mockConfidence = 0.6 + (Math.abs(Math.sin(hash)) * 0.4) // 0.6 - 1.0
+
+      // Mock Date: within last 60 days
+      const daysAgo = hash % 60
+      const mockDate = new Date()
+      mockDate.setDate(mockDate.getDate() - daysAgo)
+
       return {
         id: index,
         top: Math.max(5, Math.min(92, baseCentroid.top + jitterTop)) + '%',
         left: Math.max(5, Math.min(88, baseCentroid.left + jitterLeft)) + '%',
         anomalyScore,
-        discoveryTime: Math.floor((index / constituencies.length) * 100),
+        discoveryTime: Math.floor((index / constituencies.length) * 100), // Keep for legacy slider
+        date: mockDate,
+        type: mockType,
+        confidence: mockConfidence,
         name: constituency.constituency || `Constituency ${index + 1}`,
         state: constituency.state || 'Unknown',
         voterCount: constituency.voter_count,
@@ -383,12 +420,36 @@ function Dashboard() {
 
   // Filter Logic
   const filteredPoints = mapPoints.filter(point => {
-    // Time Travel Filter
+    // 1. Time Travel Filter (Legacy)
     if (point.discoveryTime > timelineProgress) return false
 
-    // Standard Filters
-    if (showAnomaliesOnly && point.anomalyScore < 50) return false
+    // 2. Standard Filter (Show Anomalies Only)
+    // if (showAnomaliesOnly && point.anomalyScore < 50) return false // Replaced by severity filter
+
+    // 3. Anomaly Threshold Slider (Legacy)
     if (point.anomalyScore < anomalyThreshold) return false
+
+    // 4. Time Range Filter
+    if (timeRange !== 'ALL') {
+      const today = new Date()
+      const pointDate = new Date(point.date)
+      const diffTime = Math.abs(today - pointDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (timeRange === 'TODAY' && diffDays > 1) return false
+      if (timeRange === '7_DAYS' && diffDays > 7) return false
+      if (timeRange === '30_DAYS' && diffDays > 30) return false
+    }
+
+    // 5. Anomaly Type Filter
+    if (anomalyType !== 'ALL' && point.type !== anomalyType) return false
+
+    // 6. Severity Level Filter
+    if (severityLevel !== 'ALL' && point.riskLevel.label.toUpperCase() !== severityLevel) return false
+
+    // 7. Confidence Score Filter
+    if (point.confidence < minConfidence) return false
+
     return true
   })
 
@@ -427,9 +488,10 @@ function Dashboard() {
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
+
             <Link to="/" className="flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-600 hover:text-[#2D3E8F] hover:bg-gray-100 transition-all">
-              <ChevronLeft className="h-5 w-5" />
-              <span className="font-medium text-sm">Back</span>
+              <Home className="h-4 w-4" />
+              <span className="font-medium text-sm">Home</span>
             </Link>
             <div className="h-6 w-px bg-gray-200"></div>
             <img src="/assets/logo-new.png" alt="MatSetu" className="h-10 w-auto" />
@@ -437,7 +499,7 @@ function Dashboard() {
               <h1 className="font-bold text-gray-900 leading-none">Matsetu</h1>
               <p className="text-[10px] text-gray-500 font-medium">Electoral Roll Forensic Audit</p>
             </div>
-          </div>
+          </div >
 
           <div className="flex items-center gap-3">
             <InvestigationBadge
@@ -450,7 +512,7 @@ function Dashboard() {
               isLoading={isInvestigationLoading}
             />
             <Link to="/forensic">
-              <Button size="sm" className="group relative overflow-hidden gap-2 rounded-full border-2 border-[#2D3E8F] bg-transparent text-[#2D3E8F] hover:text-white transition-all duration-300 shadow-sm hover:shadow-md px-5 h-10">
+              <Button size="sm" className="group relative overflow-hidden gap-2 rounded-full border-2 border-[#2D3E8F] bg-transparent text-[#2D3E8F] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_-5px_rgba(45,62,143,0.4)] px-5 h-10 transform hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0.5">
                 <span className="absolute inset-0 w-full h-full bg-[#2D3E8F] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left ease-out"></span>
                 <span className="relative flex items-center gap-2 font-semibold">
                   <Shield className="h-4 w-4 transition-transform group-hover:scale-110" />
@@ -459,19 +521,23 @@ function Dashboard() {
               </Button>
             </Link>
           </div>
-        </div>
-      </header>
+        </div >
+      </header >
 
       <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Sidebar Filters - Redesigned */}
-        <aside className="w-80 bg-white/70 backdrop-blur-sm border-r border-gray-100 overflow-y-auto p-6 hidden lg:block">
+        {/* Sidebar Filters - Redesigned */}
+        <aside className="w-80 bg-white/60 backdrop-blur-md border-r border-white/50 overflow-y-auto p-6 hidden lg:block scrollbar-hide">
           {/* Filter Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B4A] to-[#FF8F6B] flex items-center justify-center">
-                <SlidersHorizontal className="h-4 w-4 text-white" />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B4A] to-[#FF8F6B] shadow-lg shadow-orange-500/20 flex items-center justify-center">
+                <SlidersHorizontal className="h-5 w-5 text-white" />
               </div>
-              <span className="font-semibold text-gray-900">Filters</span>
+              <div>
+                <h2 className="font-bold text-gray-900 text-lg leading-tight">Filters</h2>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Configuration</p>
+              </div>
             </div>
             <button
               onClick={() => {
@@ -479,129 +545,313 @@ function Dashboard() {
                 setAnomalyThreshold(0)
                 setSelectedState('ALL')
                 setTimelineProgress(100)
+
+                // Reset Advanced Filters
+                setTimeRange('ALL')
+                setAnomalyType('ALL')
+                setSeverityLevel('ALL')
+                setMinConfidence(0)
+                setRegionType('STATE')
               }}
-              className="text-xs text-[#FF6B4A] font-medium hover:text-[#2D3E8F] flex items-center gap-1 transition-colors">
-              <RotateCcw className="h-3 w-3" /> Reset
+              className="group relative px-3 py-1.5 rounded-lg bg-orange-50 text-[#FF6B4A] text-xs font-semibold hover:bg-[#FF6B4A] hover:text-white transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-orange-500/30">
+              <span className="flex items-center gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5 group-hover:-rotate-180 transition-transform duration-500" /> Reset
+              </span>
             </button>
           </div>
 
-          {/* Guided Steps Panel */}
-          <div className="mt-6">
-            <DemoSteps
-              currentStep={currentStep}
-              completedSteps={completedSteps}
-              onStepClick={(action) => {
-                if (action === 'heatmap') {
-                  resetInvestigation()
-                } else if (action === 'timeline') {
-                  setTimelineProgress(75)
-                }
-              }}
-            />
-          </div>
+          {/* Guided Steps Panel - Only visible during investigation */}
+          <AnimatePresence>
+            {investigationMode && (
+              <motion.div
+                initial={{ opacity: 0, x: -20, height: 0 }}
+                animate={{ opacity: 1, x: 0, height: 'auto' }}
+                exit={{ opacity: 0, x: -20, height: 0 }}
+                className="mt-6 mb-8"
+              >
+                <DemoSteps
+                  currentStep={currentStep}
+                  completedSteps={completedSteps}
+                  onClose={resetInvestigation}
+                  onStepClick={(action) => {
+                    if (action === 'heatmap') {
+                      // resetInvestigation() 
+                    } else if (action === 'timeline') {
+                      setTimelineProgress(75)
+                    }
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <div className="mt-8 space-y-6">
+          <div className="space-y-8 pb-10">
             {/* Anomalies Toggle */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-orange-50/50 transition-colors">
-              <input
-                type="checkbox"
-                id="anomalies"
-                checked={showAnomaliesOnly}
-                onChange={(e) => setShowAnomaliesOnly(e.target.checked)}
-                className="rounded border-gray-300 text-[#FF6B4A] focus:ring-[#FF6B4A] h-4 w-4"
-              />
-              <label htmlFor="anomalies" className="text-sm font-medium text-gray-700 select-none cursor-pointer">Show Anomalies Only</label>
-            </div>
-
-            {/* State Selector */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">State / UT</label>
-              <div className="relative">
-                <select
-                  value={selectedState}
-                  onChange={(e) => setSelectedState(e.target.value)}
-                  className="w-full appearance-none bg-white border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-[#FF6B4A] focus:border-[#FF6B4A] block w-full p-3 hover:border-[#FF6B4A]/50 transition-colors">
-                  <option value="ALL">ALL</option>
-                  <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="West Bengal">West Bengal</option>
-                  <option value="Gujarat">Gujarat</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3.5 h-4 w-4 text-gray-400 pointer-events-none" />
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-orange-100/50 border border-orange-100 hover:border-orange-200 transition-colors shadow-sm">
+              <span className="text-sm font-bold text-gray-800">Show Anomalies Only</span>
+              <div
+                onClick={() => setShowAnomaliesOnly(!showAnomaliesOnly)}
+                className={`w-12 h-7 rounded-full p-1 cursor-pointer transition-colors duration-300 ${showAnomaliesOnly ? 'bg-[#FF6B4A]' : 'bg-gray-300'}`}
+              >
+                <motion.div
+                  className="w-5 h-5 bg-white rounded-full shadow-sm"
+                  animate={{ x: showAnomaliesOnly ? 20 : 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
               </div>
             </div>
 
-            {/* Threshold Slider */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium text-gray-700">Anomaly Threshold</label>
-                <span className="text-xs font-semibold text-[#FF6B4A] bg-orange-50 px-2 py-0.5 rounded-full">{anomalyThreshold}+</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={anomalyThreshold}
-                onChange={(e) => setAnomalyThreshold(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF6B4A]"
-              />
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>0</span>
-                <span>50</span>
-                <span>100</span>
-              </div>
-            </div>
-
-            {/* Quick Stats Card */}
-            <div className="pt-6 border-t border-gray-100">
-              <div className="bg-gradient-to-br from-[#2D3E8F]/5 to-[#FF6B4A]/5 rounded-2xl p-4 border border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-[#2D3E8F]" />
-                  Quick Stats
-                </h3>
-                <div className="space-y-3 text-sm">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-4 w-4 animate-spin text-[#FF6B4A]" />
+            <div className="space-y-6">
+              {/* 📍 Region & Location */}
+              <FilterCard
+                title="Geo-Intelligence"
+                icon={MapPin}
+                gradient="from-orange-50 to-red-50/50"
+                iconColor="text-orange-600"
+                iconBg="bg-white"
+              >
+                <div className="space-y-5">
+                  {/* Region Type */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Region Level</label>
+                    <div className="relative group">
+                      <select
+                        value={regionType}
+                        onChange={(e) => setRegionType(e.target.value)}
+                        className="w-full appearance-none bg-gray-50 border-none text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#FF6B4A]/20 block p-3.5 pl-4 transition-all hover:bg-gray-100 cursor-pointer font-medium"
+                      >
+                        <option value="STATE">State / UT</option>
+                        <option value="DISTRICT">District (Drill-down)</option>
+                        <option value="CITY">City</option>
+                        <option value="PIN">Pin Code</option>
+                      </select>
+                      <div className="absolute right-3 top-3.5 p-1 bg-white rounded-md shadow-sm border border-gray-100 pointer-events-none group-hover:scale-110 transition-transform">
+                        <ChevronDown className="h-3 w-3 text-gray-400" />
+                      </div>
                     </div>
-                  ) : error ? (
-                    <div className="text-red-600 text-xs">{error}</div>
-                  ) : dashboardData ? (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">States</span>
-                        <span className="font-semibold text-gray-900">{DASHBOARD_CONFIG.STATES_COUNT}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Union Territories</span>
-                        <span className="font-semibold text-gray-900">{DASHBOARD_CONFIG.XX_UTS_COUNT}</span>
-                      </div>
-                      <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
-                        <span className="text-gray-900 font-semibold">Total Admin Units</span>
-                        <span className="font-bold text-[#2D3E8F]">{DASHBOARD_CONFIG.TOTAL_ADMIN_UNITS}</span>
-                      </div>
+                  </div>
 
-                      <div className="flex justify-between mt-3">
-                        <span className="text-gray-500">Constituencies</span>
-                        <span className="font-semibold text-gray-900">{dashboardData.constituencies_count || 'N/A'}</span>
+                  {/* State Selector */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Target State</label>
+                    <div className="relative group">
+                      <select
+                        value={selectedState}
+                        onChange={(e) => setSelectedState(e.target.value)}
+                        className="w-full appearance-none bg-orange-50/50 border border-orange-100 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-[#FF6B4A]/20 block p-3.5 pl-4 shadow-sm hover:border-[#FF6B4A]/30 transition-all cursor-pointer font-semibold"
+                      >
+                        <option value="ALL">National (All States)</option>
+                        <option value="Andaman & Nicobar Islands">A & N Islands</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="West Bengal">West Bengal</option>
+                        <option value="Gujarat">Gujarat</option>
+                      </select>
+                      <div className="absolute right-3 top-3.5 p-1 bg-white rounded-md shadow-sm border border-orange-100 pointer-events-none group-hover:scale-110 transition-transform">
+                        <ChevronDown className="h-3 w-3 text-[#FF6B4A]" />
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Total Voters</span>
-                        <span className="font-semibold text-gray-900">
-                          {dashboardData.total_voters ? dashboardData.total_voters.toLocaleString() : 'N/A'}
-                        </span>
+                    </div>
+                  </div>
+                </div>
+              </FilterCard>
+
+              {/* 1️⃣ Time Range */}
+              <FilterCard
+                title="Temporal Scope"
+                icon={RotateCcw}
+                gradient="from-blue-50 to-indigo-50/50"
+                iconColor="text-blue-600"
+                iconBg="bg-white"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  {['ALL', 'TODAY', '7_DAYS', '30_DAYS'].map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setTimeRange(range)}
+                      className={cn(
+                        "text-xs py-2.5 px-3 rounded-xl border transition-all duration-300 font-semibold relative overflow-hidden group",
+                        timeRange === range
+                          ? "bg-gradient-to-r from-[#2D3E8F] to-[#3B4FBF] text-white border-transparent shadow-lg shadow-blue-900/20"
+                          : "bg-white text-gray-500 border-gray-100 hover:border-blue-200 hover:text-blue-600 hover:shadow-md"
+                      )}
+                    >
+                      {timeRange === range && (
+                        <span className="absolute inset-0 bg-white/20 animate-pulse-slow"></span>
+                      )}
+                      {range === 'ALL' ? 'All Time' : range.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                    </button>
+                  ))}
+                </div>
+              </FilterCard>
+
+              {/* 2️⃣ Anomaly Type */}
+              <FilterCard
+                title="Anomaly Type"
+                icon={AlertTriangle}
+                gradient="from-purple-50 to-pink-50/50"
+                iconColor="text-purple-600"
+                iconBg="bg-white"
+              >
+                <div className="relative group">
+                  <select
+                    value={anomalyType}
+                    onChange={(e) => setAnomalyType(e.target.value)}
+                    className="w-full appearance-none bg-purple-50/30 border border-purple-100 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-purple-500/20 block p-3.5 pl-4 shadow-sm hover:border-purple-200 transition-all cursor-pointer font-medium"
+                  >
+                    <option value="ALL">All Information Types</option>
+                    <option value="Spike">📈 Spike (Sudden Increase)</option>
+                    <option value="Drop">📉 Drop (Mass Deletion)</option>
+                    <option value="Irregular Pattern">〰️ Irregular Pattern</option>
+                    <option value="Missing Data">❓ Missing Demographics</option>
+                  </select>
+                  <div className="absolute right-3 top-3.5 p-1 bg-white rounded-md shadow-sm border border-purple-100 pointer-events-none group-hover:scale-110 transition-transform">
+                    <ChevronDown className="h-3 w-3 text-purple-500" />
+                  </div>
+                </div>
+              </FilterCard>
+
+              {/* 3️⃣ Severity Level */}
+              <FilterCard
+                title="Severity Level"
+                icon={TrendingUp}
+                gradient="from-rose-50 to-red-50/50"
+                iconColor="text-rose-600"
+                iconBg="bg-white"
+              >
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'NORMAL', label: 'Low', color: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 ring-emerald-400' },
+                    { id: 'WARNING', label: 'Medium', color: 'bg-amber-100 text-amber-700 hover:bg-amber-200 ring-amber-400' },
+                    { id: 'HIGH', label: 'High', color: 'bg-orange-100 text-orange-700 hover:bg-orange-200 ring-orange-400' },
+                    { id: 'CRITICAL', label: 'Critical', color: 'bg-rose-100 text-rose-700 hover:bg-rose-200 ring-rose-400' }
+                  ].map((level) => (
+                    <button
+                      key={level.id}
+                      onClick={() => setSeverityLevel(severityLevel === level.id ? 'ALL' : level.id)}
+                      className={cn(
+                        "text-xs py-2 px-4 rounded-full transition-all duration-300 font-bold flex-1 text-center shadow-sm hover:shadow-md border border-transparent",
+                        severityLevel === level.id
+                          ? `${level.color} ring-2 ring-offset-2 scale-105`
+                          : "bg-gray-50 text-gray-400 hover:bg-white hover:text-gray-600"
+                      )}
+                    >
+                      {level.label}
+                    </button>
+                  ))}
+                </div>
+              </FilterCard>
+
+
+              {/* 4️⃣ Confidence Score */}
+              <FilterCard
+                title="AI Confidence"
+                icon={Shield}
+                gradient="from-teal-50 to-cyan-50/50"
+                iconColor="text-teal-600"
+                iconBg="bg-white"
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Min Threshold</span>
+                    <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-100 shadow-sm">
+                      {Math.round(minConfidence * 100)}% +
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={minConfidence * 100}
+                    onChange={(e) => setMinConfidence(parseInt(e.target.value) / 100)}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-400 transition-all"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+              </FilterCard>
+
+              {/* Threshold Slider (Legacy/Global) - Wrapped for consistency */}
+              <FilterCard
+                title="Risk Sensitivity"
+                icon={SlidersHorizontal}
+                gradient="from-slate-50 to-gray-50/50"
+                iconColor="text-slate-600"
+                iconBg="bg-white"
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Anomaly Score</span>
+                    <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100 shadow-sm">{anomalyThreshold}+</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={anomalyThreshold}
+                    onChange={(e) => setAnomalyThreshold(parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF6B4A] hover:accent-[#ff8f6b] transition-all"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                    <span>0</span>
+                    <span>50</span>
+                    <span>100</span>
+                  </div>
+                </div>
+              </FilterCard>
+
+              {/* Quick Stats Card */}
+              <div className="pt-6 border-t border-gray-100">
+                <div className="bg-gradient-to-br from-[#2D3E8F]/5 to-[#FF6B4A]/5 rounded-2xl p-4 border border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-[#2D3E8F]" />
+                    Quick Stats
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    {loading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin text-[#FF6B4A]" />
                       </div>
-                    </>
-                  ) : (
-                    <div className="text-gray-500 text-xs">No data available</div>
-                  )}
-                  <div className="pt-3 mt-3 border-t border-gray-100">
-                    <span className="text-xs text-gray-400">Last updated</span>
-                    <div className="text-sm font-medium text-[#10B981]">Just now</div>
+                    ) : error ? (
+                      <div className="text-red-600 text-xs">{error}</div>
+                    ) : dashboardData ? (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">States</span>
+                          <span className="font-semibold text-gray-900">{DASHBOARD_CONFIG.STATES_COUNT}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Union Territories</span>
+                          <span className="font-semibold text-gray-900">{DASHBOARD_CONFIG.XX_UTS_COUNT}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
+                          <span className="text-gray-900 font-semibold">Total Admin Units</span>
+                          <span className="font-bold text-[#2D3E8F]">{DASHBOARD_CONFIG.TOTAL_ADMIN_UNITS}</span>
+                        </div>
+
+                        <div className="flex justify-between mt-3">
+                          <span className="text-gray-500">Constituencies</span>
+                          <span className="font-semibold text-gray-900">{dashboardData.constituencies_count || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Total Voters</span>
+                          <span className="font-semibold text-gray-900">
+                            {dashboardData.total_voters ? dashboardData.total_voters.toLocaleString() : 'N/A'}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-gray-500 text-xs">No data available</div>
+                    )}
+                    <div className="pt-3 mt-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-400">Last updated</span>
+                      <div className="text-sm font-medium text-[#10B981]">Just now</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1228,7 +1478,7 @@ function Dashboard() {
           )}
         </main>
       </div>
-    </div>
+    </div >
   )
 }
 
