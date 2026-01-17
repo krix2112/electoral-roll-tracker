@@ -397,7 +397,7 @@ function Upload() {
                       Processing {files.length} files...
                     </div>
                   ) : (
-                    `Start Processing (${files.length} files)`
+                    `Upload Data (${files.length} files)`
                   )}
                 </Button>
               )}
