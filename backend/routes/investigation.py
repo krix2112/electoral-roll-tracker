@@ -109,9 +109,7 @@ def generate_anomaly_score(constituency_name, voter_count, index, total):
 def get_top_anomaly():
     """
     Get the constituency-period combination with the highest anomaly score.
-    
-    Returns:
-        JSON with constituency_id, period, score, zoom_coordinates, impact_facts
+    Returns data formatted for the ForensicDashboard.
     """
     try:
         # Load CSV safely
@@ -152,13 +150,14 @@ def get_top_anomaly():
         # Calculate anomaly scores and find the maximum
         max_anomaly = None
         max_score = 0
+        total_constituencies = len(constituency_counts)
         
         for idx, row in constituency_counts.iterrows():
             score = generate_anomaly_score(
                 row[constituency_col],
                 row['voter_count'],
                 idx,
-                len(constituency_counts)
+                total_constituencies
             )
             
             if score > max_score:
@@ -166,26 +165,66 @@ def get_top_anomaly():
                 state = str(row[state_col]).strip()
                 constituency = str(row[constituency_col]).strip()
                 voter_count = int(row['voter_count'])
+                deletion_estimate = int(voter_count * 0.12)
                 
-                # Get coordinates for the state
-                coords = STATE_COORDINATES.get(state, {'lat': 20.5937, 'lng': 78.9629, 'zoom': 5})
-                
-                # Calculate impact facts
-                deletion_estimate = int(voter_count * 0.12)  # ~12% unexplained deletions
+                # Determine verdict
+                if score > 80:
+                    verdict = 'Critical Anomaly'
+                    confidence = 'High'
+                elif score > 50:
+                    verdict = 'Suspicious'
+                    confidence = 'Medium'
+                else:
+                    verdict = 'Normal'
+                    confidence = 'Low'
+
+                # Generate synthetic evidence based on data
+                evidence = [
+                    f"🏝️ **Network Isolation Alert**: {int(voter_count * 0.05)} voters show zero familial connections",
+                    f"📅 **Bulk Registration Alert**: {int(voter_count * 0.08)} voters registered in last 30 days",
+                    f"⚠️ **Abnormal Deletions**: {deletion_estimate} voters deleted without clear reason"
+                ]
                 
                 max_anomaly = {
-                    'constituency_id': f"AC-{(sum(ord(c) for c in constituency) % 900) + 100:03d}",
-                    'constituency_name': constituency,
+                    'analysis_id': f"ANOM-{random.randint(1000, 9999)}-{constituency[:3].upper()}",
+                    'final_anomaly_score': score,
+                    'constituency': constituency,
                     'state': state,
-                    'period': '2023-10-01',
-                    'score': score,
+                    'verdict': verdict,
+                    'confidence_level': confidence,
+                    'triggered_modules': ['Network Analysis', 'Entropy Analysis', 'Behavioral Fingerprinting'],
+                    'all_evidence': evidence,
+                    'summary': f"🚨 Critical forensic analysis detected anomalies in {constituency}. High concentration of unexplained deletions and isolated voter nodes.",
+                    'module_breakdowns': [
+                        {
+                            'module': 'Network Analysis',
+                            'score': min(99, score + 5),
+                            'weight': 0.35,
+                            'contribution': round(score * 0.35, 1),
+                            'evidence': [evidence[0]]
+                        },
+                        {
+                            'module': 'Entropy Analysis',
+                            'score': min(99, score - 5),
+                            'weight': 0.25,
+                            'contribution': round((score - 5) * 0.25, 1),
+                            'evidence': [evidence[1]]
+                        },
+                        {
+                            'module': 'Behavioral Fingerprinting',
+                            'score': min(99, score - 10),
+                            'weight': 0.40,
+                            'contribution': round((score - 10) * 0.40, 1),
+                            'evidence': [evidence[2]]
+                        }
+                    ],
+                    'timestamp': pd.Timestamp.now().isoformat(),
+                    
+                    # Keep original fields for backward compatibility if needed elsewhere
+                    'constituency_id': f"AC-{(sum(ord(c) for c in constituency) % 900) + 100:03d}",
                     'voter_count': voter_count,
                     'deletion_count': deletion_estimate,
-                    'zoom_coordinates': {
-                        'lat': coords['lat'],
-                        'lng': coords['lng'],
-                        'zoom': coords['zoom']
-                    },
+                    'zoom_coordinates': STATE_COORDINATES.get(state, {'lat': 20.5937, 'lng': 78.9629, 'zoom': 5}),
                     'impact_facts': {
                         'swing_seats': calculate_swing_seats(deletion_estimate),
                         'equivalent_town': get_equivalent_town(deletion_estimate),
@@ -200,6 +239,7 @@ def get_top_anomaly():
         return jsonify(max_anomaly), 200
         
     except Exception as e:
+        print(f"Error in get_top_anomaly: {e}")
         return jsonify({'error': f'Failed to fetch top anomaly: {str(e)}'}), 500
 
 

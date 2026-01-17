@@ -1,0 +1,74 @@
+[
+  {
+    "id": "AC-042",
+    "name": "Mumbai North",
+    "state": "Maharashtra",
+    "voter_count": 202466,
+    "geo_center": [
+      18.90453904600783,
+      73.28845684291093
+    ],
+    "polling_stations": [
+      "PS-01",
+      "PS-02",
+      "PS-03",
+      "PS-04",
+      "PS-05",
+      "PS-06",
+      "PS-07",
+      "PS-08",
+      "PS-09",
+      "PS-10",
+      "PS-11"
+    ]
+  },
+  {
+    "id": "AC-057",
+    "name": "South Delhi",
+    "state": "Delhi",
+    "voter_count": 178525,
+    "geo_center": [
+      19.6385274343296,
+      73.52634216988506
+    ],
+    "polling_stations": [
+      "PS-01",
+      "PS-02",
+      "PS-03",
+      "PS-04",
+      "PS-05",
+      "PS-06",
+      "PS-07",
+      "PS-08",
+      "PS-09",
+      "PS-10",
+      "PS-11"
+    ]
+  },
+  {
+    "id": "AC-033",
+    "name": "Bangalore South",
+    "state": "Karnataka",
+    "voter_count": 290581,
+    "geo_center": [
+      18.45600507921202,
+      72.34506458953838
+    ],
+    "polling_stations": [
+      "PS-01",
+      "PS-02",
+      "PS-03",
+      "PS-04",
+      "PS-05",
+      "PS-06",
+      "PS-07",
+      "PS-08",
+      "PS-09",
+      "PS-10",
+      "PS-11",
+      "PS-12",
+      "PS-13",
+      "PS-14"
+    ]
+  }
+]

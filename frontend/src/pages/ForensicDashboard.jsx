@@ -204,15 +204,15 @@ export default function ForensicDashboard() {
                             onClick={loadTopAnomaly}
                             disabled={investigating}
                             size="sm"
-                            variant="outline"
-                            className="gap-2"
+                            className="relative group overflow-hidden gap-2 bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B] hover:from-[#e55a3b] hover:to-[#ff7d57] text-white border-none shadow-md hover:shadow-lg transition-all duration-300"
                         >
+                            <span className="absolute inset-0 w-full h-full bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
                             {investigating ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                                 <Search className="h-4 w-4" />
                             )}
-                            Investigate Top Anomaly
+                            <span className="relative font-semibold">Investigate Top Anomaly</span>
                         </Button>
                         <Link to="/notifications" className="relative p-2 rounded-full hover:bg-gray-50 text-gray-500 hover:text-indigo-600 transition-colors">
                             <Bell className="w-5 h-5" />

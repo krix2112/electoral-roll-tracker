@@ -291,7 +291,7 @@ export const getConstituencyImpact = async (constituencyId) => {
   if (!constituencyId) {
     throw new Error('Constituency ID is required')
   }
-  
+
   try {
     const response = await api.get(`/api/constituency/${constituencyId}/impact-data`)
     return response.data

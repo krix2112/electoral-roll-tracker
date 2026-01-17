@@ -31,6 +31,7 @@ export function DemoSteps({
     onStepClick,
     isCollapsed = false,
     onToggleCollapse,
+    onClose,
     className = ''
 }) {
     const [collapsed, setCollapsed] = useState(isCollapsed)
@@ -92,23 +93,38 @@ export function DemoSteps({
             className={`bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden ${className}`}
         >
             {/* Header */}
-            <button
-                onClick={toggleCollapse}
-                className="w-full px-4 py-3 flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-colors"
+            <div
+                className="w-full px-4 py-3 flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
             >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 cursor-pointer" onClick={toggleCollapse}>
                     <Sparkles className="h-4 w-4" />
                     <span className="font-semibold text-sm">Investigation Steps</span>
                     <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
                         {completedCount}/{steps.length}
                     </span>
                 </div>
-                {collapsed ? (
-                    <ChevronDown className="h-4 w-4" />
-                ) : (
-                    <ChevronUp className="h-4 w-4" />
-                )}
-            </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={toggleCollapse} className="hover:bg-white/20 p-1 rounded transition-colors">
+                        {collapsed ? (
+                            <ChevronDown className="h-4 w-4" />
+                        ) : (
+                            <ChevronUp className="h-4 w-4" />
+                        )}
+                    </button>
+                    {onClose && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClose();
+                            }}
+                            className="hover:bg-white/20 p-1 rounded transition-colors"
+                        >
+                            <span className="sr-only">Close</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                        </button>
+                    )}
+                </div>
+            </div>
 
             {/* Progress Bar */}
             <div className="h-1 bg-gray-100">

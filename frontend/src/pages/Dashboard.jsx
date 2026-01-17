@@ -15,13 +15,27 @@ import { Link } from 'react-router-dom'
 import {
   Users, AlertTriangle, FileText, ChevronLeft, Bell,
   RotateCcw, SlidersHorizontal, Play, Pause, ChevronDown, FileSearch, Loader2, Upload,
-  MapPin, TrendingUp, Shield, Info, Eye
+  MapPin, TrendingUp, Shield, Info, Eye, Home
 } from 'lucide-react'
 import { InvestigationButton, InvestigationBadge } from '../components/InvestigationButton'
 import { ImpactPanel } from '../components/ImpactPanel'
 import { DemoSteps } from '../components/DemoSteps'
 import { MapLegend } from '../components/MapLegend'
 import { AnomalyBadge } from '../components/AnomalyBadge'
+
+const FilterCard = ({ title, icon: Icon, children, className = '', gradient = 'from-gray-50 to-white', iconColor = 'text-indigo-600', iconBg = 'bg-indigo-50' }) => (
+  <div className={`group bg-white/70 backdrop-blur-xl rounded-3xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 overflow-hidden ${className}`}>
+    <div className={`px-5 py-4 bg-gradient-to-r ${gradient} border-b border-white/40 flex items-center gap-3`}>
+      <div className={`w-8 h-8 rounded-xl ${iconBg} shadow-sm border border-white/60 flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>
+        <Icon className={`h-4 w-4 ${iconColor}`} />
+      </div>
+      <span className="text-[11px] font-extrabold text-gray-600 uppercase tracking-[0.2em]">{title}</span>
+    </div>
+    <div className="p-5">
+      {children}
+    </div>
+  </div>
+)
 
 function Dashboard() {
 
@@ -37,6 +51,13 @@ function Dashboard() {
   const [showAnomaliesOnly, setShowAnomaliesOnly] = useState(false)
   const [anomalyThreshold, setAnomalyThreshold] = useState(0)
   const [selectedState, setSelectedState] = useState('ALL')
+
+  // Advanced Filters
+  const [timeRange, setTimeRange] = useState('ALL') // 'TODAY', '7_DAYS', '30_DAYS', 'CUSTOM'
+  const [anomalyType, setAnomalyType] = useState('ALL') // 'SPIKE', 'DROP', 'IRREGULAR', 'MISSING'
+  const [severityLevel, setSeverityLevel] = useState('ALL') // 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'
+  const [minConfidence, setMinConfidence] = useState(0) // 0.0 - 1.0
+  const [regionType, setRegionType] = useState('STATE') // 'STATE', 'DISTRICT', 'CITY', 'PIN'
 
   // Investigation / Demo States
   const [investigationMode, setInvestigationMode] = useState(false)
@@ -268,12 +289,28 @@ function Dashboard() {
       else if (percentile < 60) anomalyScore = 31 + Math.floor((hash * 7) % 40) // Warning
       else anomalyScore = Math.floor((hash * 11) % 31) // Normal
 
+      // MOCK DATA GENERATION FOR ADVANCED FILTERS
+      // Deterministic generation based on hash to keep it consistent
+      const anomalyTypes = ['Spike', 'Drop', 'Irregular Pattern', 'Missing Data']
+      const typeIndex = hash % 4
+      const mockType = anomalyTypes[typeIndex]
+
+      const mockConfidence = 0.6 + (Math.abs(Math.sin(hash)) * 0.4) // 0.6 - 1.0
+
+      // Mock Date: within last 60 days
+      const daysAgo = hash % 60
+      const mockDate = new Date()
+      mockDate.setDate(mockDate.getDate() - daysAgo)
+
       return {
         id: index,
         top: Math.max(5, Math.min(92, baseCentroid.top + jitterTop)) + '%',
         left: Math.max(5, Math.min(88, baseCentroid.left + jitterLeft)) + '%',
         anomalyScore,
-        discoveryTime: Math.floor((index / constituencies.length) * 100),
+        discoveryTime: Math.floor((index / constituencies.length) * 100), // Keep for legacy slider
+        date: mockDate,
+        type: mockType,
+        confidence: mockConfidence,
         name: constituency.constituency || `Constituency ${index + 1}`,
         state: constituency.state || 'Unknown',
         voterCount: constituency.voter_count,
@@ -383,12 +420,36 @@ function Dashboard() {
 
   // Filter Logic
   const filteredPoints = mapPoints.filter(point => {
-    // Time Travel Filter
+    // 1. Time Travel Filter (Legacy)
     if (point.discoveryTime > timelineProgress) return false
 
-    // Standard Filters
-    if (showAnomaliesOnly && point.anomalyScore < 50) return false
+    // 2. Standard Filter (Show Anomalies Only)
+    // if (showAnomaliesOnly && point.anomalyScore < 50) return false // Replaced by severity filter
+
+    // 3. Anomaly Threshold Slider (Legacy)
     if (point.anomalyScore < anomalyThreshold) return false
+
+    // 4. Time Range Filter
+    if (timeRange !== 'ALL') {
+      const today = new Date()
+      const pointDate = new Date(point.date)
+      const diffTime = Math.abs(today - pointDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (timeRange === 'TODAY' && diffDays > 1) return false
+      if (timeRange === '7_DAYS' && diffDays > 7) return false
+      if (timeRange === '30_DAYS' && diffDays > 30) return false
+    }
+
+    // 5. Anomaly Type Filter
+    if (anomalyType !== 'ALL' && point.type !== anomalyType) return false
+
+    // 6. Severity Level Filter
+    if (severityLevel !== 'ALL' && point.riskLevel.label.toUpperCase() !== severityLevel) return false
+
+    // 7. Confidence Score Filter
+    if (point.confidence < minConfidence) return false
+
     return true
   })
 
@@ -408,24 +469,39 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Dashboard App Bar */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      {/* Background Decorations */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 -left-40 w-[500px] h-[500px] bg-[#FF6B4A]/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 -right-40 w-[600px] h-[600px] bg-[#2D3E8F]/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-orange-50/30 to-blue-50/30 rounded-full opacity-50" />
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.015) 1px, transparent 1px)`,
+            backgroundSize: '32px 32px'
+          }}
+        />
+      </div>
+
+      {/* Dashboard Header - Glassmorphic */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-gray-500 hover:text-gray-900 flex items-center gap-2">
-              <ChevronLeft className="h-5 w-5" />
-              <span className="font-medium">Back</span>
+
+            <Link to="/" className="flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-600 hover:text-[#2D3E8F] hover:bg-gray-100 transition-all">
+              <Home className="h-4 w-4" />
+              <span className="font-medium text-sm">Home</span>
             </Link>
-            <div className="h-6 w-px bg-gray-200 mx-2"></div>
-            <img src="/assets/matsetu-logo.png" alt="Matsetu Logo" className="h-12 w-auto" />
+            <div className="h-6 w-px bg-gray-200"></div>
+            <img src="/assets/logo-new.png" alt="MatSetu" className="h-10 w-auto" />
             <div>
               <h1 className="font-bold text-gray-900 leading-none">Matsetu</h1>
-              <p className="text-[10px] text-gray-500 font-medium">Electoral Roll Forensic Audit System</p>
+              <p className="text-[10px] text-gray-500 font-medium">Electoral Roll Forensic Audit</p>
             </div>
-          </div>
+          </div >
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <InvestigationBadge
               active={investigationMode}
               constituencyName={investigatedAnomaly?.constituency_name}
@@ -436,32 +512,32 @@ function Dashboard() {
               isLoading={isInvestigationLoading}
             />
             <Link to="/forensic">
-              <Button size="sm" variant="outline" className="gap-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50">
-                <Shield className="h-4 w-4" />
-                Forensic Analysis
-              </Button>
-            </Link>
-            <Link to="/notifications" className="relative p-2 rounded-full hover:bg-gray-50 text-gray-500 hover:text-indigo-600 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </Link>
-            <Link to="/upload">
-              <Button size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
-                <Upload className="h-4 w-4" />
-                Upload Data
+              <Button size="sm" className="group relative overflow-hidden gap-2 rounded-full border-2 border-[#2D3E8F] bg-transparent text-[#2D3E8F] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_-5px_rgba(45,62,143,0.4)] px-5 h-10 transform hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0.5">
+                <span className="absolute inset-0 w-full h-full bg-[#2D3E8F] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left ease-out"></span>
+                <span className="relative flex items-center gap-2 font-semibold">
+                  <Shield className="h-4 w-4 transition-transform group-hover:scale-110" />
+                  Forensic Analysis
+                </span>
               </Button>
             </Link>
           </div>
-        </div>
-      </header>
+        </div >
+      </header >
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar Filters */}
-        <aside className="w-80 bg-white border-r border-gray-200 overflow-y-auto p-6 hidden lg:block">
+      <div className="flex-1 flex overflow-hidden relative z-10">
+        {/* Sidebar Filters - Redesigned */}
+        {/* Sidebar Filters - Redesigned */}
+        <aside className="w-80 bg-white/60 backdrop-blur-md border-r border-white/50 overflow-y-auto p-6 hidden lg:block scrollbar-hide">
+          {/* Filter Header */}
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2 font-semibold text-gray-900">
-              <SlidersHorizontal className="h-5 w-5 text-indigo-600" />
-              Filters
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B4A] to-[#FF8F6B] shadow-lg shadow-orange-500/20 flex items-center justify-center">
+                <SlidersHorizontal className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="font-bold text-gray-900 text-lg leading-tight">Filters</h2>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Configuration</p>
+              </div>
             </div>
             <button
               onClick={() => {
@@ -469,121 +545,314 @@ function Dashboard() {
                 setAnomalyThreshold(0)
                 setSelectedState('ALL')
                 setTimelineProgress(100)
+
+                // Reset Advanced Filters
+                setTimeRange('ALL')
+                setAnomalyType('ALL')
+                setSeverityLevel('ALL')
+                setMinConfidence(0)
+                setRegionType('STATE')
               }}
-              className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
-              <RotateCcw className="h-3 w-3" /> Reset
+              className="group relative px-3 py-1.5 rounded-lg bg-orange-50 text-[#FF6B4A] text-xs font-semibold hover:bg-[#FF6B4A] hover:text-white transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-orange-500/30">
+              <span className="flex items-center gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5 group-hover:-rotate-180 transition-transform duration-500" /> Reset
+              </span>
             </button>
           </div>
 
-          {/* Guided Steps Panel */}
-          <div className="mt-6">
-            <DemoSteps
-              currentStep={currentStep}
-              completedSteps={completedSteps}
-              onStepClick={(action) => {
-                if (action === 'heatmap') {
-                  resetInvestigation()
-                } else if (action === 'timeline') {
-                  setTimelineProgress(75)
-                }
-              }}
-            />
-          </div>
+          {/* Guided Steps Panel - Only visible during investigation */}
+          <AnimatePresence>
+            {investigationMode && (
+              <motion.div
+                initial={{ opacity: 0, x: -20, height: 0 }}
+                animate={{ opacity: 1, x: 0, height: 'auto' }}
+                exit={{ opacity: 0, x: -20, height: 0 }}
+                className="mt-6 mb-8"
+              >
+                <DemoSteps
+                  currentStep={currentStep}
+                  completedSteps={completedSteps}
+                  onClose={resetInvestigation}
+                  onStepClick={(action) => {
+                    if (action === 'heatmap') {
+                      // resetInvestigation() 
+                    } else if (action === 'timeline') {
+                      setTimelineProgress(75)
+                    }
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <div className="mt-8 space-y-8">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="anomalies"
-                checked={showAnomaliesOnly}
-                onChange={(e) => setShowAnomaliesOnly(e.target.checked)}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-              />
-              <label htmlFor="anomalies" className="text-sm font-medium text-gray-700 select-none cursor-pointer">Show Anomalies Only</label>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">State / UT</label>
-              <div className="relative">
-                <select
-                  value={selectedState}
-                  onChange={(e) => setSelectedState(e.target.value)}
-                  className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                  <option value="ALL">ALL</option>
-                  <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="West Bengal">West Bengal</option>
-                  <option value="Gujarat">Gujarat</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
+          <div className="space-y-8 pb-10">
+            {/* Anomalies Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-orange-100/50 border border-orange-100 hover:border-orange-200 transition-colors shadow-sm">
+              <span className="text-sm font-bold text-gray-800">Show Anomalies Only</span>
+              <div
+                onClick={() => setShowAnomaliesOnly(!showAnomaliesOnly)}
+                className={`w-12 h-7 rounded-full p-1 cursor-pointer transition-colors duration-300 ${showAnomaliesOnly ? 'bg-[#FF6B4A]' : 'bg-gray-300'}`}
+              >
+                <motion.div
+                  className="w-5 h-5 bg-white rounded-full shadow-sm"
+                  animate={{ x: showAnomaliesOnly ? 20 : 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium text-gray-700">Anomaly Score Threshold</label>
-                <span className="text-xs text-indigo-600 font-medium">{anomalyThreshold}+</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={anomalyThreshold}
-                onChange={(e) => setAnomalyThreshold(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-              />
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>0</span>
-                <span>50</span>
-                <span>100</span>
-              </div>
-            </div>
-
-            <div className="pt-8 border-t border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Quick Stats</h3>
-              <div className="space-y-3 text-sm">
-                {loading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+            <div className="space-y-6">
+              {/* 📍 Region & Location */}
+              <FilterCard
+                title="Geo-Intelligence"
+                icon={MapPin}
+                gradient="from-orange-50 to-red-50/50"
+                iconColor="text-orange-600"
+                iconBg="bg-white"
+              >
+                <div className="space-y-5">
+                  {/* Region Type */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Region Level</label>
+                    <div className="relative group">
+                      <select
+                        value={regionType}
+                        onChange={(e) => setRegionType(e.target.value)}
+                        className="w-full appearance-none bg-gray-50 border-none text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#FF6B4A]/20 block p-3.5 pl-4 transition-all hover:bg-gray-100 cursor-pointer font-medium"
+                      >
+                        <option value="STATE">State / UT</option>
+                        <option value="DISTRICT">District (Drill-down)</option>
+                        <option value="CITY">City</option>
+                        <option value="PIN">Pin Code</option>
+                      </select>
+                      <div className="absolute right-3 top-3.5 p-1 bg-white rounded-md shadow-sm border border-gray-100 pointer-events-none group-hover:scale-110 transition-transform">
+                        <ChevronDown className="h-3 w-3 text-gray-400" />
+                      </div>
+                    </div>
                   </div>
-                ) : error ? (
-                  <div className="text-red-600 text-xs">{error}</div>
-                ) : dashboardData ? (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">States</span>
-                      <span className="font-medium text-gray-900">{DASHBOARD_CONFIG.STATES_COUNT}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Union Territories</span>
-                      <span className="font-medium text-gray-900">{DASHBOARD_CONFIG.XX_UTS_COUNT}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
-                      <span className="text-gray-900 font-semibold">Total Admin Units</span>
-                      <span className="font-bold text-indigo-600">{DASHBOARD_CONFIG.TOTAL_ADMIN_UNITS}</span>
-                    </div>
 
-                    <div className="flex justify-between mt-3">
-                      <span className="text-gray-500">Constituencies</span>
-                      <span className="font-medium text-gray-900">{dashboardData.constituencies_count || 'N/A'}</span>
+                  {/* State Selector */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Target State</label>
+                    <div className="relative group">
+                      <select
+                        value={selectedState}
+                        onChange={(e) => setSelectedState(e.target.value)}
+                        className="w-full appearance-none bg-orange-50/50 border border-orange-100 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-[#FF6B4A]/20 block p-3.5 pl-4 shadow-sm hover:border-[#FF6B4A]/30 transition-all cursor-pointer font-semibold"
+                      >
+                        <option value="ALL">National (All States)</option>
+                        <option value="Andaman & Nicobar Islands">A & N Islands</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="West Bengal">West Bengal</option>
+                        <option value="Gujarat">Gujarat</option>
+                      </select>
+                      <div className="absolute right-3 top-3.5 p-1 bg-white rounded-md shadow-sm border border-orange-100 pointer-events-none group-hover:scale-110 transition-transform">
+                        <ChevronDown className="h-3 w-3 text-[#FF6B4A]" />
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Total Voters</span>
-                      <span className="font-medium text-gray-900">
-                        {dashboardData.total_voters ? dashboardData.total_voters.toLocaleString() : 'N/A'}
-                      </span>
+                  </div>
+                </div>
+              </FilterCard>
+
+              {/* 1️⃣ Time Range */}
+              <FilterCard
+                title="Temporal Scope"
+                icon={RotateCcw}
+                gradient="from-blue-50 to-indigo-50/50"
+                iconColor="text-blue-600"
+                iconBg="bg-white"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  {['ALL', 'TODAY', '7_DAYS', '30_DAYS'].map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setTimeRange(range)}
+                      className={cn(
+                        "text-xs py-2.5 px-3 rounded-xl border transition-all duration-300 font-semibold relative overflow-hidden group",
+                        timeRange === range
+                          ? "bg-gradient-to-r from-[#2D3E8F] to-[#3B4FBF] text-white border-transparent shadow-lg shadow-blue-900/20"
+                          : "bg-white text-gray-500 border-gray-100 hover:border-blue-200 hover:text-blue-600 hover:shadow-md"
+                      )}
+                    >
+                      {timeRange === range && (
+                        <span className="absolute inset-0 bg-white/20 animate-pulse-slow"></span>
+                      )}
+                      {range === 'ALL' ? 'All Time' : range.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                    </button>
+                  ))}
+                </div>
+              </FilterCard>
+
+              {/* 2️⃣ Anomaly Type */}
+              <FilterCard
+                title="Anomaly Type"
+                icon={AlertTriangle}
+                gradient="from-purple-50 to-pink-50/50"
+                iconColor="text-purple-600"
+                iconBg="bg-white"
+              >
+                <div className="relative group">
+                  <select
+                    value={anomalyType}
+                    onChange={(e) => setAnomalyType(e.target.value)}
+                    className="w-full appearance-none bg-purple-50/30 border border-purple-100 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-purple-500/20 block p-3.5 pl-4 shadow-sm hover:border-purple-200 transition-all cursor-pointer font-medium"
+                  >
+                    <option value="ALL">All Information Types</option>
+                    <option value="Spike">📈 Spike (Sudden Increase)</option>
+                    <option value="Drop">📉 Drop (Mass Deletion)</option>
+                    <option value="Irregular Pattern">〰️ Irregular Pattern</option>
+                    <option value="Missing Data">❓ Missing Demographics</option>
+                  </select>
+                  <div className="absolute right-3 top-3.5 p-1 bg-white rounded-md shadow-sm border border-purple-100 pointer-events-none group-hover:scale-110 transition-transform">
+                    <ChevronDown className="h-3 w-3 text-purple-500" />
+                  </div>
+                </div>
+              </FilterCard>
+
+              {/* 3️⃣ Severity Level */}
+              <FilterCard
+                title="Severity Level"
+                icon={TrendingUp}
+                gradient="from-rose-50 to-red-50/50"
+                iconColor="text-rose-600"
+                iconBg="bg-white"
+              >
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'NORMAL', label: 'Low', color: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 ring-emerald-400' },
+                    { id: 'WARNING', label: 'Medium', color: 'bg-amber-100 text-amber-700 hover:bg-amber-200 ring-amber-400' },
+                    { id: 'HIGH', label: 'High', color: 'bg-orange-100 text-orange-700 hover:bg-orange-200 ring-orange-400' },
+                    { id: 'CRITICAL', label: 'Critical', color: 'bg-rose-100 text-rose-700 hover:bg-rose-200 ring-rose-400' }
+                  ].map((level) => (
+                    <button
+                      key={level.id}
+                      onClick={() => setSeverityLevel(severityLevel === level.id ? 'ALL' : level.id)}
+                      className={cn(
+                        "text-xs py-2 px-4 rounded-full transition-all duration-300 font-bold flex-1 text-center shadow-sm hover:shadow-md border border-transparent",
+                        severityLevel === level.id
+                          ? `${level.color} ring-2 ring-offset-2 scale-105`
+                          : "bg-gray-50 text-gray-400 hover:bg-white hover:text-gray-600"
+                      )}
+                    >
+                      {level.label}
+                    </button>
+                  ))}
+                </div>
+              </FilterCard>
+
+
+              {/* 4️⃣ Confidence Score */}
+              <FilterCard
+                title="AI Confidence"
+                icon={Shield}
+                gradient="from-teal-50 to-cyan-50/50"
+                iconColor="text-teal-600"
+                iconBg="bg-white"
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Min Threshold</span>
+                    <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-100 shadow-sm">
+                      {Math.round(minConfidence * 100)}% +
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={minConfidence * 100}
+                    onChange={(e) => setMinConfidence(parseInt(e.target.value) / 100)}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-400 transition-all"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+              </FilterCard>
+
+              {/* Threshold Slider (Legacy/Global) - Wrapped for consistency */}
+              <FilterCard
+                title="Risk Sensitivity"
+                icon={SlidersHorizontal}
+                gradient="from-slate-50 to-gray-50/50"
+                iconColor="text-slate-600"
+                iconBg="bg-white"
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Anomaly Score</span>
+                    <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100 shadow-sm">{anomalyThreshold}+</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={anomalyThreshold}
+                    onChange={(e) => setAnomalyThreshold(parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF6B4A] hover:accent-[#ff8f6b] transition-all"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                    <span>0</span>
+                    <span>50</span>
+                    <span>100</span>
+                  </div>
+                </div>
+              </FilterCard>
+
+              {/* Quick Stats Card */}
+              <div className="pt-6 border-t border-gray-100">
+                <div className="bg-gradient-to-br from-[#2D3E8F]/5 to-[#FF6B4A]/5 rounded-2xl p-4 border border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-[#2D3E8F]" />
+                    Quick Stats
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    {loading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin text-[#FF6B4A]" />
+                      </div>
+                    ) : error ? (
+                      <div className="text-red-600 text-xs">{error}</div>
+                    ) : dashboardData ? (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">States</span>
+                          <span className="font-semibold text-gray-900">{DASHBOARD_CONFIG.STATES_COUNT}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Union Territories</span>
+                          <span className="font-semibold text-gray-900">{DASHBOARD_CONFIG.XX_UTS_COUNT}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
+                          <span className="text-gray-900 font-semibold">Total Admin Units</span>
+                          <span className="font-bold text-[#2D3E8F]">{DASHBOARD_CONFIG.TOTAL_ADMIN_UNITS}</span>
+                        </div>
+
+                        <div className="flex justify-between mt-3">
+                          <span className="text-gray-500">Constituencies</span>
+                          <span className="font-semibold text-gray-900">{dashboardData.constituencies_count || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Total Voters</span>
+                          <span className="font-semibold text-gray-900">
+                            {dashboardData.total_voters ? dashboardData.total_voters.toLocaleString() : 'N/A'}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-gray-500 text-xs">No data available</div>
+                    )}
+                    <div className="pt-3 mt-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-400">Last updated</span>
+                      <div className="text-sm font-medium text-[#10B981]">Just now</div>
                     </div>
-                  </>
-                ) : (
-                  <div className="text-gray-500 text-xs">No data available</div>
-                )}
-                <div className="pt-4">
-                  <span className="text-xs text-gray-400">Last updated</span>
-                  <div className="text-sm font-medium text-gray-900">Just now</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -592,18 +861,17 @@ function Dashboard() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-y-auto">
-          {/* REMOVED: National Voter Statistics section - data now displayed in metric cards and charts below */}
 
           {/* State Context Indicator */}
           <motion.div
             key={selectedState}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 flex items-center gap-2"
+            className="mb-6 flex items-center gap-2"
           >
-            <Eye className="h-4 w-4 text-indigo-600" />
+            <Eye className="h-4 w-4 text-[#2D3E8F]" />
             <span className="text-sm text-gray-600">Viewing:</span>
-            <span className="text-sm font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+            <span className="text-sm font-semibold text-[#2D3E8F] bg-[#2D3E8F]/10 px-3 py-1 rounded-full">
               {selectedState === 'ALL' ? 'National (All States)' : selectedState}
             </span>
           </motion.div>
@@ -647,26 +915,26 @@ function Dashboard() {
             )}
           </AnimatePresence>
 
-          {/* Top Stats Row - ENHANCED WITH GRADIENTS */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {/* Top Stats Row - Homepage Color Palette */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
             {/* Total Voters Card */}
             <motion.div
               key={`voters-${selectedState}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-5 text-white shadow-lg"
+              className="bg-gradient-to-br from-[#2D3E8F] to-[#1e2d6b] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-indigo-100 text-sm font-medium">Total Voters</p>
+                  <p className="text-blue-200 text-sm font-medium">Total Voters</p>
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : formatVoterCount(dashboardData?.total_voters)}
                   </h3>
-                  <p className="text-indigo-200 text-xs mt-2 flex items-center gap-1">
+                  <p className="text-blue-300/70 text-xs mt-2 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" /> Live from electoral roll
                   </p>
                 </div>
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-3 bg-white/10 rounded-xl">
                   <Users className="h-6 w-6" />
                 </div>
               </div>
@@ -678,7 +946,7 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.05 }}
-              className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white shadow-lg"
+              className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -686,11 +954,11 @@ function Dashboard() {
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : (dashboardData?.constituencies_count || 0)}
                   </h3>
-                  <p className="text-emerald-200 text-xs mt-2 flex items-center gap-1">
+                  <p className="text-emerald-200/70 text-xs mt-2 flex items-center gap-1">
                     <MapPin className="h-3 w-3" /> Parliamentary seats
                   </p>
                 </div>
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-3 bg-white/10 rounded-xl">
                   <MapPin className="h-6 w-6" />
                 </div>
               </div>
@@ -702,15 +970,15 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl p-5 text-white shadow-lg"
+              className="bg-gradient-to-br from-[#FF6B4A] to-[#dc2626] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-1">
-                    <p className="text-rose-100 text-sm font-medium">Anomalies Detected</p>
+                    <p className="text-red-100 text-sm font-medium">Anomalies Detected</p>
                     <div className="group relative">
-                      <Info className="h-3 w-3 text-rose-200 cursor-help" />
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
+                      <Info className="h-3 w-3 text-red-200 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
                         Derived indicator: ~3% of constituencies based on statistical modeling
                       </div>
                     </div>
@@ -718,9 +986,9 @@ function Dashboard() {
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : anomaliesDetected}
                   </h3>
-                  <p className="text-rose-200 text-xs mt-2">~3% estimated flag rate</p>
+                  <p className="text-red-200/70 text-xs mt-2">~3% estimated flag rate</p>
                 </div>
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-3 bg-white/10 rounded-xl">
                   <AlertTriangle className="h-6 w-6" />
                 </div>
               </div>
@@ -732,7 +1000,7 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.15 }}
-              className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white shadow-lg"
+              className="bg-gradient-to-br from-[#f59e0b] to-[#d97706] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -740,7 +1008,7 @@ function Dashboard() {
                     <p className="text-amber-100 text-sm font-medium">Audits Required</p>
                     <div className="group relative">
                       <Info className="h-3 w-3 text-amber-200 cursor-help" />
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
                         Derived indicator: ~40% of anomalies require manual verification
                       </div>
                     </div>
@@ -748,9 +1016,9 @@ function Dashboard() {
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : auditsRequired}
                   </h3>
-                  <p className="text-amber-200 text-xs mt-2">Manual review needed</p>
+                  <p className="text-amber-200/70 text-xs mt-2">Manual review needed</p>
                 </div>
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-3 bg-white/10 rounded-xl">
                   <FileText className="h-6 w-6" />
                 </div>
               </div>
@@ -759,23 +1027,27 @@ function Dashboard() {
 
           {/* Risk Distribution Bar */}
           {!loading && dashboardData && (
-            <Card className="mb-6 shadow-none border-none ring-1 ring-gray-100">
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
+            <Card className="mb-6 shadow-lg border-none rounded-2xl overflow-hidden">
+              {/* Gradient accent bar */}
+              <div className="h-1 bg-gradient-to-r from-[#10B981] via-[#f59e0b] to-[#FF6B4A]" />
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-indigo-600" />
+                    <div className="w-6 h-6 rounded-lg bg-[#2D3E8F]/10 flex items-center justify-center">
+                      <Shield className="h-3.5 w-3.5 text-[#2D3E8F]" />
+                    </div>
                     Risk Distribution
                   </h3>
-                  <span className="text-xs text-gray-500">Based on voter concentration analysis</span>
+                  <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">Based on voter concentration</span>
                 </div>
 
                 {/* Stacked Bar */}
-                <div className="h-4 rounded-full overflow-hidden flex bg-gray-100">
+                <div className="h-5 rounded-full overflow-hidden flex bg-gray-100 shadow-inner">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.normal.percent}%` }}
                     transition={{ duration: 0.5 }}
-                    className="bg-green-500 h-full"
+                    className="bg-[#10B981] h-full"
                     title={`Normal: ${riskDistribution.normal.percent}%`}
                   />
                   <motion.div
@@ -789,48 +1061,51 @@ function Dashboard() {
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.high.percent}%` }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="bg-orange-500 h-full"
+                    className="bg-[#FF6B4A] h-full"
                     title={`High: ${riskDistribution.high.percent}%`}
                   />
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.critical.percent}%` }}
                     transition={{ duration: 0.5, delay: 0.3 }}
-                    className="bg-red-500 h-full"
+                    className="bg-red-600 h-full"
                     title={`Critical: ${riskDistribution.critical.percent}%`}
                   />
                 </div>
 
                 {/* Legend */}
-                <div className="flex justify-between mt-3 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-gray-600">Normal {riskDistribution.normal.percent}%</span>
+                <div className="flex justify-between mt-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-[#10B981]" />
+                    <span className="text-gray-600 font-medium">Normal {riskDistribution.normal.percent}%</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-amber-500" />
-                    <span className="text-gray-600">Warning {riskDistribution.warning.percent}%</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-amber-500" />
+                    <span className="text-gray-600 font-medium">Warning {riskDistribution.warning.percent}%</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-orange-500" />
-                    <span className="text-gray-600">High {riskDistribution.high.percent}%</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-[#FF6B4A]" />
+                    <span className="text-gray-600 font-medium">High {riskDistribution.high.percent}%</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-red-500" />
-                    <span className="text-gray-600">Critical {riskDistribution.critical.percent}%</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-600" />
+                    <span className="text-gray-600 font-medium">Critical {riskDistribution.critical.percent}%</span>
                   </div>
                 </div>
               </div>
             </Card>
           )}
 
-          {/* Insights Card */}
-
-          <Card className="mb-6 min-h-[650px] shadow-none border-none ring-1 ring-gray-100 flex flex-col">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          {/* Map Card */}
+          <Card className="mb-6 min-h-[650px] shadow-lg border-none rounded-2xl flex flex-col overflow-hidden">
+            {/* Gradient accent bar */}
+            <div className="h-1 bg-gradient-to-r from-[#2D3E8F] to-[#FF6B4A]" />
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50/50 to-white">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-indigo-600" />
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2D3E8F] to-[#1e2d6b] flex items-center justify-center">
+                    <MapPin className="h-4 w-4 text-white" />
+                  </div>
                   Constituency Risk Map
                 </h2>
                 {/* Enhanced Legend */}
@@ -995,7 +1270,7 @@ function Dashboard() {
                 <h3 className="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
                   Key Insights
-                  <span className="text-xs font-normal text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">Derived</span>
+                  <span className="text-xs font-normal text-[#2D3E8F] bg-[#2D3E8F]/10 px-2 py-0.5 rounded-full">Derived</span>
                 </h3>
                 <ul className="space-y-2">
                   {insights.map((insight, index) => (
@@ -1004,9 +1279,9 @@ function Dashboard() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="text-sm text-indigo-800 flex items-start gap-2"
+                      className="text-sm text-gray-700 flex items-start gap-2"
                     >
-                      <span className="text-indigo-500 mt-0.5">•</span>
+                      <span className="text-[#FF6B4A] mt-0.5">•</span>
                       {insight}
                     </motion.li>
                   ))}
@@ -1019,10 +1294,13 @@ function Dashboard() {
           {!loading && dashboardData && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Mini Bar Chart - Top 5 Constituencies */}
-              <Card className="shadow-none border-none ring-1 ring-gray-100">
-                <div className="p-4">
+              <Card className="shadow-lg border-none rounded-2xl overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-[#2D3E8F] to-[#10B981]" />
+                <div className="p-5">
                   <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-indigo-600" />
+                    <div className="w-6 h-6 rounded-lg bg-[#2D3E8F]/10 flex items-center justify-center">
+                      <TrendingUp className="h-3.5 w-3.5 text-[#2D3E8F]" />
+                    </div>
                     Top Constituencies by Voter Count
                   </h3>
                   <div className="space-y-3">
@@ -1200,7 +1478,7 @@ function Dashboard() {
           )}
         </main>
       </div>
-    </div>
+    </div >
   )
 }
 
