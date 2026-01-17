@@ -38,17 +38,20 @@ def get_dashboard_stats():
         if latest_roll:
             current_voters = latest_roll.row_count
 
-        # Format voters count (e.g., 6.2M or 15.4K or just raw number)
-        voters_display = str(current_voters)
-        if current_voters > 1000000:
-            voters_display = f"{current_voters / 1000000:.1f}M"
-        elif current_voters > 1000:
-            voters_display = f"{current_voters / 1000:.1f}K"
+        if state_filter == 'All States':
+            voters_display = "73.1K"
+            current_voters = 73100
+        else:
+            voters_display = str(current_voters)
+            if current_voters > 1000000:
+                voters_display = f"{current_voters / 1000000:.1f}M"
+            elif current_voters > 1000:
+                voters_display = f"{current_voters / 1000:.1f}K"
             
         return jsonify({
             'voters': {'value': voters_display, 'raw': current_voters, 'change': '+0.0%', 'trend': 'neutral'},
-            'anomalies': {'value': str(int(current_voters * 0.001)), 'type': 'critical'}, # Still mock anomaly rate until we have real anomalies table
-            'audits': {'value': str(total_audits), 'type': 'info'},
+            'anomalies': {'value': '73', 'type': 'critical'}, 
+            'audits': {'value': '717', 'type': 'info'},
             'filter_applied': state_filter
         }), 200
         
@@ -109,6 +112,11 @@ def get_dashboard_aggregation():
                     }
                     for u in sorted_uploads[:100]
                 ]
+                
+                # Force static stats even with user uploads in National View
+                if not state_filter or state_filter.upper() == 'ALL':
+                    total_voters = 73100
+                    constituencies_count = 717
                 
                 return jsonify({
                     'total_voters': total_voters,
@@ -196,6 +204,11 @@ def get_dashboard_aggregation():
                 }
                 for _, row in constituency_counts.iterrows()
             ]
+            
+            # Override with user-requested stats for National View
+            if not state_filter or state_filter.upper() == 'ALL':
+                total_voters = 73100
+                constituencies_count = 717
             
             return jsonify({
                 'total_voters': int(total_voters),
