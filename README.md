@@ -1,31 +1,28 @@
-<div align="center" style="font-family: Arial, sans-serif; background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); padding: 40px; border-radius: 16px; color: white;">
+<div align="center">
 
-  <h1 style="font-size: 42px; margin-bottom: 10px; letter-spacing: 2px;">
-    🗳️ Electoral Roll Tracker
-  </h1>
+<h1>🗳️ Electoral Roll Tracker</h1>
 
-  <h3 style="font-weight: 300; margin-top: 0;">
-    Forensic Auditing of Electoral Roll Changes at National Scale
-  </h3>
+<h3>Forensic Auditing of Electoral Roll Changes at National Scale</h3>
 
-  <p style="max-width: 800px; margin: 20px auto; font-size: 16px; opacity: 0.9;">
-    Electoral manipulation doesn’t happen loudly.  
-    It hides inside silent data changes — additions, deletions, and subtle modifications.
-    <br /><br />
-    <strong>Electoral Roll Tracker</strong> is a civic-tech platform that detects, audits, and visualizes suspicious changes in voter rolls — like <em>Git Diff for Democracy</em>.
-  </p>
+<p>
+Electoral manipulation doesn’t happen loudly.  
+It hides inside silent data changes — <b>additions, deletions, and subtle modifications</b>.
+</p>
 
-  <div style="margin: 30px 0;">
-    <a href="https://electoral-roll-tracker-one.vercel.app/" target="_blank"
-       style="padding: 14px 26px; background: #00e5ff; color: #000; text-decoration: none; border-radius: 30px; font-weight: bold; margin-right: 12px;">
-      🚀 Live Frontend
-    </a>
+<p>
+<b>Electoral Roll Tracker</b> is a civic-tech platform that detects, audits, and visualizes suspicious changes in voter rolls —  
+<i>like Git Diff for Democracy</i>.
+</p>
 
-    <a href="https://dashboard.render.com/web/srv-d5in7ingi27c73d33fkg" target="_blank"
-       style="padding: 14px 26px; background: transparent; color: #00e5ff; border: 2px solid #00e5ff; text-decoration: none; border-radius: 30px; font-weight: bold;">
-      ⚙️ Backend Service
-    </a>
-  </div>
+<p>
+<a href="https://electoral-roll-tracker-one.vercel.app/" target="_blank">
+🚀 <b>Live Frontend</b>
+</a>
+&nbsp;&nbsp;|&nbsp;&nbsp;
+<a href="https://dashboard.render.com/web/srv-d5in7ingi27c73d33fkg" target="_blank">
+⚙️ <b>Backend Service</b>
+</a>
+</p>
 
 </div>
 
@@ -35,109 +32,112 @@
 
 > **Electoral roll manipulation hides in silent data changes, not in static voter lists.**
 
-With frequent voter list updates across regions, it becomes nearly impossible to manually detect:
-- Mass voter deletions
-- Artificial voter insertions
-- Suspicious demographic shifts
-- Synthetic or duplicated voter records
+With frequent voter list updates across regions, it becomes extremely difficult to detect:
+- Mass voter deletions  
+- Artificial voter insertions  
+- Suspicious demographic shifts  
+- Synthetic or duplicated voter records  
 
-This platform provides **forensic-grade auditing** for electoral roll changes — aligned with the vision of  
-**🗺️ One Nation, One Election**.
+This platform provides **forensic-grade auditing** aligned with the vision of  
+🇮🇳 **One Nation, One Election**.
 
 ---
 
 ## 🏆 Hackathon Details
 
 | Field | Details |
-|-----|--------|
-| **Hackathon** | ❄️ Snow Frost Hackathon 2026 |
-| **Theme** | Civic Tech – One Nation One Election |
-| **Problem Title** | Forensic Auditing of Electoral Roll Changes at National Scale |
-| **Team Name** | **TEEN TITANS** |
+|------|--------|
+| Hackathon | ❄️ Snow Frost Hackathon 2026 |
+| Theme | Civic Tech – One Nation One Election |
+| Problem Statement | Forensic Auditing of Electoral Roll Changes at National Scale |
+| Team Name | **TEEN TITANS** |
 
 ---
 
 ## 👥 Team
 
 | Name | Role |
-|----|----|
-| **Krishna** | Lead – Full Stack |
-| **Vansh** | Backend Developer |
-| **Hitendra** | Frontend Developer |
-| **Aarushi Sachdeva** | Frontend Developer |
+|------|------|
+| Krishna | Lead – Full Stack |
+| Vansh | Backend Developer |
+| Hitendra | Frontend Developer |
+| Aarushi Sachdeva | Frontend Developer |
 
 ---
 
 ## ⚙️ Technological Approach
 
 ### 🔍 Pre-Processing Intelligence
-- Detects **unnatural voter movement** using age, gender, time & migration patterns
-- Identifies **fake voter clusters** via address & relationship similarity
-- Flags **impossible voter densities** using spatial clustering
-- Detects **synthetic data** through low randomness patterns
-- Assigns **probabilistic risk scores** instead of binary flags
+- Detects unnatural voter movement using age, gender, time & migration patterns  
+- Identifies fake voter clusters via address & relationship similarity  
+- Flags impossible voter densities using spatial clustering  
+- Detects synthetic data through low randomness patterns  
+- Assigns **probabilistic risk scores** instead of binary flags  
 
 ### 🧩 Core Concept
-> *Version control for electoral democracy.*
+**Version control for democracy**
 
-We compare two versions of electoral rolls and classify:
-- ➕ Additions
-- ➖ Deletions
+Two electoral roll versions are compared to identify:
+- ➕ Additions  
+- ➖ Deletions  
 - ✏️ Modifications  
-with visual highlights and statistical summaries.
+
+All changes are visualized with clear statistics and highlights.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend
+**Backend**
 - Python
 - FastAPI
 - Pandas
 - PostgreSQL
 - Uvicorn
 
-### Frontend
+**Frontend**
 - React (Vite)
 - Tailwind CSS
-- Interactive visual diff viewer
+- Interactive Diff Viewer
 
-### Deployment
-- **Frontend**: Vercel  
-- **Backend**: Render  
-
----
-
-## 📊 Demo Flow (For Judges)
-
-1. Upload two electoral roll CSV files
-2. System computes structural and statistical differences
-3. Suspicious patterns are highlighted visually
-4. Risk scores and summaries are generated
-5. Insights can be reviewed within seconds
+**Deployment**
+- Frontend: Vercel  
+- Backend: Render  
 
 ---
 
-## 📚 References & Data Justification
+## 📊 Demo Flow
 
-- Association for Democratic Reforms (ADR): https://adrindia.org/
-- Election Commission of India: https://eci.gov.in/
-- National Electoral Roll Purification & Authentication Programme
+1. Upload two electoral roll CSV files  
+2. System computes structural & statistical differences  
+3. Suspicious patterns are highlighted  
+4. Risk scores and summaries are generated  
+5. Insights available instantly  
+
+---
+
+## 📚 References
+
+- ADR India — https://adrindia.org  
+- Election Commission of India — https://eci.gov.in  
+- National Electoral Roll Purification & Authentication Programme  
 - Special Intensive Revision (SIR)
-
-These sources define the **real-world urgency** and legal framework behind this project.
 
 ---
 
 ## 🌍 Impact
 
-- Enables **transparent electoral audits**
-- Scales to national-level voter databases
-- Reduces reliance on manual verification
-- Strengthens democratic trust through data
+- Enables transparent electoral audits  
+- Scales to national voter databases  
+- Reduces manual verification  
+- Strengthens democratic trust through data  
 
 ---
 
-<div align="center" style="margin-top: 40px; font-size: 14px; opacity: 0.8;">
-  Built with integrity 🕊️ | Data for Democracy 🇮🇳
+<div align="center">
+<br><br>
+<img src="https://upload.wikimedia.org/wikipedia/commons/1/17/Lion_Capital_of_Ashoka.jpg" width="120" />
+<br><br>
+<b>सत्यमेव जयते</b><br>
+<i>Truth Alone Triumphs</i>
 </div>
