@@ -1,143 +1,233 @@
-<div align="center">
-
-<h1>🗳️ Electoral Roll Tracker</h1>
-
-<h3>Forensic Auditing of Electoral Roll Changes at National Scale</h3>
-
-<p>
-Electoral manipulation doesn’t happen loudly.  
-It hides inside silent data changes — <b>additions, deletions, and subtle modifications</b>.
-</p>
-
-<p>
-<b>Electoral Roll Tracker</b> is a civic-tech platform that detects, audits, and visualizes suspicious changes in voter rolls —  
-<i>like Git Diff for Democracy</i>.
-</p>
-
-<p>
-<a href="https://electoral-roll-tracker-one.vercel.app/" target="_blank">
-🚀 <b>Live Frontend</b>
-</a>
-&nbsp;&nbsp;|&nbsp;&nbsp;
-<a href="https://dashboard.render.com/web/srv-d5in7ingi27c73d33fkg" target="_blank">
-⚙️ <b>Backend Service</b>
-</a>
-</p>
-
-</div>
+# 🗳️ Electoral Roll Tracker  
+### “Git for Democracy”  
+### Forensic Auditing of Electoral Roll Changes at National Scale  
 
 ---
 
-## 🧠 Problem Statement
+## 👨‍💻 Team: *caffiene.exe*  
+Built at **Hackavensis Hackathon 2026**
 
-> **Electoral roll manipulation hides in silent data changes, not in static voter lists.**
+| Name | Role | LinkedIn | GitHub |
+|------|------|----------|--------|
+| **Krishna** | Leader & Full Stack Developer | [LinkedIn](https://www.linkedin.com/in/krishna-verma-2177b3394/) | [GitHub](https://github.com/krix2112) |
+| **Aarushi Sachdeva** | UI/UX Developer | [LinkedIn](https://www.linkedin.com/in/aarushi-sachdeva-aa7609378/) | [GitHub](https://github.com/sachdeva-aarushi) |
+| **Suhani** | Frontend Developer | [LinkedIn](https://www.linkedin.com/in/suhani-s-3aa9a21aa/) | [GitHub](https://github.com/Suhani1954) |
+| **Hitendra** | Frontend Developer | [LinkedIn](https://www.linkedin.com/in/hitendra-dhapola-952854368/) | [GitHub](https://github.com/j25aiml192-hash/) |
+| **Vansh Bhatia** | Full Stack Developer | [LinkedIn](https://www.linkedin.com/in/vansh-bhatia-9aa017269/) | [GitHub](https://github.com/vanssh012) |
 
-With frequent voter list updates across regions, it becomes extremely difficult to detect:
-- Mass voter deletions  
-- Artificial voter insertions  
-- Suspicious demographic shifts  
-- Synthetic or duplicated voter records  
-
-This platform provides **forensic-grade auditing** aligned with the vision of  
-🇮🇳 **One Nation, One Election**.
-
----
-
-## 🏆 Hackathon Details
-
-| Field | Details |
-|------|--------|
-| Hackathon | ❄️ Snow Frost Hackathon 2026 |
-| Theme | Civic Tech – One Nation One Election |
-| Problem Statement | Forensic Auditing of Electoral Roll Changes at National Scale |
-| Team Name | **TEEN TITANS** |
+🔗 **Project Repository:**  
+https://github.com/krix2112/electoral-roll-tracker
 
 ---
 
-## 👥 Team
+# 🧠 The Core Concept
 
-| Name | Role |
-|------|------|
-| Krishna | Lead – Full Stack |
-| Vansh | Backend Developer |
-| Hitendra | Frontend Developer |
-| Aarushi Sachdeva | Frontend Developer |
+> Electoral manipulation doesn’t happen loudly.  
+> It hides inside silent data changes.
 
----
+Electoral Roll Tracker is a civic-tech platform that tracks, audits, and visualizes **every change** in electoral rolls.
 
-## ⚙️ Technological Approach
+It works like **Git Diff — but for Democracy.**
 
-### 🔍 Pre-Processing Intelligence
-- Detects unnatural voter movement using age, gender, time & migration patterns  
-- Identifies fake voter clusters via address & relationship similarity  
-- Flags impossible voter densities using spatial clustering  
-- Detects synthetic data through low randomness patterns  
-- Assigns **probabilistic risk scores** instead of binary flags  
+Instead of staring at static voter lists, we compare *versions* and detect:
 
-### 🧩 Core Concept
-**Version control for democracy**
-
-Two electoral roll versions are compared to identify:
 - ➕ Additions  
 - ➖ Deletions  
 - ✏️ Modifications  
-
-All changes are visualized with clear statistics and highlights.
-
----
-
-## 🛠️ Tech Stack
-
-**Backend**
-- Python
-- FastAPI
-- Pandas
-- PostgreSQL
-- Uvicorn
-
-**Frontend**
-- React (Vite)
-- Tailwind CSS
-- Interactive Diff Viewer
-
-**Deployment**
-- Frontend: Vercel  
-- Backend: Render  
+- 🚨 Suspicious patterns  
 
 ---
 
-## 📊 Demo Flow
+# 🚨 Problem Statement
 
-1. Upload two electoral roll CSV files  
-2. System computes structural & statistical differences  
-3. Suspicious patterns are highlighted  
-4. Risk scores and summaries are generated  
-5. Insights available instantly  
+Electoral roll manipulation hides in silent data changes — not in static voter lists.
 
----
+With frequent roll updates across regions, it becomes extremely difficult to detect:
 
-## 📚 References
+- Mass voter deletions  
+- Artificial voter insertions  
+- Suspicious same-day registrations  
+- Duplicate or synthetic voter records  
+- Pattern-based demographic anomalies  
 
-- ADR India — https://adrindia.org  
-- Election Commission of India — https://eci.gov.in  
-- National Electoral Roll Purification & Authentication Programme  
-- Special Intensive Revision (SIR)
+Manual auditing is slow.  
+National-scale auditing is nearly impossible.
 
 ---
 
-## 🌍 Impact
+# 💡 Our Solution
 
-- Enables transparent electoral audits  
-- Scales to national voter databases  
-- Reduces manual verification  
-- Strengthens democratic trust through data  
+A version-controlled forensic auditing system for electoral rolls.
+
+Upload two CSV versions.  
+Click compare.  
+Instantly visualize changes.
+
+Think:
+
+> `git diff electoral_roll_jan.csv electoral_roll_feb.csv`
+
+But with red/green highlighting and automated anomaly detection.
 
 ---
 
-<div align="center">
-<br><br>
-<img src="https://upload.wikimedia.org/wikipedia/commons/1/17/Lion_Capital_of_Ashoka.jpg" width="120" />
-<br><br>
-<b>सत्यमेव जयते</b><br>
-<i>Truth Alone Triumphs</i>
-</div>
+# ⚙️ Key Features
+
+### 📤 Upload Electoral Roll CSV Files
+Secure upload and parsing of large datasets.
+
+### 🔍 Version Comparison Engine
+Detects:
+- Added voters
+- Deleted voters
+- Modified records
+
+### 🚨 Suspicious Pattern Detection
+Automatically flags:
+- 500+ bulk deletions
+- Same-day mass registrations
+- Duplicate entries
+- Abnormal data clusters
+
+### 🎨 Visual Diff Viewer
+- Red = Deleted voters
+- Green = Added voters
+- Yellow = Modified entries
+- GitHub-style comparison UI
+
+### 📢 Alert System
+Real-time alerts for suspicious roll activity.
+
+---
+
+# ⚡ The "Wow" Moments
+
+### 🧮 Hash-Based Diff Algorithm
+- O(n) complexity
+- Uses Pandas + MD5 hashing
+- Extremely fast comparison even at 10,000+ rows
+
+### 📊 Pattern Detection Intelligence
+- Bulk deletion threshold alerts
+- Same-day suspicious registrations
+- Statistical anomaly detection
+
+### 🌍 Real Civic Impact
+Addresses real electoral integrity concerns at scale.
+
+---
+
+# 🎬 2-Minute Demo Script
+
+1. Upload **January Roll** (10,000 voters)
+2. Upload **February Roll** (9,500 voters)
+3. Click **Compare**
+4. 💥 Visual diff appears
+5. 🔴 500 voters highlighted in red
+6. 🚨 Alert: *"Bulk deletion detected"*
+
+Instant forensic insight.
+
+---
+
+# 🛠️ Tech Stack
+
+## 🔹 Backend
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas)
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway)
+
+## 🔹 Frontend
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css)
+![shadcn/ui](https://img.shields.io/badge/shadcn/ui-black?style=for-the-badge)
+
+## 🔹 Deployment
+
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel)
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway)
+
+---
+
+# 🏗️ System Architecture
+
+User Upload
+↓
+CSV Parser (Pandas)
+↓
+Hash Generator (MD5)
+↓
+Diff Engine (O(n))
+↓
+Pattern Detection Module
+↓
+Alert Engine
+↓
+React Diff Viewer UI
+
+
+---
+
+# 📂 Project Structure
+
+electoral-roll-tracker/
+│
+├── backend/
+│ ├── app.py
+│ ├── diff_engine.py
+│ ├── pattern_detection.py
+│ ├── database.py
+│
+├── frontend/
+│ ├── components/
+│ ├── pages/
+│ ├── diffViewer/
+│
+├── README.md
+
+
+---
+
+# 🚀 How to Run Locally
+
+## Backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+flask run
+Frontend
+cd frontend
+npm install
+npm run dev
+🌍 Impact
+Enables transparent electoral audits
+
+Scales to national voter databases
+
+Reduces manual verification
+
+Strengthens democratic trust
+
+Introduces version control to public governance
+
+🔮 Future Improvements
+Role-based access control
+
+Geographic heatmap visualization
+
+Blockchain audit logging
+
+AI-powered anomaly prediction
+
+Public transparency dashboard
+
+🏆 Built at Hackavensis 2026
+Team: caffiene.exe
+
+Because democracy deserves version control.
