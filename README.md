@@ -2,10 +2,15 @@
 ### “Git for Democracy”  
 ### Forensic Auditing of Electoral Roll Changes at National Scale  
 
+<img width="3839" height="1756" alt="image" src="https://github.com/user-attachments/assets/16384161-2c96-4713-82d3-b414910dda49" />
+<img width="3784" height="1762" alt="image" src="https://github.com/user-attachments/assets/33d25f65-f6c4-4842-b53b-2be32e2905ef" />
+<img width="3778" height="1755" alt="image" src="https://github.com/user-attachments/assets/008fe783-ca48-425d-92b4-dd7fc642be3d" />
+<img width="3790" height="1747" alt="image" src="https://github.com/user-attachments/assets/5b10f10e-f621-4d27-b6fe-0de5e8dc568a" />
+
 ---
 
 ## 👨‍💻 Team: *caffiene.exe*  
-Built at **Hackavensis Hackathon 2026**
+Built for **Hackavensis Hackathon 2026**
 
 | Name | Role | LinkedIn | GitHub |
 |------|------|----------|--------|
@@ -17,6 +22,9 @@ Built at **Hackavensis Hackathon 2026**
 
 🔗 **Project Repository:**  
 https://github.com/krix2112/electoral-roll-tracker
+🔗 **Deployed Link:**  
+https://electoral-roll-tracker-one.vercel.app/
+<img width="3791" height="1750" alt="image" src="https://github.com/user-attachments/assets/afc6abc3-448b-4558-acf0-8abf0015638f" />
 
 ---
 
@@ -227,7 +235,7 @@ AI-powered anomaly prediction
 
 Public transparency dashboard
 
-🏆 Built at Hackavensis 2026
+🏆 Built for Hackavensis 2026
 Team: caffiene.exe
 
 Because democracy deserves version control.
