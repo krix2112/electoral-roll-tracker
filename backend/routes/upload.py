@@ -10,6 +10,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import db
 from models import ElectoralRoll, VoterRecord, Notification
 from diff_engine import calculate_row_hash, calculate_dataset_hash
+from utils.pdf_parser import parse_electoral_roll_pdf
+import tempfile
 
 upload_bp = Blueprint('upload', __name__)
 REQUIRED_COLUMNS = ['voter_id', 'name', 'age', 'address', 'registration_date']
@@ -31,8 +33,9 @@ def process_single_file(file):
             return {'error': 'No file selected', 'filename': ''}
         
         # Edge Case 3: Invalid file extension
-        if not file.filename.lower().endswith('.csv'):
-            return {'error': 'Only CSV files are supported', 'filename': file.filename}
+        is_pdf = file.filename.lower().endswith('.pdf')
+        if not (file.filename.lower().endswith('.csv') or is_pdf):
+            return {'error': 'Only CSV and PDF files are supported', 'filename': file.filename}
         
         # Edge Case 4: Check file size (before processing)
         file.seek(0, os.SEEK_END)
@@ -46,22 +49,42 @@ def process_single_file(file):
         if file_size > MAX_FILE_SIZE:
             return {'error': f'File too large. Maximum size is 50MB. Your file is {file_size / (1024*1024):.2f}MB', 'filename': file.filename}
         
-        # Edge Case 5: Try multiple encodings for CSV parsing
-        encodings = ['utf-8-sig', 'utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
-        df = None
-        encoding_used = None
-        
-        for encoding in encodings:
+        # Edge Case 5: Parsing Logic (CSV vs PDF)
+        if is_pdf:
+            # Handle PDF Upload
             try:
-                file.seek(0)  # Reset file pointer
-                df = pd.read_csv(file, encoding=encoding)
-                encoding_used = encoding
-                break
-            except (UnicodeDecodeError, pd.errors.ParserError):
-                continue
+                # Create temp file for PDF processing
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
+                    file.save(temp_pdf.name)
+                    temp_pdf_path = temp_pdf.name
+                
+                try:
+                    # Parse PDF to DataFrame
+                    df = parse_electoral_roll_pdf(temp_pdf_path, method='pdfplumber')
+                    encoding_used = 'pdf-extraction'
+                finally:
+                    # Clean up temp file
+                    if os.path.exists(temp_pdf_path):
+                        os.unlink(temp_pdf_path)
+            except Exception as e:
+                return {'error': f'Failed to parse PDF: {str(e)}', 'filename': file.filename}
+        else:
+            # Handle CSV Upload (Existing Logic)
+            encodings = ['utf-8-sig', 'utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
+            df = None
+            encoding_used = None
+            
+            for encoding in encodings:
+                try:
+                    file.seek(0)  # Reset file pointer
+                    df = pd.read_csv(file, encoding=encoding)
+                    encoding_used = encoding
+                    break
+                except (UnicodeDecodeError, pd.errors.ParserError):
+                    continue
         
         if df is None:
-            return {'error': 'Unable to parse CSV file. Please ensure it is a valid CSV file with proper encoding', 'filename': file.filename}
+            return {'error': 'Unable to parse file. Please ensure it is valid.', 'filename': file.filename}
         
         # Edge Case 6: Empty DataFrame (only headers or completely empty)
         if df.empty:

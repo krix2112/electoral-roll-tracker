@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models import ElectoralRoll, VoterRecord
 from diff_engine import compare_rolls
 
-diffviewer_bp = Blueprint('diffviewer', __name__)
+diffviewer_bp = Blueprint('diffviewer', __name__, url_prefix='/api/diffviewer')
 
 @diffviewer_bp.route('/stats', methods=['GET'])
 def get_comparison_stats():

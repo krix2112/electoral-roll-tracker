@@ -61,11 +61,11 @@ function Upload() {
 
   const addFiles = (newFiles) => {
     const validFiles = Array.from(newFiles).filter(
-      f => f.type === 'text/csv' || f.name.endsWith('.csv')
+      f => f.type === 'text/csv' || f.name.endsWith('.csv') || f.type === 'application/pdf' || f.name.endsWith('.pdf')
     )
 
     if (validFiles.length === 0) {
-      setError('Please upload valid CSV files.')
+      setError('Please upload valid CSV or PDF files.')
       return
     }
 
@@ -238,7 +238,7 @@ function Upload() {
                       type="file"
                       ref={fileInputRef}
                       className="hidden"
-                      accept=".csv"
+                      accept=".csv,.pdf"
                       multiple
                       onChange={handleFileChange}
                     />
@@ -247,7 +247,7 @@ function Upload() {
                     </div>
                     <div>
                       <p className="font-bold text-gray-900 text-lg group-hover:text-[#FF6B4A] transition-colors">Click to upload or drag and drop</p>
-                      <p className="text-sm text-gray-400 mt-1 font-medium">CSV files only (max 50MB)</p>
+                      <p className="text-sm text-gray-400 mt-1 font-medium">CSV or PDF electoral rolls (max 50MB)</p>
                     </div>
                   </motion.div>
                 ) : !results ? (
@@ -270,7 +270,7 @@ function Upload() {
                         type="file"
                         ref={fileInputRef}
                         className="hidden"
-                        accept=".csv"
+                        accept=".csv,.pdf"
                         multiple
                         onChange={handleFileChange}
                       />
