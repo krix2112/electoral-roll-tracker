@@ -1,9 +1,16 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Button } from './ui/Button'
 import { ArrowRight } from 'lucide-react'
 import logo from '../assets/logo-new.png'
 
 export function Navbar() {
+    const location = useLocation()
+
+    const navLinks = [
+        { to: '/dashboard', label: 'Dashboard' },
+        { to: '/diffviewer', label: 'DiffViewer' }
+    ]
+
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#0f172a]/80 backdrop-blur-md transition-all duration-300">
             <div className="container mx-auto px-6 h-20 flex items-center justify-between">
@@ -14,6 +21,25 @@ export function Navbar() {
 
                 {/* Centered Navigation */}
                 <div className="hidden md:flex items-center gap-8">
+                    {navLinks.map((link) => {
+                        const isActive = location.pathname === link.to
+                        return (
+                            <Link
+                                key={link.to}
+                                to={link.to}
+                                className={`relative text-sm font-medium transition-colors group ${isActive
+                                        ? 'text-[#D97706]'
+                                        : 'text-gray-300 hover:text-white'
+                                    }`}
+                            >
+                                {link.label}
+                                <span className={`absolute -bottom-[21px] left-0 right-0 h-0.5 bg-[#D97706] transition-transform origin-left ${isActive
+                                        ? 'scale-x-100'
+                                        : 'scale-x-0 group-hover:scale-x-100'
+                                    }`}></span>
+                            </Link>
+                        )
+                    })}
                     {['About Us', 'Features', 'Connections'].map((item) => (
                         <a
                             key={item}
