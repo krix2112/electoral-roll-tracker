@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from 'react';
 export function NewChallenges() {
     const stackContainerRef = useRef(null);
     const [activeIndex, setActiveIndex] = useState(0);
+    const [topActiveIndex, setTopActiveIndex] = useState(-1);
 
     const problems = [
         {
@@ -97,19 +98,37 @@ export function NewChallenges() {
 
                         {/* Static Cards */}
                         <div className="space-y-4">
-                            {problems.map((item, index) => (
-                                <div key={index} className="flex gap-4 p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="mt-1 flex-shrink-0">
-                                        <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
-                                            <item.icon className="w-6 h-6 text-red-500" />
+                            {problems.map((item, index) => {
+                                const isActive = topActiveIndex === index;
+                                let activeBgClass = '';
+
+                                // Different light colors for each box when active
+                                if (isActive) {
+                                    if (index === 0) activeBgClass = 'bg-red-50 border-red-100 ring-1 ring-red-200';
+                                    else if (index === 1) activeBgClass = 'bg-blue-50 border-blue-100 ring-1 ring-blue-200';
+                                    else activeBgClass = 'bg-orange-50 border-orange-100 ring-1 ring-orange-200';
+                                } else {
+                                    activeBgClass = 'bg-[#F5F5F0] hover:bg-[#D4E8F0]';
+                                }
+
+                                return (
+                                    <button
+                                        key={index}
+                                        onClick={() => setTopActiveIndex(index === topActiveIndex ? -1 : index)}
+                                        className={`w-full text-left flex gap-4 p-6 rounded-xl transition-all duration-300 group ${activeBgClass} ${!isActive ? 'shadow-[0_2px_8px_rgba(184,212,232,0.2)] hover:shadow-[0_6px_16px_rgba(184,212,232,0.35)] hover:-translate-y-[1px]' : 'shadow-inner'}`}
+                                    >
+                                        <div className="mt-1 flex-shrink-0">
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm transition-transform ${isActive ? 'bg-white scale-110' : 'bg-white group-hover:scale-110'}`}>
+                                                <item.icon className="w-6 h-6 text-[#1B3A5C]" />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h4>
-                                        <p className="text-gray-600 leading-relaxed">{item.description}</p>
-                                    </div>
-                                </div>
-                            ))}
+                                        <div>
+                                            <h4 className="text-xl font-bold text-[#1B3A5C] mb-2">{item.title}</h4>
+                                            <p className="text-[#1B3A5C]/70 leading-relaxed">{item.description}</p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -123,11 +142,11 @@ export function NewChallenges() {
                         </div>
 
                         {/* Stacked Cards Container */}
-                        <div className="h-[550px] rounded-3xl bg-gray-900 relative w-full overflow-hidden">
+                        <div className="h-[450px] rounded-3xl bg-[#E8F4F8] relative w-full overflow-hidden shadow-inner flex flex-col justify-center">
                             {/* Scroll container */}
                             <div
                                 ref={stackContainerRef}
-                                className="absolute inset-0 overflow-y-auto scrollbar-hide"
+                                className="absolute inset-0 overflow-y-auto scrollbar-hide z-20"
                                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                             >
                                 {/* Spacer for scroll */}
@@ -135,9 +154,9 @@ export function NewChallenges() {
                             </div>
 
                             {/* Cards stack - fixed position within container */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-start pt-16 px-6 pointer-events-none">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pointer-events-none z-10">
                                 {/* Stacked card bars showing at top */}
-                                <div className="relative w-full" style={{ height: '450px' }}>
+                                <div className="relative w-full" style={{ height: '350px' }}>
                                     {solutions.map((item, index) => {
                                         const isActive = index === activeIndex;
                                         const isPast = index < activeIndex;
@@ -179,13 +198,7 @@ export function NewChallenges() {
                                 </div>
                             </div>
 
-                            {/* Scroll indicator */}
-                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-sm flex flex-col items-center gap-2">
-                                <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-                                    <div className="w-1.5 h-3 bg-white/50 rounded-full animate-bounce" />
-                                </div>
-                                <span>Scroll to explore</span>
-                            </div>
+
                         </div>
                     </div>
                 </div>

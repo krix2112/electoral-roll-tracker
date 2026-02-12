@@ -39,7 +39,7 @@ export function NewFeatures() {
         },
         {
             icon: FileSearch,
-            title: 'Court-Ready Reports',
+            title: 'Forensic Analysis',
             description: 'Generate legally admissible audit reports with complete documentation.',
             gradient: 'from-pink-500 to-fuchsia-500',
             bgGradient: 'from-pink-500/10 to-fuchsia-500/5'

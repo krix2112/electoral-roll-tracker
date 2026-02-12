@@ -3,9 +3,8 @@ import { ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import logo from '../../assets/logo-new.png';
 import api, { getDashboardAggregation } from '../../services/api';
-import Particles from '../ui/Particles';
 
-import heroBg from '../../assets/hero-bg-eci.png';
+import heroBg from '../../assets/hero-bg-democracy.png';
 
 export function NewHero() {
     const [stats, setStats] = useState({
@@ -61,25 +60,11 @@ export function NewHero() {
                 <img
                     src={heroBg}
                     alt="Background"
-                    className="w-full h-full object-cover opacity-[0.27]"
+                    className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-white/90"></div>
+                <div className="absolute inset-0 bg-white/60"></div>
             </div>
-            {/* Particle Animation Background */}
-            <Particles
-                particleCount={150}
-                particleSpread={15}
-                speed={0.05}
-                particleColors={['#FF6B4A', '#2D3E8F', '#10B981', '#f97316', '#8b5cf6']}
-                moveParticlesOnHover={true}
-                particleHoverFactor={0.5}
-                alphaParticles={true}
-                particleBaseSize={80}
-                sizeRandomness={0.8}
-                cameraDistance={25}
-                disableRotation={false}
-                className="opacity-40"
-            />
+
 
             {/* Subtle background patterns */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -106,8 +91,8 @@ export function NewHero() {
                 </div>
 
                 {/* Main Heading */}
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-8 leading-tight tracking-tight mx-auto">
-                    Electoral changes <span className="bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B] bg-clip-text text-transparent">made visible</span>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#1B3A5C] mb-8 leading-tight tracking-tight mx-auto">
+                    Electoral changes <span className="text-[#D4A03A]">made visible</span>
                 </h1>
 
                 {/* Subtitle */}
@@ -118,13 +103,13 @@ export function NewHero() {
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-20">
                     <Link to="/dashboard">
-                        <button className="group px-8 py-4 bg-gradient-to-r from-[#FF6B4A] to-[#FF8F6B] text-white rounded-full font-semibold text-lg hover:shadow-xl hover:shadow-orange-200 transition-all flex items-center gap-3 transform hover:-translate-y-1">
+                        <button className="group px-8 py-4 bg-[#1B3A5C] text-white rounded-[50px] font-semibold text-lg shadow-[0_4px_12px_rgba(27,58,92,0.3)] hover:bg-[#4A9B9B] hover:shadow-[0_8px_20px_rgba(74,155,155,0.4)] active:bg-[#0F1F2E] active:shadow-[0_2px_8px_rgba(27,58,92,0.25)] active:scale-98 transition-all duration-300 flex items-center gap-3 transform hover:-translate-y-[2px] active:translate-y-[3px]">
                             Launch Dashboard
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </button>
                     </Link>
                     <Link to="/compare">
-                        <button className="px-8 py-4 bg-white border-2 border-[#2D3E8F] text-[#2D3E8F] rounded-full font-semibold text-lg hover:bg-[#2D3E8F] hover:text-white transition-all transform hover:-translate-y-1">
+                        <button className="px-8 py-4 bg-transparent border-2 border-[#1B3A5C] text-[#1B3A5C] rounded-[50px] font-semibold text-lg shadow-[0_2px_8px_rgba(27,58,92,0.15)] hover:bg-[#1B3A5C] hover:text-white hover:shadow-[0_8px_20px_rgba(27,58,92,0.3)] hover:-translate-y-[2px] active:bg-[#0F1F2E] active:shadow-[0_2px_8px_rgba(27,58,92,0.2)] active:scale-98 active:translate-y-[3px] transition-all duration-300">
                             Compare Rolls
                         </button>
                     </Link>

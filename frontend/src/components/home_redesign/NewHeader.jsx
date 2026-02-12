@@ -151,13 +151,16 @@ export function NewHeader() {
 
                     {/* Right Actions */}
                     <div className="hidden md:flex items-center gap-4 relative" ref={notificationRef}>
-                        {/* Notification Button */}
+                        {/* Notification Button - DANGER ALERT STYLE */}
                         <button
-                            className={`relative p-2 rounded-full transition-colors ${notificationsOpen ? 'bg-gray-100 text-[#FF6B4A]' : 'text-gray-600 hover:bg-gray-100'}`}
+                            className={`relative p-2 rounded-full transition-all duration-200 border-[3px] ${notificationsOpen
+                                ? 'border-[#E74C3C] bg-[#E74C3C] text-white shadow-[0_0_0_6px_rgba(231,76,60,0.5)] scale-95'
+                                : 'border-transparent text-[#E74C3C] hover:bg-red-50 active:scale-95 active:shadow-[0_0_0_4px_rgba(231,76,60,0.5)]'
+                                }`}
                             onClick={() => setNotificationsOpen(!notificationsOpen)}
                         >
                             <Bell className="w-5 h-5" />
-                            <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                            {/* Alert bubble removed as requested */}
                         </button>
 
                         {/* Notifications Dropdown */}
@@ -205,9 +208,8 @@ export function NewHeader() {
                             </div>
                         )}
 
-                        {/* Upload Data Button */}
                         <Link to="/upload">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all">
+                            <button className="flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-[100px] text-sm font-medium hover:bg-gray-50 hover:shadow-sm active:scale-95 transition-all duration-200">
                                 <Upload className="w-4 h-4" />
                                 Upload Data
                             </button>

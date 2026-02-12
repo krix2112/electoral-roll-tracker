@@ -20,7 +20,7 @@ export function NewFooter() {
                             Start analyzing electoral rolls today. Our platform is ready to help you ensure transparency and integrity.
                         </p>
                         <Link to="/dashboard">
-                            <button className="px-8 py-4 bg-white text-[#2D3E8F] rounded-full font-semibold hover:shadow-xl transition-all">
+                            <button className="px-8 py-4 bg-[#1B3A5C] text-white rounded-[50px] font-semibold text-lg shadow-[0_4px_12px_rgba(27,58,92,0.3)] hover:bg-[#4A9B9B] hover:shadow-[0_8px_20px_rgba(74,155,155,0.4)] hover:-translate-y-[2px] active:bg-[#0F1F2E] active:shadow-[0_2px_8px_rgba(27,58,92,0.25)] active:translate-y-[4px] active:scale-97 transition-all duration-200 ease-out">
                                 Get Started Free
                             </button>
                         </Link>
