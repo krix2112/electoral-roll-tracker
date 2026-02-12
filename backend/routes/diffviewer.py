@@ -44,11 +44,10 @@ def get_comparison_stats():
 @diffviewer_bp.route('/timeline', methods=['GET'])
 def get_timeline_data():
     """
-    Get time-series data for changes
+    Get time-series data based on voter registration dates
     Query params: old_upload_id, new_upload_id
     
-    Note: This is currently mock data for visualization purposes.
-    Real time-series would require historical comparison data.
+    Returns monthly aggregation of voter registrations from both uploads
     """
     try:
         old_upload_id = request.args.get('old_upload_id')
@@ -57,37 +56,50 @@ def get_timeline_data():
         if not old_upload_id or not new_upload_id:
             return jsonify({'error': 'Both old_upload_id and new_upload_id are required'}), 400
         
-        # Get comparison to derive timeline
-        result = compare_rolls(old_upload_id, new_upload_id)
-        stats = result.get('stats', {})
+        # Fetch all voter records for both uploads
+        old_records = VoterRecord.query.filter_by(upload_id=old_upload_id).all()
+        new_records = VoterRecord.query.filter_by(upload_id=new_upload_id).all()
         
-        # Generate mock timeline data based on comparison stats
-        # In a real system, this would come from historical comparison records
-        total_changes = stats.get('total_added', 0) + stats.get('total_deleted', 0) + stats.get('total_modified', 0)
+        # Group by month (YYYY-MM format)
+        old_by_month = {}
+        new_by_month = {}
         
-        timeline = []
-        months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        for record in old_records:
+            if record.registration_date:
+                month = record.registration_date[:7]  # Extract "YYYY-MM" from "YYYY-MM-DD"
+                old_by_month[month] = old_by_month.get(month, 0) + 1
         
-        for i, month in enumerate(months):
-            # Distribute changes across timeline
-            progress = (i + 1) / len(months)
-            timeline.append({
+        for record in new_records:
+            if record.registration_date:
+                month = record.registration_date[:7]
+                new_by_month[month] = new_by_month.get(month, 0) + 1
+        
+        # Merge all unique months and sort chronologically
+        all_months = sorted(set(list(old_by_month.keys()) + list(new_by_month.keys())))
+        
+        # Build timeline data with real monthly counts
+        timeline_data = []
+        for month in all_months:
+            old_count = old_by_month.get(month, 0)
+            new_count = new_by_month.get(month, 0)
+            timeline_data.append({
                 'month': month,
-                'added': int(stats.get('total_added', 0) * progress * 0.1),
-                'deleted': int(stats.get('total_deleted', 0) * progress * 0.1),
-                'modified': int(stats.get('total_modified', 0) * progress * 0.1)
+                'old_count': old_count,
+                'new_count': new_count,
+                'net_change': new_count - old_count
             })
         
-        return jsonify(timeline), 200
+        return jsonify(timeline_data), 200
         
     except Exception as e:
         return jsonify({'error': f'Failed to fetch timeline: {str(e)}'}), 500
 
 
+
 @diffviewer_bp.route('/heatmap', methods=['GET'])
 def get_heatmap_data():
     """
-    Get geographic distribution of changes
+    Get geographic distribution of changes by constituency
     Query params: old_upload_id, new_upload_id
     
     Returns constituency-level change data for heatmap visualization
@@ -99,32 +111,52 @@ def get_heatmap_data():
         if not old_upload_id or not new_upload_id:
             return jsonify({'error': 'Both old_upload_id and new_upload_id are required'}), 400
         
-        # Get comparison result
-        result = compare_rolls(old_upload_id, new_upload_id)
+        # Get real comparison data
+        comparison = compare_rolls(old_upload_id, new_upload_id)
         
-        # Get state information from uploads
-        old_roll = ElectoralRoll.query.filter_by(upload_id=old_upload_id).first()
-        new_roll = ElectoralRoll.query.filter_by(upload_id=new_upload_id).first()
+        # Aggregate changes BY CONSTITUENCY (real granularity)
+        stats = {}
         
-        if not old_roll or not new_roll:
-            return jsonify({'error': 'Upload not found'}), 404
+        # Process added voters
+        for voter in comparison['added']:
+            const = voter.get('constituency', 'Unknown')
+            if const not in stats:
+                stats[const] = {'added': 0, 'deleted': 0, 'modified': 0}
+            stats[const]['added'] += 1
         
-        stats = result.get('stats', {})
+        # Process deleted voters  
+        for voter in comparison['deleted']:
+            const = voter.get('constituency', 'Unknown')
+            if const not in stats:
+                stats[const] = {'added': 0, 'deleted': 0, 'modified': 0}
+            stats[const]['deleted'] += 1
         
-        # Create heatmap data structure
-        # In a real system, this would aggregate by constituency/region
-        heatmap_data = [{
-            'region': old_roll.state or 'Unknown',
-            'added': stats.get('total_added', 0),
-            'deleted': stats.get('total_deleted', 0),
-            'modified': stats.get('total_modified', 0),
-            'intensity': min(100, (stats.get('total_added', 0) + stats.get('total_deleted', 0)) / 10)
-        }]
+        # Process modified voters
+        for voter in comparison['modified']:
+            const = voter.get('constituency', 'Unknown')
+            if const not in stats:
+                stats[const] = {'added': 0, 'deleted': 0, 'modified': 0}
+            stats[const]['modified'] += 1
+        
+        # Convert to list format frontend expects
+        heatmap_data = []
+        for const, counts in stats.items():
+            total_changes = counts['added'] + counts['deleted'] + counts['modified']
+            intensity = min(100, (total_changes / 100.0) * 10)  # Scale for viz
+            
+            heatmap_data.append({
+                'region': const,
+                'added': counts['added'],
+                'deleted': counts['deleted'],
+                'modified': counts['modified'],
+                'intensity': intensity
+            })
         
         return jsonify(heatmap_data), 200
         
     except Exception as e:
         return jsonify({'error': f'Failed to fetch heatmap: {str(e)}'}), 500
+
 
 
 @diffviewer_bp.route('/differences', methods=['GET'])
