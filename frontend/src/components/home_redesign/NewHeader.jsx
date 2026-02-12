@@ -91,6 +91,7 @@ export function NewHeader() {
         { label: 'Features', id: 'features', type: 'scroll' },
         { label: 'About', id: 'about', type: 'scroll' },
         { label: 'Dashboard', href: '/dashboard', type: 'link' },
+        { label: 'DiffViewer', href: '/diffviewer', type: 'link' },
     ];
 
     return (
