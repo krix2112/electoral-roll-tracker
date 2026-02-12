@@ -232,10 +232,10 @@ function Dashboard() {
 
   // Helper to get risk level label
   const getRiskLevel = (score) => {
-    if (score >= 86) return { label: 'Critical', color: 'text-red-600', bg: 'bg-red-100' }
-    if (score >= 71) return { label: 'High', color: 'text-orange-600', bg: 'bg-orange-100' }
-    if (score >= 31) return { label: 'Warning', color: 'text-amber-600', bg: 'bg-amber-100' }
-    return { label: 'Normal', color: 'text-green-600', bg: 'bg-green-100' }
+    if (score >= 86) return { label: 'Critical', color: 'text-[#2F4663]', bg: 'bg-[#2F4663]/10 ring-[#2F4663]/20' }
+    if (score >= 71) return { label: 'High', color: 'text-[#546E7A]', bg: 'bg-[#9FB6C3]/20 ring-[#9FB6C3]/30' }
+    if (score >= 31) return { label: 'Warning', color: 'text-[#8D7B3A]', bg: 'bg-[#C8A84F]/10 ring-[#C8A84F]/20' }
+    return { label: 'Normal', color: 'text-[#2C6666]', bg: 'bg-[#5E9C9C]/10 ring-[#5E9C9C]/20' }
   }
 
   // ============================================
@@ -455,10 +455,10 @@ function Dashboard() {
 
   // Helper to get color based on score
   const getPointColor = (score) => {
-    if (score >= 86) return 'bg-red-500'
-    if (score >= 71) return 'bg-orange-500'
-    if (score >= 31) return 'bg-amber-500'
-    return 'bg-green-500'
+    if (score >= 86) return 'bg-[#2F4663]'
+    if (score >= 71) return 'bg-[#9FB6C3]'
+    if (score >= 31) return 'bg-[#C8A84F]'
+    return 'bg-[#5E9C9C]'
   }
 
   // Get current month label based on progress
@@ -510,14 +510,12 @@ function Dashboard() {
             <InvestigationButton
               onInvestigate={handleInvestigate}
               isLoading={isInvestigationLoading}
+              className="[&_button]:!bg-[#2F4663] [&_button]:!bg-none [&_button]:!border-none [&_button]:hover:!bg-[#24364A] [&_button]:!text-white [&_button]:!shadow-none [&_.absolute]:hidden"
             />
             <Link to="/forensic">
-              <Button size="sm" className="group relative overflow-hidden gap-2 rounded-full border-2 border-[#2D3E8F] bg-transparent text-[#2D3E8F] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_-5px_rgba(45,62,143,0.4)] px-5 h-10 transform hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0.5">
-                <span className="absolute inset-0 w-full h-full bg-[#2D3E8F] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left ease-out"></span>
-                <span className="relative flex items-center gap-2 font-semibold">
-                  <Shield className="h-4 w-4 transition-transform group-hover:scale-110" />
-                  Forensic Analysis
-                </span>
+              <Button size="sm" className="bg-[#5E9C9C] text-white hover:bg-[#4A8585] border-transparent shadow-none px-5 h-10 font-semibold gap-2">
+                <Shield className="h-4 w-4" />
+                Forensic Analysis
               </Button>
             </Link>
           </div>
@@ -922,19 +920,19 @@ function Dashboard() {
               key={`voters-${selectedState}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-gradient-to-br from-[#2D3E8F] to-[#1e2d6b] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
+              className="bg-[#334E6F] rounded-2xl p-6 text-white shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-blue-200 text-sm font-medium">Total Voters</p>
+                  <p className="text-white/70 text-sm font-medium">Total Voters</p>
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : formatVoterCount(dashboardData?.total_voters)}
                   </h3>
-                  <p className="text-blue-300/70 text-xs mt-2 flex items-center gap-1">
+                  <p className="text-white/60 text-xs mt-2 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" /> Live from electoral roll
                   </p>
                 </div>
-                <div className="p-3 bg-white/10 rounded-xl">
+                <div className="p-3 bg-white/[0.08] rounded-xl">
                   <Users className="h-6 w-6" />
                 </div>
               </div>
@@ -946,19 +944,19 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.05 }}
-              className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
+              className="bg-[#5E9C9C] rounded-2xl p-6 text-white shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-emerald-100 text-sm font-medium">Constituencies</p>
+                  <p className="text-white/70 text-sm font-medium">Constituencies</p>
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : (dashboardData?.constituencies_count || 0)}
                   </h3>
-                  <p className="text-emerald-200/70 text-xs mt-2 flex items-center gap-1">
+                  <p className="text-white/60 text-xs mt-2 flex items-center gap-1">
                     <MapPin className="h-3 w-3" /> Parliamentary seats
                   </p>
                 </div>
-                <div className="p-3 bg-white/10 rounded-xl">
+                <div className="p-3 bg-white/[0.08] rounded-xl">
                   <MapPin className="h-6 w-6" />
                 </div>
               </div>
@@ -970,14 +968,14 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="bg-gradient-to-br from-[#FF6B4A] to-[#dc2626] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
+              className="bg-[#B7C5CF] rounded-2xl p-6 text-[#24364A] shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-1">
-                    <p className="text-red-100 text-sm font-medium">Anomalies Detected</p>
+                    <p className="text-[#24364A] text-sm font-medium">Anomalies Detected</p>
                     <div className="group relative">
-                      <Info className="h-3 w-3 text-red-200 cursor-help" />
+                      <Info className="h-3 w-3 text-[#24364A]/70 cursor-help" />
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
                         Derived indicator: ~3% of constituencies based on statistical modeling
                       </div>
@@ -986,9 +984,9 @@ function Dashboard() {
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : anomaliesDetected}
                   </h3>
-                  <p className="text-red-200/70 text-xs mt-2">~3% estimated flag rate</p>
+                  <p className="text-[#24364A]/70 text-xs mt-2">~3% estimated flag rate</p>
                 </div>
-                <div className="p-3 bg-white/10 rounded-xl">
+                <div className="p-3 bg-[#24364A]/10 rounded-xl">
                   <AlertTriangle className="h-6 w-6" />
                 </div>
               </div>
@@ -1000,14 +998,14 @@ function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.15 }}
-              className="bg-gradient-to-br from-[#f59e0b] to-[#d97706] rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
+              className="bg-[#D4B257] rounded-2xl p-6 text-white shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-1">
-                    <p className="text-amber-100 text-sm font-medium">Audits Required</p>
+                    <p className="text-white/70 text-sm font-medium">Audits Required</p>
                     <div className="group relative">
-                      <Info className="h-3 w-3 text-amber-200 cursor-help" />
+                      <Info className="h-3 w-3 text-white/50 cursor-help" />
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-30">
                         Derived indicator: ~40% of anomalies require manual verification
                       </div>
@@ -1016,7 +1014,7 @@ function Dashboard() {
                   <h3 className="text-3xl font-bold mt-1">
                     {loading ? '...' : auditsRequired}
                   </h3>
-                  <p className="text-amber-200/70 text-xs mt-2">Manual review needed</p>
+                  <p className="text-white/60 text-xs mt-2">Manual review needed</p>
                 </div>
                 <div className="p-3 bg-white/10 rounded-xl">
                   <FileText className="h-6 w-6" />
@@ -1029,12 +1027,12 @@ function Dashboard() {
           {!loading && dashboardData && (
             <Card className="mb-6 shadow-lg border-none rounded-2xl overflow-hidden">
               {/* Gradient accent bar */}
-              <div className="h-1 bg-gradient-to-r from-[#10B981] via-[#f59e0b] to-[#FF6B4A]" />
+              <div className="h-1 bg-[#2F4663]" />
               <div className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-[#2D3E8F]/10 flex items-center justify-center">
-                      <Shield className="h-3.5 w-3.5 text-[#2D3E8F]" />
+                    <div className="w-6 h-6 rounded-lg bg-[#2F4663]/10 flex items-center justify-center">
+                      <Shield className="h-3.5 w-3.5 text-[#2F4663]" />
                     </div>
                     Risk Distribution
                   </h3>
@@ -1047,28 +1045,28 @@ function Dashboard() {
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.normal.percent}%` }}
                     transition={{ duration: 0.5 }}
-                    className="bg-[#10B981] h-full"
+                    className="bg-[#5E9C9C] h-full"
                     title={`Normal: ${riskDistribution.normal.percent}%`}
                   />
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.warning.percent}%` }}
                     transition={{ duration: 0.5, delay: 0.1 }}
-                    className="bg-amber-500 h-full"
+                    className="bg-[#C8A84F] h-full"
                     title={`Warning: ${riskDistribution.warning.percent}%`}
                   />
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.high.percent}%` }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="bg-[#FF6B4A] h-full"
+                    className="bg-[#9FB6C3] h-full"
                     title={`High: ${riskDistribution.high.percent}%`}
                   />
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskDistribution.critical.percent}%` }}
                     transition={{ duration: 0.5, delay: 0.3 }}
-                    className="bg-red-600 h-full"
+                    className="bg-[#2F4663] h-full"
                     title={`Critical: ${riskDistribution.critical.percent}%`}
                   />
                 </div>
@@ -1076,19 +1074,19 @@ function Dashboard() {
                 {/* Legend */}
                 <div className="flex justify-between mt-4 text-xs">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-[#10B981]" />
+                    <div className="w-3 h-3 rounded-full bg-[#5E9C9C]" />
                     <span className="text-gray-600 font-medium">Normal {riskDistribution.normal.percent}%</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-amber-500" />
+                    <div className="w-3 h-3 rounded-full bg-[#C8A84F]" />
                     <span className="text-gray-600 font-medium">Warning {riskDistribution.warning.percent}%</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-[#FF6B4A]" />
+                    <div className="w-3 h-3 rounded-full bg-[#9FB6C3]" />
                     <span className="text-gray-600 font-medium">High {riskDistribution.high.percent}%</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-600" />
+                    <div className="w-3 h-3 rounded-full bg-[#2F4663]" />
                     <span className="text-gray-600 font-medium">Critical {riskDistribution.critical.percent}%</span>
                   </div>
                 </div>
@@ -1111,22 +1109,22 @@ function Dashboard() {
                 {/* Enhanced Legend */}
                 <div className="flex flex-wrap gap-4 mt-3 text-xs">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm" />
+                    <div className="w-3 h-3 rounded-full bg-[#5E9C9C] shadow-sm" />
                     <span className="text-gray-600 font-medium">Normal</span>
                     <span className="text-gray-400">(0-30)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-amber-500 shadow-sm" />
+                    <div className="w-3 h-3 rounded-full bg-[#C8A84F] shadow-sm" />
                     <span className="text-gray-600 font-medium">Warning</span>
                     <span className="text-gray-400">(31-70)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-orange-500 shadow-sm" />
+                    <div className="w-3 h-3 rounded-full bg-[#9FB6C3] shadow-sm" />
                     <span className="text-gray-600 font-medium">High</span>
                     <span className="text-gray-400">(71-85)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm animate-pulse" />
+                    <div className="w-3 h-3 rounded-full bg-[#2F4663] shadow-sm animate-pulse" />
                     <span className="text-gray-600 font-medium">Critical</span>
                     <span className="text-gray-400">(86-100)</span>
                   </div>
@@ -1326,7 +1324,7 @@ function Dashboard() {
                               initial={{ width: 0 }}
                               animate={{ width: `${percent}%` }}
                               transition={{ duration: 0.5, delay: index * 0.1 }}
-                              className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"
+                              className="h-full bg-[#334E6F] rounded-full"
                             />
                           </div>
                         </motion.div>
@@ -1352,7 +1350,7 @@ function Dashboard() {
                         <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#f3f4f6" strokeWidth="3" />
                         {/* Normal segment */}
                         <motion.circle
-                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#22c55e" strokeWidth="3"
+                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#5E9C9C" strokeWidth="3"
                           strokeDasharray={`${riskDistribution.normal.percent} ${100 - riskDistribution.normal.percent}`}
                           strokeDashoffset="0"
                           initial={{ strokeDasharray: "0 100" }}
@@ -1361,7 +1359,7 @@ function Dashboard() {
                         />
                         {/* Warning segment */}
                         <motion.circle
-                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#f59e0b" strokeWidth="3"
+                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#C8A84F" strokeWidth="3"
                           strokeDasharray={`${riskDistribution.warning.percent} ${100 - riskDistribution.warning.percent}`}
                           strokeDashoffset={`${-riskDistribution.normal.percent}`}
                           initial={{ strokeDasharray: "0 100" }}
@@ -1370,7 +1368,7 @@ function Dashboard() {
                         />
                         {/* High segment */}
                         <motion.circle
-                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#f97316" strokeWidth="3"
+                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#9FB6C3" strokeWidth="3"
                           strokeDasharray={`${riskDistribution.high.percent} ${100 - riskDistribution.high.percent}`}
                           strokeDashoffset={`${-(riskDistribution.normal.percent + riskDistribution.warning.percent)}`}
                           initial={{ strokeDasharray: "0 100" }}
@@ -1379,7 +1377,7 @@ function Dashboard() {
                         />
                         {/* Critical segment */}
                         <motion.circle
-                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#ef4444" strokeWidth="3"
+                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#2F4663" strokeWidth="3"
                           strokeDasharray={`${riskDistribution.critical.percent} ${100 - riskDistribution.critical.percent}`}
                           strokeDashoffset={`${-(riskDistribution.normal.percent + riskDistribution.warning.percent + riskDistribution.high.percent)}`}
                           initial={{ strokeDasharray: "0 100" }}
@@ -1396,22 +1394,22 @@ function Dashboard() {
                     {/* Legend */}
                     <div className="space-y-2 text-xs">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-green-500" />
+                        <div className="w-3 h-3 rounded-full bg-[#5E9C9C]" />
                         <span className="text-gray-600">Normal</span>
                         <span className="font-medium text-gray-900">{riskDistribution.normal.percent}%</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-amber-500" />
+                        <div className="w-3 h-3 rounded-full bg-[#C8A84F]" />
                         <span className="text-gray-600">Warning</span>
                         <span className="font-medium text-gray-900">{riskDistribution.warning.percent}%</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-orange-500" />
+                        <div className="w-3 h-3 rounded-full bg-[#9FB6C3]" />
                         <span className="text-gray-600">High</span>
                         <span className="font-medium text-gray-900">{riskDistribution.high.percent}%</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                        <div className="w-3 h-3 rounded-full bg-[#2F4663]" />
                         <span className="text-gray-600">Critical</span>
                         <span className="font-medium text-gray-900">{riskDistribution.critical.percent}%</span>
                       </div>
@@ -1446,7 +1444,7 @@ function Dashboard() {
                     <tbody>
                       {dashboardData.top_constituencies.slice(0, 5).map((item, index) => {
                         const risk = index < 1 ? 'Critical' : index < 2 ? 'High' : index < 3 ? 'Warning' : 'Normal'
-                        const riskColor = index < 1 ? 'text-red-600 bg-red-50' : index < 2 ? 'text-orange-600 bg-orange-50' : index < 3 ? 'text-amber-600 bg-amber-50' : 'text-green-600 bg-green-50'
+                        const riskColor = index < 1 ? 'text-[#2F4663] bg-[#2F4663]/10' : index < 2 ? 'text-[#546E7A] bg-[#9FB6C3]/20' : index < 3 ? 'text-[#8D7B3A] bg-[#C8A84F]/10' : 'text-[#2C6666] bg-[#5E9C9C]/10'
                         return (
                           <motion.tr
                             key={index}
