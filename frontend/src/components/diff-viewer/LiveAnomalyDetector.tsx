@@ -13,6 +13,7 @@ interface LiveAnomalyDetectorProps {
 
 export function LiveAnomalyDetector({ data }: LiveAnomalyDetectorProps) {
   const [pulseCount, setPulseCount] = useState(0);
+  const [alertClicked, setAlertClicked] = useState(false);
 
   // Safe Accessors for real data
   const totalChanges = data.added.length + data.deleted.length + data.modified.length;
@@ -34,53 +35,48 @@ export function LiveAnomalyDetector({ data }: LiveAnomalyDetectorProps) {
 
   return (
     <motion.div
-      className="bg-gradient-to-br from-red-50 via-orange-50 to-amber-50 rounded-xl shadow-lg border-2 border-red-200 p-6 relative overflow-hidden"
+      className="bg-gradient-to-br from-red-50 via-orange-50 to-amber-50 rounded-xl shadow-lg border-2 border-orange-300 p-6 relative overflow-hidden"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Animated warning stripes */}
-      <motion.div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(239, 68, 68, 0.3) 10px, rgba(239, 68, 68, 0.3) 20px)",
-        }}
-        animate={{ x: [0, 20] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-      />
-
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <motion.div
-              className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center relative"
-              animate={{
+              className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center relative cursor-pointer transition-all duration-200 hover:bg-red-100"
+              onClick={() => setAlertClicked(!alertClicked)}
+              animate={alertClicked ? {
                 boxShadow: [
                   "0 0 0 0 rgba(239, 68, 68, 0.7)",
                   "0 0 0 20px rgba(239, 68, 68, 0)",
                 ]
-              }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+              } : {}}
+              transition={{ duration: 1.5, repeat: alertClicked ? Infinity : 0 }}
             >
-              <AlertTriangle className="text-white" size={24} />
+              <AlertTriangle className="text-red-500" size={24} />
 
-              {/* Pulse rings */}
-              <motion.div
-                className="absolute inset-0 rounded-full border-4 border-red-500"
-                animate={{
-                  scale: [1, 2, 2],
-                  opacity: [1, 0.5, 0]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              <motion.div
-                className="absolute inset-0 rounded-full border-4 border-red-500"
-                animate={{
-                  scale: [1, 2, 2],
-                  opacity: [1, 0.5, 0]
-                }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-              />
+              {/* Pulse rings - only show when clicked */}
+              {alertClicked && (
+                <>
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-4 border-red-500"
+                    animate={{
+                      scale: [1, 2, 2],
+                      opacity: [1, 0.5, 0]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-4 border-red-500"
+                    animate={{
+                      scale: [1, 2, 2],
+                      opacity: [1, 0.5, 0]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                  />
+                </>
+              )}
             </motion.div>
 
             <div>
