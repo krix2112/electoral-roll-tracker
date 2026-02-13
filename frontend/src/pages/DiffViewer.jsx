@@ -49,6 +49,10 @@ export default function DiffViewer() {
       // Sort: Oldest [0], Newest [1]
       const sorted = [...uploads].sort((a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at));
 
+      // analyzeRoll(new, old) -> Backend usually expects (new, old) for forensic, 
+      // but let's check analyzeRoll definition. 
+      // api.js: analyzeRoll(currentUploadId, previousUploadId)
+      // So analyzeRoll(sorted[1], sorted[0]) is correct for forensic.
       const data = await analyzeRoll(sorted[1].upload_id, sorted[0].upload_id);
       setForensicData(data);
     } catch (e) { console.error(e); }
@@ -88,12 +92,11 @@ export default function DiffViewer() {
 
         if (uploadsToCompare.length >= 2) {
           setUploads(uploadsToCompare);
-          // Sort by date ASC
+          // Sort by date ASC: sorted[0] is Old, sorted[1] is New
           const sorted = [...uploadsToCompare].sort((a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at));
-          // compareRolls(new, old) -> verify signature. 
-          // Usually compareRolls(current_id, previous_id).
-          // So sorted[1] (new), sorted[0] (old).
-          const result = await compareRolls(sorted[1].upload_id, sorted[0].upload_id);
+
+          // compareRolls(old_id, new_id) based on backend signature
+          const result = await compareRolls(sorted[0].upload_id, sorted[1].upload_id);
           setComparisonData(result);
           setComparisonStats(result.stats);
         }
@@ -111,10 +114,12 @@ export default function DiffViewer() {
   // COMPUTED METRICS FROM REAL DATA
   // ============================================
   const computedMetrics = useMemo(() => {
-    const totalChanges = comparisonData.added.length + comparisonData.deleted.length + comparisonData.modified.length;
-    const additionsCount = comparisonData.added.length;
-    const deletionsCount = comparisonData.deleted.length;
-    const modificationsCount = comparisonData.modified.length;
+    // USE STATS OBJECT FOR ACCURACY (Array lengths are capped at 500 for performance)
+    const stats = comparisonStats || {};
+    const additionsCount = stats.total_added || 0;
+    const deletionsCount = stats.total_deleted || 0;
+    const modificationsCount = stats.total_modified || 0;
+    const totalChanges = additionsCount + deletionsCount + modificationsCount;
 
     const additionsRatio = totalChanges > 0 ? ((additionsCount / totalChanges) * 100).toFixed(1) : "0.0";
     const deletionsRatio = totalChanges > 0 ? ((deletionsCount / totalChanges) * 100).toFixed(1) : "0.0";
@@ -134,7 +139,7 @@ export default function DiffViewer() {
       growthType,
       deletionRatioNumeric
     };
-  }, [comparisonData]);
+  }, [comparisonStats]);
 
   // Constituency-level aggregations
   const constituencyStats = useMemo(() => {
