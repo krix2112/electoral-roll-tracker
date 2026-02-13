@@ -26,8 +26,9 @@ import axios from 'axios'
  */
 const PRODUCTION_BACKEND_URL = 'https://electoral-roll-tracker-1.onrender.com'
 // FORCE LOCALHOST for debugging network issues
-const API_BASE_URL = 'http://localhost:5000'
-// const API_BASE_URL = import.meta.env.VITE_API_URL || PRODUCTION_BACKEND_URL
+// FORCE LOCALHOST for debugging network issues
+// const API_BASE_URL = 'http://localhost:5000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || PRODUCTION_BACKEND_URL
 
 // ============================================
 // STARTUP LOGGING - Essential for debugging production issues
