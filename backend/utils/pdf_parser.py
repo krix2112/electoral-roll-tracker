@@ -78,29 +78,54 @@ def parse_voter_line(line: str) -> Optional[Dict[str, str]]:
     Parse a line of text to extract voter information
     Handles various formats of electoral roll data
     """
-    # Common patterns in electoral roll PDFs
+    # Common patterns in electoral roll PDFs requiring Date (YYYY-MM-DD)
+    # But real rolls often don't have dates like YYYY-MM-DD.
+    # We should support simple ID + Name + Age + Address formats too.
+
     patterns = [
-        # Pattern 1: Voter ID, Name, Age, Address, Date
+        # Pattern 1: Voter ID, Name, Age, Address, Date (YYYY-MM-DD) - Original Strict Pattern
         r'(\w+)\s+([A-Z][a-zA-Z\s\.]+?)\s+(\d+)\s+(.+?)\s+(\d{4}-\d{2}-\d{2})',
-        # Pattern 2: Serial, Name, Father/Husband, Age, Address
-        r'(\d+)\s+([A-Z][a-zA-Z\s\.]+?)\s+([A-Z][a-zA-Z\s\.]+?)?\s+(\d+)\s+(.+?)\s+(\d{4}-\d{2}-\d{2})',
-        # Pattern 3: EPIC No, Name, Age, Address, Date
-        r'([A-Z]{2}\d{7})\s+([A-Z][a-zA-Z\s\.]+?)\s+(\d+)\s+(.+?)\s+(\d{4}-\d{2}-\d{2})',
+        
+        # Pattern 2: Typical Electoral Roll Box Layout Attempt 1
+        # ID (Top Left) ... Name ... Age ... Gender ... House No
+        # This is hard with line-by-line regex on raw text dump. 
+        # But let's try a relaxed pattern: ID + Name + Age + Address (ignoring date)
+        r'([A-Z]{3}\d{7})\s+([A-Z][a-zA-Z\s\.]+?)\s+(\d{1,3})\s+(.+)', 
+        
+        # Pattern 3: Similar to Pattern 2 but different ID format
+        r'([A-Z]+\d+)\s+([A-Z][a-zA-Z\s\.]+?)\s+(\d{1,3})\s+(.+)',
+        
+        # Pattern 4: Name ... Age ... Sex ... ID (Sometimes reversed)
+        # r'([A-Z][a-zA-Z\s\.]+?)\s+(\d{1,3})\s+(M|F|O|Male|Female)\s+([A-Z]{3}\d{7})' 
+        # Hard to capture address here.
     ]
     
     for pattern in patterns:
         match = re.search(pattern, line)
         if match:
             groups = match.groups()
+            
+            # Strict Pattern with Date (5 groups)
             if len(groups) >= 5:
                 return {
                     'voter_id': groups[0].strip(),
                     'name': groups[1].strip(),
-                    'age': groups[2] if len(groups) > 2 else '0',
-                    'address': groups[-2].strip() if len(groups) > 3 else '',
-                    'registration_date': groups[-1].strip() if len(groups) > 4 else '2020-01-01'
+                    'age': groups[2].strip(),
+                    'address': groups[3].strip(),
+                    'registration_date': groups[4].strip()
                 }
-    
+            
+            # Relaxed Pattern without Date (4 groups)
+            # Default date to '2024-01-01' or similar baseline
+            elif len(groups) >= 4:
+                return {
+                    'voter_id': groups[0].strip(),
+                    'name': groups[1].strip(),
+                    'age': groups[2].strip(),
+                    'address': groups[3].strip(),
+                    'registration_date': '2024-01-01'  # Default for PDF uploads without explicit dates
+                }
+
     return None
 
 

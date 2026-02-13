@@ -41,6 +41,8 @@ function Dashboard() {
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [timelineProgress, setTimelineProgress] = useState(100) // 0 to 100
+  const [hoveredBar, setHoveredBar] = useState(null);
+  const [hoveredRisk, setHoveredRisk] = useState(null);
 
   // Dashboard Aggregation Data (SINGLE SOURCE OF TRUTH)
   const [dashboardData, setDashboardData] = useState(null)
@@ -510,10 +512,10 @@ function Dashboard() {
             <InvestigationButton
               onInvestigate={handleInvestigate}
               isLoading={isInvestigationLoading}
-              className="[&_button]:!bg-[#2F4663] [&_button]:!bg-none [&_button]:!border-none [&_button]:hover:!bg-[#24364A] [&_button]:!text-white [&_button]:!shadow-none [&_.absolute]:hidden"
+              className="[&_button]:!bg-[#2F4663] [&_button]:!bg-none [&_button]:!border-none [&_button]:hover:!bg-[#24364A] [&_button]:!text-white [&_button]:!shadow-none [&_.absolute]:hidden [&_button]:!rounded-full [&_button]:!py-2 [&_button]:!px-6 [&_button]:!h-9"
             />
             <Link to="/forensic">
-              <Button size="sm" className="bg-[#5E9C9C] text-white hover:bg-[#4A8585] border-transparent shadow-none px-5 h-10 font-semibold gap-2">
+              <Button size="sm" className="bg-[#5E9C9C] text-white hover:bg-[#4A8585] border-transparent shadow-none px-6 h-9 rounded-full font-semibold gap-2">
                 <Shield className="h-4 w-4" />
                 Forensic Analysis
               </Button>
@@ -1288,135 +1290,258 @@ function Dashboard() {
             </Card>
           )}
 
-          {/* Visual Analytics Section - Mini Charts */}
+          {/* Visual Analytics Section - Enhanced Charts */}
           {!loading && dashboardData && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Mini Bar Chart - Top 5 Constituencies */}
-              <Card className="shadow-lg border-none rounded-2xl overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-[#2D3E8F] to-[#10B981]" />
-                <div className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-[#2D3E8F]/10 flex items-center justify-center">
-                      <TrendingUp className="h-3.5 w-3.5 text-[#2D3E8F]" />
-                    </div>
+
+              {/* Bar Chart Card */}
+              <div className="bg-white rounded-2xl shadow-sm p-8 border border-slate-200/60">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-slate-100 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-slate-600" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-slate-700">
                     Top Constituencies by Voter Count
-                  </h3>
-                  <div className="space-y-3">
-                    {(dashboardData.top_constituencies || []).slice(0, 5).map((item, index) => {
-                      const maxVoters = Math.max(...(dashboardData.top_constituencies || []).map(c => c.voter_count || 0))
-                      const percent = maxVoters > 0 ? ((item.voter_count || 0) / maxVoters) * 100 : 0
-                      return (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="group"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-gray-700 truncate max-w-[60%]" title={item.constituency}>
-                              {item.constituency}
-                            </span>
-                            <span className="text-xs text-gray-500">{formatVoterCount(item.voter_count)}</span>
-                          </div>
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${percent}%` }}
-                              transition={{ duration: 0.5, delay: index * 0.1 }}
-                              className="h-full bg-[#334E6F] rounded-full"
+                  </h2>
+                </div>
+
+                <div className="space-y-5">
+                  {(() => {
+                    const topConstituenciesData = (dashboardData.top_constituencies || []).slice(0, 5).map(c => ({
+                      name: c.constituency,
+                      votes: c.voter_count || 0
+                    }));
+                    const maxVotes = Math.max(...topConstituenciesData.map(c => c.votes)) || 1;
+
+                    return topConstituenciesData.map((constituency, index) => (
+                      <div
+                        key={constituency.name}
+                        className="relative"
+                        onMouseEnter={() => setHoveredBar(index)}
+                        onMouseLeave={() => setHoveredBar(null)}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`font-medium text-sm transition-all duration-300 ${hoveredBar === index ? 'text-slate-900 font-semibold' : 'text-slate-600'
+                            }`}>
+                            {constituency.name}
+                          </span>
+                          <span className={`text-sm font-semibold transition-all duration-300 ${hoveredBar === index ? 'text-slate-900 scale-125' : 'text-slate-500'
+                            }`}>
+                            {constituency.votes.toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div className="relative h-2.5 bg-slate-100 rounded-full">
+                          {/* Main bar with 3D lift effect */}
+                          <div
+                            className="absolute inset-y-0 left-0 rounded-full transition-all duration-400"
+                            style={{
+                              width: `${(constituency.votes / maxVotes) * 100}%`,
+                              backgroundColor: index === 0 || index === 1 ? '#1e3a8a' : '#475569',
+                              transform: hoveredBar === index
+                                ? 'translateY(-6px) scaleY(1.4)'
+                                : 'translateY(0) scaleY(1)',
+                              transformOrigin: 'center',
+                              boxShadow: hoveredBar === index
+                                ? `0 12px 24px -8px ${index === 0 || index === 1 ? 'rgba(30, 58, 138, 0.5)' : 'rgba(71, 85, 105, 0.5)'}, 0 6px 12px -4px rgba(0, 0, 0, 0.15)`
+                                : '0 1px 2px rgba(0, 0, 0, 0.05)',
+                              filter: hoveredBar === index ? 'brightness(1.1)' : 'brightness(1)'
+                            }}
+                          >
+                            {/* Inner highlight for depth */}
+                            <div
+                              className="absolute inset-0 rounded-full"
+                              style={{
+                                background: 'linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 50%)',
+                                opacity: hoveredBar === index ? 1 : 0,
+                                transition: 'opacity 0.3s'
+                              }}
                             />
                           </div>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </Card>
 
-              {/* Donut Chart - Risk Distribution (Pure CSS/SVG) */}
-              <Card className="shadow-none border-none ring-1 ring-gray-100">
-                <div className="p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-indigo-600" />
+                          {/* Bottom shadow when bar lifts */}
+                          {hoveredBar === index && (
+                            <div
+                              className="absolute rounded-full transition-all duration-400"
+                              style={{
+                                width: `${(constituency.votes / maxVotes) * 100}%`,
+                                height: '2.5px',
+                                top: '0',
+                                left: '0',
+                                backgroundColor: index === 0 || index === 1 ? '#1e3a8a' : '#475569',
+                                opacity: 0.15,
+                                filter: 'blur(4px)'
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Risk Distribution Donut */}
+              <div className="bg-white rounded-2xl shadow-sm p-8 border border-slate-200/60">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-slate-100 rounded-lg">
+                    <svg className="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-semibold text-slate-700">
                     Risk Distribution
-                    <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Derived</span>
-                  </h3>
-                  <div className="flex items-center justify-center gap-6">
-                    {/* SVG Donut Chart */}
-                    <div className="relative w-32 h-32">
-                      <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
-                        {/* Background circle */}
-                        <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#f3f4f6" strokeWidth="3" />
-                        {/* Normal segment */}
-                        <motion.circle
-                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#5E9C9C" strokeWidth="3"
-                          strokeDasharray={`${riskDistribution.normal.percent} ${100 - riskDistribution.normal.percent}`}
-                          strokeDashoffset="0"
-                          initial={{ strokeDasharray: "0 100" }}
-                          animate={{ strokeDasharray: `${riskDistribution.normal.percent} ${100 - riskDistribution.normal.percent}` }}
-                          transition={{ duration: 0.5 }}
-                        />
-                        {/* Warning segment */}
-                        <motion.circle
-                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#C8A84F" strokeWidth="3"
-                          strokeDasharray={`${riskDistribution.warning.percent} ${100 - riskDistribution.warning.percent}`}
-                          strokeDashoffset={`${-riskDistribution.normal.percent}`}
-                          initial={{ strokeDasharray: "0 100" }}
-                          animate={{ strokeDasharray: `${riskDistribution.warning.percent} ${100 - riskDistribution.warning.percent}` }}
-                          transition={{ duration: 0.5, delay: 0.1 }}
-                        />
-                        {/* High segment */}
-                        <motion.circle
-                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#9FB6C3" strokeWidth="3"
-                          strokeDasharray={`${riskDistribution.high.percent} ${100 - riskDistribution.high.percent}`}
-                          strokeDashoffset={`${-(riskDistribution.normal.percent + riskDistribution.warning.percent)}`}
-                          initial={{ strokeDasharray: "0 100" }}
-                          animate={{ strokeDasharray: `${riskDistribution.high.percent} ${100 - riskDistribution.high.percent}` }}
-                          transition={{ duration: 0.5, delay: 0.2 }}
-                        />
-                        {/* Critical segment */}
-                        <motion.circle
-                          cx="18" cy="18" r="15.9" fill="transparent" stroke="#2F4663" strokeWidth="3"
-                          strokeDasharray={`${riskDistribution.critical.percent} ${100 - riskDistribution.critical.percent}`}
-                          strokeDashoffset={`${-(riskDistribution.normal.percent + riskDistribution.warning.percent + riskDistribution.high.percent)}`}
-                          initial={{ strokeDasharray: "0 100" }}
-                          animate={{ strokeDasharray: `${riskDistribution.critical.percent} ${100 - riskDistribution.critical.percent}` }}
-                          transition={{ duration: 0.5, delay: 0.3 }}
-                        />
-                      </svg>
-                      {/* Center text */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-gray-900">{dashboardData.top_constituencies?.length || 0}</span>
-                        <span className="text-xs text-gray-500">Total</span>
+                  </h2>
+                  <span className="ml-auto px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-600">
+                    Derived
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-center gap-12">
+                  {/* Donut Chart */}
+                  <div className="relative" style={{ width: 180, height: 180 }}>
+                    <svg width="180" height="180" className="transform -rotate-90">
+                      {/* Background circle */}
+                      <circle
+                        cx="90"
+                        cy="90"
+                        r="65"
+                        fill="none"
+                        stroke="#f1f5f9"
+                        strokeWidth="16"
+                      />
+
+                      {/* Animated segments with pop-out effect */}
+                      {(() => {
+                        // Dynamic Risk Data mapped to user's color scheme
+                        const chartRiskData = [
+                          { label: 'Normal', percent: riskDistribution.normal.percent, color: '#0d9488' },
+                          { label: 'Warning', percent: riskDistribution.warning.percent, color: '#ca8a04' },
+                          { label: 'High', percent: riskDistribution.high.percent, color: '#94a3b8' },
+                          { label: 'Critical', percent: riskDistribution.critical.percent, color: '#1e3a8a' }
+                        ];
+
+                        return chartRiskData.map((risk, index) => {
+                          let cumulativePercent = 0;
+                          for (let i = 0; i < index; i++) {
+                            cumulativePercent += chartRiskData[i].percent;
+                          }
+
+                          const circumference = 2 * Math.PI * 65;
+                          const segmentLength = (risk.percent / 100) * circumference;
+                          const offset = (cumulativePercent / 100) * circumference;
+
+                          // Calculate angle for the middle of this segment
+                          const segmentMidPercent = cumulativePercent + (risk.percent / 2);
+                          const midAngle = (segmentMidPercent / 100) * 360;
+                          const midAngleRad = (midAngle * Math.PI) / 180;
+
+                          // Calculate offset for pop-out effect
+                          const popDistance = hoveredRisk === index ? 8 : 0;
+                          const translateX = Math.cos(midAngleRad) * popDistance;
+                          const translateY = Math.sin(midAngleRad) * popDistance;
+
+                          return (
+                            <g key={risk.label}>
+                              {/* Shadow layer for depth */}
+                              {hoveredRisk === index && (
+                                <circle
+                                  cx="90"
+                                  cy="90"
+                                  r="65"
+                                  fill="none"
+                                  stroke="rgba(0,0,0,0.15)"
+                                  strokeWidth="16"
+                                  strokeDasharray={`${segmentLength} ${circumference}`}
+                                  strokeDashoffset={-offset}
+                                  style={{
+                                    filter: 'blur(6px)',
+                                    transform: `translate(${translateX - 2}px, ${translateY + 4}px)`
+                                  }}
+                                />
+                              )}
+
+                              {/* Main segment */}
+                              <circle
+                                cx="90"
+                                cy="90"
+                                r="65"
+                                fill="none"
+                                stroke={risk.color}
+                                strokeWidth={hoveredRisk === index ? 20 : 16}
+                                strokeDasharray={`${segmentLength} ${circumference}`}
+                                strokeDashoffset={-offset}
+                                className="transition-all duration-300"
+                                style={{
+                                  opacity: hoveredRisk === null || hoveredRisk === index ? 1 : 0.3,
+                                  transform: `translate(${translateX}px, ${translateY}px)`,
+                                  filter: hoveredRisk === index
+                                    ? `drop-shadow(0 4px 12px ${risk.color}40) brightness(1.1)`
+                                    : 'none',
+                                  cursor: 'pointer'
+                                }}
+                                onMouseEnter={() => setHoveredRisk(index)}
+                                onMouseLeave={() => setHoveredRisk(null)}
+                              />
+                            </g>
+                          );
+                        });
+                      })()}
+                    </svg>
+
+                    {/* Center content */}
+                    <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                      <div className="text-4xl font-bold text-slate-800">
+                        {dashboardData.top_constituencies?.length || 0}
                       </div>
-                    </div>
-                    {/* Legend */}
-                    <div className="space-y-2 text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-[#5E9C9C]" />
-                        <span className="text-gray-600">Normal</span>
-                        <span className="font-medium text-gray-900">{riskDistribution.normal.percent}%</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-[#C8A84F]" />
-                        <span className="text-gray-600">Warning</span>
-                        <span className="font-medium text-gray-900">{riskDistribution.warning.percent}%</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-[#9FB6C3]" />
-                        <span className="text-gray-600">High</span>
-                        <span className="font-medium text-gray-900">{riskDistribution.high.percent}%</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-[#2F4663]" />
-                        <span className="text-gray-600">Critical</span>
-                        <span className="font-medium text-gray-900">{riskDistribution.critical.percent}%</span>
-                      </div>
+                      <div className="text-xs text-slate-500 font-medium mt-1">Total</div>
                     </div>
                   </div>
+
+                  {/* Legend */}
+                  <div className="space-y-3">
+                    {(() => {
+                      const chartRiskData = [
+                        { label: 'Normal', percent: riskDistribution.normal.percent, color: '#0d9488' },
+                        { label: 'Warning', percent: riskDistribution.warning.percent, color: '#ca8a04' },
+                        { label: 'High', percent: riskDistribution.high.percent, color: '#94a3b8' },
+                        { label: 'Critical', percent: riskDistribution.critical.percent, color: '#1e3a8a' }
+                      ];
+
+                      return chartRiskData.map((risk, index) => (
+                        <div
+                          key={risk.label}
+                          className="flex items-center gap-3 cursor-pointer transition-all duration-300"
+                          onMouseEnter={() => setHoveredRisk(index)}
+                          onMouseLeave={() => setHoveredRisk(null)}
+                          style={{
+                            transform: hoveredRisk === index ? 'translateX(6px) scale(1.05)' : 'translateX(0) scale(1)'
+                          }}
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full transition-all duration-300"
+                            style={{
+                              backgroundColor: risk.color,
+                              transform: hoveredRisk === index ? 'scale(1.4)' : 'scale(1)',
+                              boxShadow: hoveredRisk === index
+                                ? `0 0 16px ${risk.color}80, 0 4px 8px ${risk.color}40`
+                                : 'none'
+                            }}
+                          />
+                          <span className={`text-sm font-medium transition-colors duration-300 ${hoveredRisk === index ? 'text-slate-900 font-semibold' : 'text-slate-600'
+                            }`}>
+                            {risk.label}
+                          </span>
+                          <span className={`ml-auto text-sm font-semibold transition-all duration-300 ${hoveredRisk === index ? 'text-slate-900 scale-125' : 'text-slate-500'
+                            }`}>
+                            {risk.percent}%
+                          </span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
                 </div>
-              </Card>
+              </div>
             </div>
           )}
 
