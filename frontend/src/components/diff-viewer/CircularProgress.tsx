@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/diff-viewer/ui/tooltip";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 interface CircularProgressProps {
   data: {
@@ -72,7 +72,7 @@ export function CircularProgressDashboard({ data }: CircularProgressProps) {
     >
       <h3 className="text-lg font-semibold text-gray-900 mb-6">Real-Time Quality Metrics</h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {metrics.map((metric, index) => (
           <CircularProgress key={index} metric={metric} index={index} />
         ))}
@@ -92,7 +92,7 @@ interface Metric {
 
 function CircularProgress({ metric, index }: { metric: Metric; index: number }) {
   const Icon = metric.icon;
-  const circumference = 2 * Math.PI * 45;
+  const circumference = 2 * Math.PI * 34;
   const strokeDashoffset = circumference - (metric.value / 100) * circumference;
 
   return (
@@ -102,24 +102,28 @@ function CircularProgress({ metric, index }: { metric: Metric; index: number }) 
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <div className="relative w-32 h-32">
+      <motion.div
+        className="relative w-24 h-24 cursor-pointer"
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+      >
         {/* Background circle */}
-        <svg className="transform -rotate-90 w-32 h-32">
+        <svg className="transform -rotate-90 w-24 h-24">
           <circle
-            cx="64"
-            cy="64"
-            r="45"
+            cx="48"
+            cy="48"
+            r="34"
             stroke="#f3f4f6"
-            strokeWidth="8"
+            strokeWidth="6"
             fill="none"
           />
           {/* Animated progress circle */}
           <motion.circle
-            cx="64"
-            cy="64"
-            r="45"
+            cx="48"
+            cy="48"
+            r="34"
             stroke={`url(#gradient-${index})`}
-            strokeWidth="8"
+            strokeWidth="6"
             fill="none"
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -141,10 +145,10 @@ function CircularProgress({ metric, index }: { metric: Metric; index: number }) 
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <Icon className={`text-${metric.color}-600 mb-1`} size={24} />
+            <Icon className={`text-${metric.color}-600 mb-1`} size={20} />
           </motion.div>
           <motion.div
-            className={`text-2xl font-bold text-${metric.color}-600`}
+            className={`text-xl font-bold text-${metric.color}-600`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: index * 0.1 + 0.5 }}
@@ -159,7 +163,7 @@ function CircularProgress({ metric, index }: { metric: Metric; index: number }) 
           animate={{ opacity: [0, 0.2, 0] }}
           transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
         />
-      </div>
+      </motion.div>
 
       <div className="mt-3 text-center">
         <div className="text-sm font-medium text-gray-900 flex items-center justify-center gap-1 group/label">

@@ -176,7 +176,7 @@ function Upload() {
         className="w-full max-w-2xl relative z-10 mx-auto px-4 pt-32 pb-12 flex-1 flex flex-col justify-center"
       >
         <Card className="w-full bg-white/70 backdrop-blur-xl border-white/50 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.1)] rounded-3xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-gray-50/50 to-white/50 border-b border-gray-100 p-8">
+          <CardHeader className="bg-blue-50/40 border-b border-gray-100 p-8">
             <div className="flex items-center gap-4 mb-2">
               <div className="w-12 h-12 rounded-2xl bg-[#2D3E8F]/10 flex items-center justify-center text-[#2D3E8F]">
                 <UploadCloud className="h-6 w-6" />
@@ -202,12 +202,39 @@ function Upload() {
                     <option value="All States">All States / National</option>
                     <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
                     <option value="Andhra Pradesh">Andhra Pradesh</option>
+                    <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                    <option value="Assam">Assam</option>
+                    <option value="Bihar">Bihar</option>
+                    <option value="Chandigarh">Chandigarh</option>
+                    <option value="Chhattisgarh">Chhattisgarh</option>
+                    <option value="Dadra And Nagar Haveli And Daman And Diu">Dadra & Nagar Haveli and Daman & Diu</option>
                     <option value="Delhi">Delhi</option>
+                    <option value="Goa">Goa</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Haryana">Haryana</option>
+                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                    <option value="Jammu And Kashmir">Jammu and Kashmir</option>
+                    <option value="Jharkhand">Jharkhand</option>
                     <option value="Karnataka">Karnataka</option>
+                    <option value="Kerala">Kerala</option>
+                    <option value="Ladakh">Ladakh</option>
+                    <option value="Lakshadweep">Lakshadweep</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
                     <option value="Maharashtra">Maharashtra</option>
+                    <option value="Manipur">Manipur</option>
+                    <option value="Meghalaya">Meghalaya</option>
+                    <option value="Mizoram">Mizoram</option>
+                    <option value="Nagaland">Nagaland</option>
+                    <option value="Odisha">Odisha</option>
+                    <option value="Puducherry">Puducherry</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Sikkim">Sikkim</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Tripura">Tripura</option>
                     <option value="Uttar Pradesh">Uttar Pradesh</option>
                     <option value="West Bengal">West Bengal</option>
-                    {/* Add more states as needed */}
                   </select>
                   <div className="absolute right-4 top-4 pointer-events-none text-gray-400">
                     <ChevronLeft className="h-5 w-5 -rotate-90" />
@@ -299,7 +326,7 @@ function Upload() {
                         </div>
 
                         {previews[file.name] && (
-                          <div className="border border-gray-100 rounded-xl overflow-hidden bg-white/40 text-xs shadow-inner">
+                          <div className="border border-gray-100 rounded-xl overflow-hidden bg-blue-50/30 text-xs shadow-inner">
                             <div className="bg-gray-50/80 px-4 py-2 border-b border-gray-100">
                               <span className="font-bold text-gray-400 uppercase tracking-wider text-[10px]">Preview: {file.name}</span>
                             </div>
