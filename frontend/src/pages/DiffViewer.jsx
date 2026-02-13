@@ -285,6 +285,51 @@ export default function DiffViewer() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
+
+          {/* Error State */}
+          {error && (
+            <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex flex-col items-center justify-center text-center">
+              <div className="text-4xl mb-2">⚠️</div>
+              <h3 className="text-lg font-bold text-red-800 mb-1">Analysis Error</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-white text-red-700 border border-red-200 rounded-lg hover:bg-red-50 font-semibold"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Empty State / Insufficient Data Handling */}
+          {!loading && !error && uploads.length < 2 && (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl shadow-sm border border-gray-200">
+              <div className="text-6xl mb-4">📂</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Insufficient Data</h3>
+              <p className="text-gray-500 mb-6 text-center max-w-md">
+                Please upload at least two electoral rolls to perform a comparison.
+              </p>
+              <Link to="/upload" className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-colors">
+                Go to Upload
+              </Link>
+            </div>
+          )}
+
+          {!loading && uploads.length >= 2 && computedMetrics.totalChanges === 0 && (
+            <div className="flex flex-col items-center justify-center p-12 bg-green-50 rounded-2xl shadow-sm border border-green-100">
+              <div className="text-6xl mb-4">✅</div>
+              <h3 className="text-xl font-bold text-green-900 mb-2">No Differences Detected</h3>
+              <p className="text-green-700 mb-6 text-center max-w-md">
+                The two most recent electoral rolls are identical. No additions, deletions, or modifications were found.
+              </p>
+              <div className="flex gap-4">
+                <Link to="/upload" className="px-6 py-2 bg-white text-green-700 border border-green-200 rounded-lg font-bold hover:bg-green-100 transition-colors">
+                  Upload New Version
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* 🔥 NEW ANIMATED STATS DASHBOARD - JUDGE IMPRESSION SECTION */}
           {!loading && computedMetrics.totalChanges > 0 && (
             <>
