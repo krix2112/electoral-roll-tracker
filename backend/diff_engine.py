@@ -30,7 +30,7 @@ def compare_rolls(old_upload_id, new_upload_id, limit=500):
     added_voters_mask = ~new_df['voter_id'].isin(old_df['voter_id'])
     added_df = new_df[added_voters_mask]
     
-    deleted_voters_mask = ~old_df['voter_id'].isin(old_df['voter_id'])
+    deleted_voters_mask = ~old_df['voter_id'].isin(new_df['voter_id'])
     deleted_df = old_df[deleted_voters_mask]
     
     # 2. MODIFIED (Vectorized identification)
