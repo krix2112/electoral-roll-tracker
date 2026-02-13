@@ -353,3 +353,56 @@ export const markNotificationRead = async (id) => {
     throw error
   }
 }
+
+/**
+ * Analyze Electoral Rolls (AI Forensic Analysis)
+ * Calls POST /api/analyze
+ * 
+ * @param {string} currentUploadId - ID of the roll to analyze
+ * @param {string} previousUploadId - Optional ID of the baseline roll
+ * @returns {Promise<Object>} Forensic analysis result
+ */
+export const analyzeRoll = async (currentUploadId, previousUploadId = null) => {
+  try {
+    const response = await api.post('/api/analyze', {
+      current_upload_id: currentUploadId,
+      previous_upload_id: previousUploadId
+    })
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}
+
+/**
+ * Get Diff Analysis Timeline
+ * Calls GET /api/diffviewer/timeline
+ */
+export const getDiffTimeline = async (oldUploadId, newUploadId) => {
+  try {
+    const response = await api.get('/api/diffviewer/timeline', {
+      params: { old_upload_id: oldUploadId, new_upload_id: newUploadId }
+    })
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}
+
+/**
+ * Get Diff Analysis Heatmap
+ * Calls GET /api/diffviewer/heatmap
+ */
+export const getDiffHeatmap = async (oldUploadId, newUploadId) => {
+  try {
+    const response = await api.get('/api/diffviewer/heatmap', {
+      params: { old_upload_id: oldUploadId, new_upload_id: newUploadId }
+    })
+    return response.data
+  } catch (error) {
+    handleError(error)
+    throw error
+  }
+}

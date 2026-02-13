@@ -21,7 +21,7 @@ import { DataExplorerPanel } from "@/components/diff-viewer/DataExplorerPanel";
 import { motion } from "framer-motion";
 import { gsap } from 'gsap';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { compareRolls, getUploads } from '../services/api';
+import { compareRolls, getUploads, analyzeRoll, getDiffTimeline, getDiffHeatmap } from '../services/api';
 
 export default function DiffViewer() {
   const navigate = useNavigate();
@@ -49,15 +49,7 @@ export default function DiffViewer() {
       // Sort: Oldest [0], Newest [1]
       const sorted = [...uploads].sort((a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at));
 
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          current_upload_id: sorted[1].upload_id,
-          previous_upload_id: sorted[0].upload_id
-        })
-      });
-      const data = await res.json();
+      const data = await analyzeRoll(sorted[1].upload_id, sorted[0].upload_id);
       setForensicData(data);
     } catch (e) { console.error(e); }
     setAnalyzing(false);
@@ -179,23 +171,20 @@ export default function DiffViewer() {
       const oldUploadId = sorted[0].upload_id;
       const newUploadId = sorted[1].upload_id;
 
-      // Fetch real timeline data (monthly registration patterns)
-      fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/diffviewer/timeline?old_upload_id=${oldUploadId}&new_upload_id=${newUploadId}`)
-        .then(res => res.json())
-        .then(data => {
-          console.log('✅ Real timeline data loaded:', data);
-          setTimelineData(data);
-        })
-        .catch(err => console.error('Timeline fetch error:', err));
+      const fetchVisuals = async (oldId, newId) => {
+        try {
+          const timeline = await getDiffTimeline(oldId, newId);
+          setTimelineData(timeline || []);
+          console.log('✅ Real timeline data loaded:', timeline);
 
-      // Fetch real heatmap data (constituency-level changes)
-      fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/diffviewer/heatmap?old_upload_id=${oldUploadId}&new_upload_id=${newUploadId}`)
-        .then(res => res.json())
-        .then(data => {
-          console.log('✅ Real heatmap data loaded:', data);
-          setHeatmapData(data);
-        })
-        .catch(err => console.error('Heatmap fetch error:', err));
+          const heatmap = await getDiffHeatmap(oldId, newId);
+          setHeatmapData(heatmap || []);
+          console.log('✅ Real heatmap data loaded:', heatmap);
+        } catch (e) {
+          console.error("Failed to load diff visuals", e);
+        }
+      };
+      fetchVisuals(oldUploadId, newUploadId);
     }
   }, [uploads]);
 

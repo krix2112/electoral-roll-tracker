@@ -5,7 +5,7 @@
  */
 
 import { motion } from 'framer-motion'
-import { Users, Calendar, Home, TrendingUp, Activity, FileText } from 'lucide-react'
+import { Users, Calendar, Home, TrendingUp, Activity, FileText, AlertTriangle } from 'lucide-react'
 import '../styles/forensicEvidence.css'
 
 const EVIDENCE_ICONS = {

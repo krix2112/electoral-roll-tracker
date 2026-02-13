@@ -16,8 +16,7 @@ import { ForensicScoreGauge } from '../components/ForensicScoreGauge'
 import { ModuleBreakdownPanel } from '../components/ModuleBreakdownPanel'
 import { ForensicEvidenceCards } from '../components/ForensicEvidenceCards'
 import { ForensicNetworkGraph } from '../components/ForensicNetworkGraph'
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+import { getUploads, getTopAnomaly, analyzeRoll } from '../services/api'
 
 export default function ForensicDashboard() {
     const [loading, setLoading] = useState(false)
@@ -40,12 +39,9 @@ export default function ForensicDashboard() {
 
     const fetchUploads = async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/uploads`)
-            if (res.ok) {
-                const data = await res.json()
-                setUploads(data)
-                return data
-            }
+            const data = await getUploads()
+            setUploads(data)
+            return data
         } catch (e) {
             console.error("Failed to load uploads", e)
         }
@@ -66,14 +62,8 @@ export default function ForensicDashboard() {
         setSelectedUploadId('')
 
         try {
-            console.log("Fetching from:", `${API_BASE}/api/top-anomaly`)
-            const response = await fetch(`${API_BASE}/api/top-anomaly`)
-
-            if (!response.ok) {
-                throw new Error(`Server returned ${response.status}: ${response.statusText}`)
-            }
-
-            const data = await response.json()
+            console.log("Loading top anomaly via API service")
+            const data = await getTopAnomaly()
             setForensicData(data)
         } catch (err) {
             console.error('API failed, loading fallback demo data:', err)
@@ -132,18 +122,7 @@ export default function ForensicDashboard() {
         setForensicData(null) // Clear previous data to avoid confusion
 
         try {
-            const response = await fetch(`${API_BASE}/api/analyze`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    current_upload_id: currentUploadId,
-                    previous_upload_id: previousUploadId
-                })
-            })
-
-            if (!response.ok) throw new Error('Analysis failed')
-
-            const data = await response.json()
+            const data = await analyzeRoll(currentUploadId, previousUploadId)
             setForensicData(data)
         } catch (err) {
             console.error('Analysis error:', err)
