@@ -76,10 +76,6 @@ export function InvestigationButton({ onInvestigate, onAnomalyFound, isLoading =
                     <span className="text-sm md:text-base font-bold drop-shadow-sm">
                         {loading ? 'Investigating...' : 'Investigate Top Anomaly'}
                     </span>
-
-                    {!loading && (
-                        <Zap className="h-4 w-4 text-yellow-300 fill-yellow-300 animate-pulse" />
-                    )}
                 </div>
             </Button>
         </motion.div>

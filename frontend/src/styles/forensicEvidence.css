@@ -1,0 +1,83 @@
+/* ========================================
+   Forensic Evidence Cards Styles
+   ======================================== */
+
+.forensic-evidence-card {
+    position: relative;
+    cursor: default;
+}
+
+.forensic-evidence-card-inner {
+    position: relative;
+    border-radius: 12px;
+    padding: 24px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    z-index: 1;
+}
+
+.forensic-evidence-card:hover .forensic-evidence-card-inner {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Icon container */
+.forensic-evidence-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    transition: transform 0.25s ease;
+}
+
+.forensic-evidence-card:hover .forensic-evidence-icon {
+    transform: scale(1.05);
+}
+
+/* Title */
+.forensic-evidence-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+/* Description */
+.forensic-evidence-desc {
+    font-size: 13.5px;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Shadow beneath card on hover */
+.forensic-evidence-shadow {
+    position: absolute;
+    bottom: -8px;
+    left: 10%;
+    right: 10%;
+    height: 20px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.forensic-evidence-card:hover .forensic-evidence-shadow {
+    opacity: 1;
+}
+
+/* Final Anomaly Score card hover shadow */
+.h-full:hover .score-card-hover-shadow {
+    opacity: 1 !important;
+}

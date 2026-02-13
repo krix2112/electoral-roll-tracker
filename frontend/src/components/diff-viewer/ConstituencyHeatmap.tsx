@@ -15,7 +15,7 @@ const heatmapData = [
 
 export function ConstituencyHeatmap() {
   const maxIntensity = Math.max(...heatmapData.map(d => d.intensity));
-  
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="mb-4">
@@ -28,14 +28,17 @@ export function ConstituencyHeatmap() {
       <div className="space-y-2">
         {heatmapData.map((item, index) => {
           const intensity = (item.intensity / maxIntensity) * 100;
-          const colorClass = 
+          const colorClass =
             intensity > 70 ? "bg-red-500" :
-            intensity > 50 ? "bg-orange-500" :
-            intensity > 30 ? "bg-yellow-500" :
-            "bg-emerald-500";
-          
+              intensity > 50 ? "bg-orange-500" :
+                intensity > 30 ? "bg-yellow-500" :
+                  "bg-emerald-500";
+
           return (
-            <div key={index} className="relative group">
+            <div
+              key={index}
+              className="relative group"
+            >
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <MapPin size={14} className="text-gray-400" />
@@ -43,9 +46,9 @@ export function ConstituencyHeatmap() {
                 </div>
                 <span className="text-sm font-bold text-gray-900">{item.intensity}</span>
               </div>
-              <div className="h-6 bg-gray-100 rounded-full overflow-hidden relative">
-                <div 
-                  className={`h-full ${colorClass} transition-all duration-500 rounded-full relative`}
+              <div className="h-6 bg-gray-100 rounded-full overflow-visible relative cursor-pointer">
+                <div
+                  className={`h-full ${colorClass} transition-all duration-300 rounded-full relative hover:scale-105 hover:shadow-lg hover:brightness-110`}
                   style={{ width: `${intensity}%` }}
                 >
                   <div className="absolute inset-0 bg-white/20 animate-pulse" />

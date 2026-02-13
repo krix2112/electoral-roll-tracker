@@ -79,18 +79,18 @@ const CustomizedContent = (props: any) => {
 
 export function ConstituencyTreemap() {
   return (
-    <motion.div 
+    <motion.div
       className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 relative overflow-hidden"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      whileHover={{ 
+      whileHover={{
         boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
       }}
     >
       {/* Background decoration */}
       <div className="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full blur-3xl opacity-40" />
-      
+
       <div className="relative z-10">
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -102,7 +102,7 @@ export function ConstituencyTreemap() {
           </p>
         </div>
 
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={350}>
           <Treemap
             data={treemapData}
             dataKey="size"
@@ -111,7 +111,7 @@ export function ConstituencyTreemap() {
             fill="#8884d8"
             content={<CustomizedContent />}
           >
-            <Tooltip 
+            <Tooltip
               content={({ payload }) => {
                 if (payload && payload[0]) {
                   const data = payload[0].payload;
@@ -122,11 +122,10 @@ export function ConstituencyTreemap() {
                       <p className="text-xs text-gray-600">Additions: <span className="font-medium text-emerald-600">+{data.additions}</span></p>
                       <p className="text-xs text-gray-600">Deletions: <span className="font-medium text-red-600">-{data.deletions}</span></p>
                       <div className="mt-2 pt-2 border-t border-gray-200">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          data.risk === 'high' ? 'bg-red-100 text-red-700' :
-                          data.risk === 'medium' ? 'bg-amber-100 text-amber-700' :
-                          'bg-emerald-100 text-emerald-700'
-                        }`}>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${data.risk === 'high' ? 'bg-red-100 text-red-700' :
+                            data.risk === 'medium' ? 'bg-amber-100 text-amber-700' :
+                              'bg-emerald-100 text-emerald-700'
+                          }`}>
                           {data.risk?.toUpperCase()} RISK
                         </span>
                       </div>
@@ -138,12 +137,6 @@ export function ConstituencyTreemap() {
             />
           </Treemap>
         </ResponsiveContainer>
-
-        <div className="mt-4 text-center">
-          <p className="text-xs text-gray-600">
-            Size represents total change volume · Color coding by constituency · Hover for details
-          </p>
-        </div>
       </div>
     </motion.div>
   );

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
-    ChevronLeft, Loader2, Search, RefreshCw, FileSearch,
+    ChevronLeft, Loader2, Search, RefreshCw, Fingerprint,
     Shield, Bell, Upload, ChevronDown
 } from 'lucide-react'
 import { Card } from '../components/ui/Card'
@@ -246,7 +246,15 @@ export default function ForensicDashboard() {
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                            className="rounded-xl shadow-sm p-6"
+                            style={{
+                                borderTop: '4px solid #6B4226',
+                                backgroundColor: '#fdf6ef',
+                                border: '1px solid rgba(107, 66, 38, 0.12)',
+                                borderTopWidth: '4px',
+                                borderTopColor: '#6B4226',
+                                borderTopStyle: 'solid',
+                            }}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
@@ -281,9 +289,14 @@ export default function ForensicDashboard() {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.1 }}
+                                whileHover={{
+                                    y: -6,
+                                    transition: { duration: 0.25, ease: 'easeOut' }
+                                }}
                                 className="h-full"
+                                style={{ position: 'relative' }}
                             >
-                                <Card className="p-8 bg-white shadow-xl border-none ring-1 ring-gray-100 flex flex-col items-center justify-center h-full min-h-[420px]">
+                                <Card className="p-8 bg-white shadow-xl flex flex-col items-center justify-center h-full min-h-[420px] transition-shadow duration-300 hover:shadow-2xl" style={{ border: '2px solid #3a3a3a', borderRadius: '12px' }}>
                                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">
                                         Final Anomaly Score
                                     </h3>
@@ -295,10 +308,24 @@ export default function ForensicDashboard() {
                                     />
                                     <div className="mt-6 text-center max-w-xs">
                                         <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                                            {forensicData.summary?.split('.')[0] + '.'}
+                                            {(forensicData.summary?.split('.')[0] + '.').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{1F000}-\u{1FFFF}\u{200D}\u{20E3}]/gu, '').trim()}
                                         </p>
                                     </div>
                                 </Card>
+                                {/* Hover shadow */}
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '-8px',
+                                    left: '10%',
+                                    right: '10%',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    background: 'radial-gradient(ellipse at center, rgba(58,58,58,0.16) 0%, transparent 70%)',
+                                    opacity: 0,
+                                    transition: 'opacity 0.3s ease',
+                                    zIndex: 0,
+                                    pointerEvents: 'none',
+                                }} className="score-card-hover-shadow" />
                             </motion.div>
 
                             {/* Network Visualization */}
@@ -330,7 +357,7 @@ export default function ForensicDashboard() {
                             >
                                 <div className="mb-4 mt-8">
                                     <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                        <FileSearch className="h-5 w-5 text-indigo-600" />
+                                        <Fingerprint className="h-5 w-5" style={{ color: '#378A98' }} />
                                         Forensic Evidence ({forensicData.all_evidence.length})
                                     </h3>
                                     <p className="text-sm text-gray-500 mt-1">

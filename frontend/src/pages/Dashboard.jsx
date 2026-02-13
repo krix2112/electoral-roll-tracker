@@ -586,6 +586,13 @@ function Dashboard() {
           </AnimatePresence>
 
           <div className="space-y-8 pb-10">
+            {/* Compare to Rolls Button */}
+            <Link to="/compare">
+              <button className="w-full p-4 rounded-2xl bg-blue-500/10 border border-blue-200/50 hover:bg-blue-500/20 hover:border-blue-300 transition-all duration-300 shadow-sm hover:shadow-md backdrop-blur-sm">
+                <span className="text-sm font-bold text-blue-700">Compare to Rolls</span>
+              </button>
+            </Link>
+
             {/* Anomalies Toggle */}
             <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-orange-100/50 border border-orange-100 hover:border-orange-200 transition-colors shadow-sm">
               <span className="text-sm font-bold text-gray-800">Show Anomalies Only</span>
@@ -641,14 +648,41 @@ function Dashboard() {
                         className="w-full appearance-none bg-orange-50/50 border border-orange-100 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-[#FF6B4A]/20 block p-3.5 pl-4 shadow-sm hover:border-[#FF6B4A]/30 transition-all cursor-pointer font-semibold"
                       >
                         <option value="ALL">National (All States)</option>
-                        <option value="Andaman & Nicobar Islands">A & N Islands</option>
-                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
+                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                        <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                        <option value="Assam">Assam</option>
+                        <option value="Bihar">Bihar</option>
+                        <option value="Chandigarh">Chandigarh</option>
+                        <option value="Chhattisgarh">Chhattisgarh</option>
+                        <option value="Dadra And Nagar Haveli And Daman And Diu">Dadra & Nagar Haveli and Daman & Diu</option>
                         <option value="Delhi">Delhi</option>
-                        <option value="Karnataka">Karnataka</option>
-                        <option value="Uttar Pradesh">Uttar Pradesh</option>
-                        <option value="Tamil Nadu">Tamil Nadu</option>
-                        <option value="West Bengal">West Bengal</option>
+                        <option value="Goa">Goa</option>
                         <option value="Gujarat">Gujarat</option>
+                        <option value="Haryana">Haryana</option>
+                        <option value="Himachal Pradesh">Himachal Pradesh</option>
+                        <option value="Jammu And Kashmir">Jammu and Kashmir</option>
+                        <option value="Jharkhand">Jharkhand</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Kerala">Kerala</option>
+                        <option value="Ladakh">Ladakh</option>
+                        <option value="Lakshadweep">Lakshadweep</option>
+                        <option value="Madhya Pradesh">Madhya Pradesh</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Manipur">Manipur</option>
+                        <option value="Meghalaya">Meghalaya</option>
+                        <option value="Mizoram">Mizoram</option>
+                        <option value="Nagaland">Nagaland</option>
+                        <option value="Odisha">Odisha</option>
+                        <option value="Puducherry">Puducherry</option>
+                        <option value="Punjab">Punjab</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Sikkim">Sikkim</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="Tripura">Tripura</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="West Bengal">West Bengal</option>
                       </select>
                       <div className="absolute right-3 top-3.5 p-1 bg-white rounded-md shadow-sm border border-orange-100 pointer-events-none group-hover:scale-110 transition-transform">
                         <ChevronDown className="h-3 w-3 text-[#FF6B4A]" />
