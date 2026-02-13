@@ -7,31 +7,18 @@ import pandas as pd
 import hashlib
 from models import VoterRecord
 
-def compare_rolls(old_upload_id, new_upload_id):
-    """Compare two electoral rolls and return differences"""
+def compare_rolls(old_upload_id, new_upload_id, limit=500):
+    """Compare two electoral rolls and return differences using efficient pandas operations"""
+    from database import db
+    from sqlalchemy import text
+    import pandas as pd
     
-    old_records = VoterRecord.query.filter_by(upload_id=old_upload_id).all()
-    new_records = VoterRecord.query.filter_by(upload_id=new_upload_id).all()
+    # Load data directly into DataFrames using SQL for speed
+    # This avoids instantiating thousands of SQLAlchemy objects
+    query = text("SELECT voter_id, name, age, address, constituency, registration_date, row_hash FROM voter_records WHERE upload_id = :uid")
     
-    old_df = pd.DataFrame([{
-        'voter_id': r.voter_id,
-        'name': r.name,
-        'age': r.age,
-        'address': r.address,
-        'constituency': r.constituency,
-        'registration_date': r.registration_date,
-        'row_hash': r.row_hash
-    } for r in old_records])
-    
-    new_df = pd.DataFrame([{
-        'voter_id': r.voter_id,
-        'name': r.name,
-        'age': r.age,
-        'address': r.address,
-        'constituency': r.constituency,
-        'registration_date': r.registration_date,
-        'row_hash': r.row_hash
-    } for r in new_records])
+    old_df = pd.read_sql(query, db.engine, params={"uid": old_upload_id})
+    new_df = pd.read_sql(query, db.engine, params={"uid": new_upload_id})
     
     if old_df.empty and new_df.empty:
         return {
@@ -39,71 +26,66 @@ def compare_rolls(old_upload_id, new_upload_id):
             'stats': {'total_added': 0, 'total_deleted': 0, 'total_modified': 0, 'old_count': 0, 'new_count': 0}
         }
     
-    if old_df.empty:
-        return {
-            'added': new_df.drop(columns=['row_hash']).to_dict('records'),
-            'deleted': [], 'modified': [],
-            'stats': {'total_added': len(new_df), 'total_deleted': 0, 'total_modified': 0, 'old_count': 0, 'new_count': len(new_df)}
-        }
+    # 1. ADDED & DELETED (Vectorized)
+    added_voters_mask = ~new_df['voter_id'].isin(old_df['voter_id'])
+    added_df = new_df[added_voters_mask]
     
-    if new_df.empty:
-        return {
-            'added': [],
-            'deleted': old_df.drop(columns=['row_hash']).to_dict('records'),
-            'modified': [],
-            'stats': {'total_added': 0, 'total_deleted': len(old_df), 'total_modified': 0, 'old_count': len(old_df), 'new_count': 0}
-        }
+    deleted_voters_mask = ~old_df['voter_id'].isin(old_df['voter_id'])
+    deleted_df = old_df[deleted_voters_mask]
     
-    old_hashes = set(old_df['row_hash'])
-    new_hashes = set(new_df['row_hash'])
+    # 2. MODIFIED (Vectorized identification)
+    common_ids = set(old_df['voter_id']) & set(new_df['voter_id'])
     
-    deleted_hashes = old_hashes - new_hashes
-    added_hashes = new_hashes - old_hashes
+    old_common = old_df[old_df['voter_id'].isin(common_ids)].set_index('voter_id')
+    new_common = new_df[new_df['voter_id'].isin(common_ids)].set_index('voter_id')
     
-    deleted_records = old_df[old_df['row_hash'].isin(deleted_hashes)].drop(columns=['row_hash']).to_dict('records')
-    added_records = new_df[new_df['row_hash'].isin(added_hashes)].drop(columns=['row_hash']).to_dict('records')
+    # Find where row_hash differs
+    modified_mask = old_common['row_hash'] != new_common['row_hash']
+    modified_old = old_common[modified_mask]
+    modified_new = new_common[modified_mask]
     
-    old_voter_ids = set(old_df['voter_id'])
-    new_voter_ids = set(new_df['voter_id'])
-    common_voter_ids = old_voter_ids & new_voter_ids
+    total_modified = len(modified_old)
     
+    # 3. LIMIT DETAILED RECORDS FOR NETWORK PERFORMANCE
+    # We return the top N modifications for display, but counts remain accurate.
     modified_records = []
-    old_dict = {row['voter_id']: row for row in old_df.to_dict('records')}
-    new_dict = {row['voter_id']: row for row in new_df.to_dict('records')}
+    ids_to_process = modified_old.index[:limit] if limit > 0 else modified_old.index
     
-    for voter_id in common_voter_ids:
-        old_row = old_dict[voter_id]
-        new_row = new_dict[voter_id]
+    for voter_id in ids_to_process:
+        old_row = modified_old.loc[voter_id]
+        new_row = modified_new.loc[voter_id]
         
-        if old_row['row_hash'] != new_row['row_hash']:
-            old_data = {k: v for k, v in old_row.items() if k != 'row_hash'}
-            new_data = {k: v for k, v in new_row.items() if k != 'row_hash'}
-            
-            changes = {}
-            for key in old_data.keys():
-                if old_data[key] != new_data[key]:
-                    changes[key] = {'old': old_data[key], 'new': new_data[key]}
-            
-            modified_records.append({
-                'voter_id': voter_id,
-                'old': old_data,
-                'new': new_data,
-                'changes': changes
-            })
+        changes = {}
+        for col in ['name', 'age', 'address', 'constituency', 'registration_date']:
+            if str(old_row[col]) != str(new_row[col]):
+                changes[col] = {'old': old_row[col], 'new': new_row[col]}
+                
+        modified_records.append({
+            'voter_id': voter_id,
+            'old': old_row.drop('row_hash').to_dict(),
+            'new': new_row.drop('row_hash').to_dict(),
+            'changes': changes
+        })
+    
+    # Apply limit to added/deleted as well for UI sanity
+    added_list = added_df.drop(columns=['row_hash']).head(limit if limit > 0 else len(added_df)).to_dict('records')
+    deleted_list = deleted_df.drop(columns=['row_hash']).head(limit if limit > 0 else len(deleted_df)).to_dict('records')
     
     return {
-        'added': added_records,
-        'deleted': deleted_records,
+        'added': added_list,
+        'deleted': deleted_list,
         'modified': modified_records,
         'stats': {
-            'total_added': len(added_records),
-            'total_deleted': len(deleted_records),
-            'total_modified': len(modified_records),
+            'total_added': len(added_df),
+            'total_deleted': len(deleted_df),
+            'total_modified': total_modified,
             'old_count': len(old_df),
             'new_count': len(new_df),
-            'unchanged': len(common_voter_ids) - len(modified_records)
+            'unchanged': len(common_ids) - total_modified,
+            'limited_view': limit > 0 and (len(added_df) > limit or len(deleted_df) > limit or total_modified > limit)
         }
     }
+
 
 
 def calculate_row_hash(row_data):

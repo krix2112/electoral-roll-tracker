@@ -23,19 +23,22 @@ def detect_suspicious_patterns(diff_result):
         })
     
     if added:
-        registration_dates = [r['registration_date'] for r in added]
-        date_counts = {}
-        for date in registration_dates:
-            date_counts[date] = date_counts.get(date, 0) + 1
+        import pandas as pd
+        # Vectorized registration date count
+        dates = pd.Series([r['registration_date'] for r in added])
+        date_counts = dates.value_counts()
         
-        for date, count in date_counts.items():
-            if count > 50:
-                alerts.append({
-                    'type': 'SAME_DAY_REGISTRATION',
-                    'severity': 'HIGH',
-                    'message': f'{count} voters registered on same day: {date}',
-                    'date': date,
-                    'count': count
-                })
+        # Identify dates with > 50 registrations
+        high_vol_dates = date_counts[date_counts > 50]
+        
+        for date, count in high_vol_dates.items():
+            alerts.append({
+                'type': 'SAME_DAY_REGISTRATION',
+                'severity': 'HIGH',
+                'message': f'{count} voters registered on same day: {date}',
+                'date': str(date),
+                'count': int(count)
+            })
+
     
     return alerts

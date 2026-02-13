@@ -70,22 +70,24 @@ def analyze_constituency():
         if not current_roll:
             return jsonify({'error': 'Current upload not found'}), 404
         
-        current_query = VoterRecord.query.filter_by(upload_id=current_upload_id)
+        from sqlalchemy import text
+        import pandas as pd
+        
+        # Optimized loading using DataFrames directly from SQL
+        query = text("SELECT voter_id, name, age, address, constituency, registration_date FROM voter_records WHERE upload_id = :uid")
+        
+        current_df = pd.read_sql(query, db.engine, params={"uid": current_upload_id})
         if constituency_filter:
-            current_query = current_query.filter_by(constituency=constituency_filter)
+            current_df = current_df[current_df['constituency'] == constituency_filter]
         
-        current_voters = [v.to_dict() for v in current_query.all()]
-        
-        # Fetch previous voters (if provided)
-        previous_voters = []
+        previous_df = pd.DataFrame()
         if previous_upload_id:
-            previous_query = VoterRecord.query.filter_by(upload_id=previous_upload_id)
+            previous_df = pd.read_sql(query, db.engine, params={"uid": previous_upload_id})
             if constituency_filter:
-                previous_query = previous_query.filter_by(constituency=constituency_filter)
-            previous_voters = [v.to_dict() for v in previous_query.all()]
+                previous_df = previous_df[previous_df['constituency'] == constituency_filter]
         
-        # Run forensic analysis
-        analysis_result = fusion_engine.analyze(current_voters, previous_voters)
+        # Run forensic analysis using optimized DataFrame-based engine
+        analysis_result = fusion_engine.analyze(current_df, previous_df)
         
         # Generate analysis ID
         analysis_id = f"analysis_{current_upload_id}_{int(datetime.utcnow().timestamp())}"

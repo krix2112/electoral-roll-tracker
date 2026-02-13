@@ -46,9 +46,11 @@ def get_timeline_data():
     """
     Get time-series data based on voter registration dates
     Query params: old_upload_id, new_upload_id
-    
-    Returns monthly aggregation of voter registrations from both uploads
     """
+    from database import db
+    from sqlalchemy import text
+    import pandas as pd
+    
     try:
         old_upload_id = request.args.get('old_upload_id')
         new_upload_id = request.args.get('new_upload_id')
@@ -56,37 +58,29 @@ def get_timeline_data():
         if not old_upload_id or not new_upload_id:
             return jsonify({'error': 'Both old_upload_id and new_upload_id are required'}), 400
         
-        # Fetch all voter records for both uploads
-        old_records = VoterRecord.query.filter_by(upload_id=old_upload_id).all()
-        new_records = VoterRecord.query.filter_by(upload_id=new_upload_id).all()
+        # Load only registration date to minimize memory
+        query = text("SELECT registration_date FROM voter_records WHERE upload_id = :uid")
         
-        # Group by month (YYYY-MM format)
-        old_by_month = {}
-        new_by_month = {}
+        old_df = pd.read_sql(query, db.engine, params={"uid": old_upload_id})
+        new_df = pd.read_sql(query, db.engine, params={"uid": new_upload_id})
         
-        for record in old_records:
-            if record.registration_date:
-                month = record.registration_date[:7]  # Extract "YYYY-MM" from "YYYY-MM-DD"
-                old_by_month[month] = old_by_month.get(month, 0) + 1
+        # Aggregate by month (YYYY-MM)
+        # Using .str[:7] is fast for string dates
+        old_counts = old_df['registration_date'].str[:7].value_counts().sort_index()
+        new_counts = new_df['registration_date'].str[:7].value_counts().sort_index()
         
-        for record in new_records:
-            if record.registration_date:
-                month = record.registration_date[:7]
-                new_by_month[month] = new_by_month.get(month, 0) + 1
+        # Combine into one timeline
+        all_months = sorted(set(old_counts.index) | set(new_counts.index))
         
-        # Merge all unique months and sort chronologically
-        all_months = sorted(set(list(old_by_month.keys()) + list(new_by_month.keys())))
-        
-        # Build timeline data with real monthly counts
         timeline_data = []
         for month in all_months:
-            old_count = old_by_month.get(month, 0)
-            new_count = new_by_month.get(month, 0)
+            oc = int(old_counts.get(month, 0))
+            nc = int(new_counts.get(month, 0))
             timeline_data.append({
                 'month': month,
-                'old_count': old_count,
-                'new_count': new_count,
-                'net_change': new_count - old_count
+                'old_count': oc,
+                'new_count': nc,
+                'net_change': nc - oc
             })
         
         return jsonify(timeline_data), 200
@@ -99,11 +93,12 @@ def get_timeline_data():
 @diffviewer_bp.route('/heatmap', methods=['GET'])
 def get_heatmap_data():
     """
-    Get geographic distribution of changes by constituency
-    Query params: old_upload_id, new_upload_id
-    
-    Returns constituency-level change data for heatmap visualization
+    Get geographic distribution of changes by constituency using pandas
     """
+    from database import db
+    from sqlalchemy import text
+    import pandas as pd
+    
     try:
         old_upload_id = request.args.get('old_upload_id')
         new_upload_id = request.args.get('new_upload_id')
@@ -111,47 +106,57 @@ def get_heatmap_data():
         if not old_upload_id or not new_upload_id:
             return jsonify({'error': 'Both old_upload_id and new_upload_id are required'}), 400
         
-        # Get real comparison data
-        comparison = compare_rolls(old_upload_id, new_upload_id)
+        # Perform comparison with NO LIMIT on detailed records
+        # because the heatmap needs the full count per constituency
+        result = compare_rolls(old_upload_id, new_upload_id, limit=0)
         
-        # Aggregate changes BY CONSTITUENCY (real granularity)
-        stats = {}
+        # We handle aggregation on the backend to keep the payload small
+        # even if there are 100k changes.
         
-        # Process added voters
-        for voter in comparison['added']:
-            const = voter.get('constituency', 'Unknown')
-            if const not in stats:
-                stats[const] = {'added': 0, 'deleted': 0, 'modified': 0}
-            stats[const]['added'] += 1
+        # Since compare_rolls(limit=0) returns empty added/deleted/modified lists,
+        # but the stats are accurate, we actually need to refactor compare_rolls 
+        # or calculate heatmap distribution HERE for efficiency.
         
-        # Process deleted voters  
-        for voter in comparison['deleted']:
-            const = voter.get('constituency', 'Unknown')
-            if const not in stats:
-                stats[const] = {'added': 0, 'deleted': 0, 'modified': 0}
-            stats[const]['deleted'] += 1
+        # Optimization: Just query counts by constituency directly for added/deleted
+        # Modified still needs the row_hash comparison.
         
-        # Process modified voters
-        for voter in comparison['modified']:
-            const = voter.get('constituency', 'Unknown')
-            if const not in stats:
-                stats[const] = {'added': 0, 'deleted': 0, 'modified': 0}
-            stats[const]['modified'] += 1
+        query = text("SELECT voter_id, constituency, row_hash FROM voter_records WHERE upload_id = :uid")
+        old_df = pd.read_sql(query, db.engine, params={"uid": old_upload_id})
+        new_df = pd.read_sql(query, db.engine, params={"uid": new_upload_id})
         
-        # Convert to list format frontend expects
+        # 1. Added by constituency
+        added_df = new_df[~new_df['voter_id'].isin(old_df['voter_id'])]
+        added_counts = added_df.groupby('constituency').size()
+        
+        # 2. Deleted by constituency
+        deleted_df = old_df[~old_df['voter_id'].isin(new_df['voter_id'])]
+        deleted_counts = deleted_df.groupby('constituency').size()
+        
+        # 3. Modified by constituency
+        common_ids = set(old_df['voter_id']) & set(new_df['voter_id'])
+        old_common = old_df[old_df['voter_id'].isin(common_ids)].set_index('voter_id')
+        new_common = new_df[new_df['voter_id'].isin(common_ids)].set_index('voter_id')
+        modified_ids = old_common[old_common['row_hash'] != new_common['row_hash']].index
+        modified_counts = new_common.loc[modified_ids].groupby('constituency').size()
+        
+        # Combine all constituencies
+        all_regions = sorted(set(added_counts.index) | set(deleted_counts.index) | set(modified_counts.index))
+        
         heatmap_data = []
-        for const, counts in stats.items():
-            total_changes = counts['added'] + counts['deleted'] + counts['modified']
-            intensity = min(100, (total_changes / 100.0) * 10)  # Scale for viz
+        for region in all_regions:
+            ac = int(added_counts.get(region, 0))
+            dc = int(deleted_counts.get(region, 0))
+            mc = int(modified_counts.get(region, 0))
+            total = ac + dc + mc
             
             heatmap_data.append({
-                'region': const,
-                'added': counts['added'],
-                'deleted': counts['deleted'],
-                'modified': counts['modified'],
-                'intensity': intensity
+                'region': region,
+                'added': ac,
+                'deleted': dc,
+                'modified': mc,
+                'intensity': min(100, (total / 100.0) * 10)
             })
-        
+            
         return jsonify(heatmap_data), 200
         
     except Exception as e:

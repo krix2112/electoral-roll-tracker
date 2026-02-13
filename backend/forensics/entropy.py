@@ -48,116 +48,92 @@ class EntropyAnalysisEngine:
             return 0
         return min(1.0, entropy / max_possible)
     
-    def analyze(self, current_voters: List[Dict], previous_voters: List[Dict] = None) -> Dict[str, Any]:
+    def analyze(self, current_df: Any, previous_df: Any = None) -> Dict[str, Any]:
         """
-        Analyze entropy in voter data
+        Analyze entropy in voter data using DataFrames
         
         Args:
-            current_voters: List of current voter records
-            previous_voters: Optional list of previous voter records (unused for now)
+            current_df: DataFrame of current voter records
+            previous_df: Optional DataFrame of previous voter records
             
         Returns:
             Dict with entropy_score (0-100) and evidence
         """
-        if not current_voters:
-            return {
-                'entropy_score': 0,
-                'evidence': [],
-                'details': 'No voter data to analyze'
-            }
+        if current_df is None or current_df.empty:
+            return {'entropy_score': 0, 'evidence': [], 'details': 'No data'}
         
-        # Extract fields for entropy analysis
-        names = [v.get('name', '') for v in current_voters]
-        ages = [str(v.get('age', '')) for v in current_voters]
-        registration_dates = [v.get('registration_date', '') for v in current_voters]
-        addresses = [v.get('address', '') for v in current_voters]
+        total_voters = len(current_df)
         
-        # Calculate entropy for each field
-        name_entropy = self._calculate_shannon_entropy(names)
-        age_entropy = self._calculate_shannon_entropy(ages)
-        date_entropy = self._calculate_shannon_entropy(registration_dates)
-        address_entropy = self._calculate_shannon_entropy(addresses)
+        # Calculate entropy for multiple fields (vectorized using pandas value_counts)
+        fields = ['name', 'age', 'registration_date', 'address']
+        field_entropies = {}
         
-        # Calculate maximum possible entropy (log2 of unique values)
-        max_name_entropy = math.log2(len(set(names))) if len(set(names)) > 1 else 1
-        max_age_entropy = math.log2(len(set(ages))) if len(set(ages)) > 1 else 1
-        max_date_entropy = math.log2(len(set(registration_dates))) if len(set(registration_dates)) > 1 else 1
-        max_address_entropy = math.log2(len(set(addresses))) if len(set(addresses)) > 1 else 1
-        
-        # Normalize entropy scores (0-1)
-        norm_name_entropy = self._normalize_entropy(name_entropy, max_name_entropy)
-        norm_age_entropy = self._normalize_entropy(age_entropy, max_age_entropy)
-        norm_date_entropy = self._normalize_entropy(date_entropy, max_date_entropy)
-        norm_address_entropy = self._normalize_entropy(address_entropy, max_address_entropy)
+        for field in fields:
+            if field in current_df.columns:
+                counts = current_df[field].value_counts()
+                probs = counts / total_voters
+                # H = -Σ(p * log2(p))
+                entropy = -(probs * probs.apply(lambda x: math.log2(x) if x > 0 else 0)).sum()
+                
+                # Max possible entropy = log2 of unique values
+                unique_count = len(counts)
+                max_entropy = math.log2(unique_count) if unique_count > 1 else 1
+                
+                # Normalize (0-1)
+                normalized = min(1.0, entropy / max_entropy) if max_entropy > 0 else 0
+                field_entropies[field] = {
+                    'normalized': normalized,
+                    'top_val': counts.index[0] if not counts.empty else None,
+                    'top_count': counts.iloc[0] if not counts.empty else 0
+                }
         
         # Detect low entropy patterns
-        LOW_ENTROPY_THRESHOLD = 0.5  # Below this is suspicious
-        
+        LOW_ENTROPY_THRESHOLD = 0.5
         anomalies = []
         evidence = []
         
-        # Check for synthetic name patterns
-        if norm_name_entropy < LOW_ENTROPY_THRESHOLD:
-            # Look for sequential patterns (e.g., "Raj Kumar 1", "Raj Kumar 2")
-            name_counter = Counter(names)
-            most_common = name_counter.most_common(3)
-            if most_common and most_common[0][1] > len(current_voters) * 0.1:
+        # Name Diversity
+        name_stats = field_entropies.get('name', {})
+        if name_stats.get('normalized', 1.0) < LOW_ENTROPY_THRESHOLD:
+            if name_stats.get('top_count', 0) > total_voters * 0.1:
                 anomalies.append('name')
-                evidence.append(
-                    f"📝 **Low Name Diversity**: Top name '{most_common[0][0]}' appears {most_common[0][1]} times (entropy: {norm_name_entropy:.2f})"
-                )
+                evidence.append(f"📝 **Low Name Diversity**: Top name '{name_stats['top_val']}' appears {name_stats['top_count']} times")
         
-        # Check for suspicious age patterns
-        if norm_age_entropy < LOW_ENTROPY_THRESHOLD:
-            age_counter = Counter(ages)
-            most_common_age = age_counter.most_common(1)
-            if most_common_age and most_common_age[0][1] > len(current_voters) * 0.15:
+        # Age Clustering
+        age_stats = field_entropies.get('age', {})
+        if age_stats.get('normalized', 1.0) < LOW_ENTROPY_THRESHOLD:
+            if age_stats.get('top_count', 0) > total_voters * 0.15:
                 anomalies.append('age')
-                evidence.append(
-                    f"🎂 **Age Clustering**: {most_common_age[0][1]} voters have age {most_common_age[0][0]} (entropy: {norm_age_entropy:.2f})"
-                )
+                evidence.append(f"🎂 **Age Clustering**: {age_stats['top_count']} voters have age {age_stats['top_val']}")
         
-        # Check for bulk registration patterns
-        if norm_date_entropy < LOW_ENTROPY_THRESHOLD:
-            date_counter = Counter(registration_dates)
-            most_common_date = date_counter.most_common(1)
-            if most_common_date and most_common_date[0][1] > len(current_voters) * 0.2:
+        # Bulk Registration
+        date_stats = field_entropies.get('registration_date', {})
+        if date_stats.get('normalized', 1.0) < LOW_ENTROPY_THRESHOLD:
+            if date_stats.get('top_count', 0) > total_voters * 0.2:
                 anomalies.append('date')
-                evidence.append(
-                    f"📅 **Bulk Registration Alert**: {most_common_date[0][1]} voters registered on {most_common_date[0][0]} (entropy: {norm_date_entropy:.2f})"
-                )
-        
-        # Check for address duplication
-        if norm_address_entropy < LOW_ENTROPY_THRESHOLD:
-            address_counter = Counter(addresses)
-            most_common_addr = address_counter.most_common(1)
-            if most_common_addr and most_common_addr[0][1] > 10:
+                evidence.append(f"📅 **Bulk Registration Alert**: {date_stats['top_count']} voters registered on {date_stats['top_val']}")
+                
+        # Address Duplication
+        addr_stats = field_entropies.get('address', {})
+        if addr_stats.get('normalized', 1.0) < LOW_ENTROPY_THRESHOLD:
+            if addr_stats.get('top_count', 0) > 10:
                 anomalies.append('address')
-                addr_preview = most_common_addr[0][0][:40] + '...' if len(most_common_addr[0][0]) > 40 else most_common_addr[0][0]
-                evidence.append(
-                    f"🏠 **Address Duplication**: {most_common_addr[0][1]} voters at '{addr_preview}' (entropy: {norm_address_entropy:.2f})"
-                )
+                short_addr = str(addr_stats['top_val'])[:40] + '...' if len(str(addr_stats['top_val'])) > 40 else addr_stats['top_val']
+                evidence.append(f"🏠 **Address Duplication**: {addr_stats['top_count']} voters at '{short_addr}'")
+                
+        # Calculate final score
+        avg_norm_entropy = sum(f['normalized'] for f in field_entropies.values()) / len(field_entropies) if field_entropies else 1.0
+        entropy_score = (1 - avg_norm_entropy) * 100
         
-        # Calculate entropy score (0-100, higher = more anomalous)
-        # Lower entropy = higher anomaly score
-        avg_entropy = (norm_name_entropy + norm_age_entropy + norm_date_entropy + norm_address_entropy) / 4
-        
-        # Invert: low entropy = high score
-        entropy_score = (1 - avg_entropy) * 100
-        
-        # Boost score for multiple anomalies
-        anomaly_boost = len(anomalies) * 10
-        final_score = min(100, entropy_score + anomaly_boost)
+        # Boost for multiple anomalies
+        final_score = min(100, entropy_score + (len(anomalies) * 10))
         
         return {
             'entropy_score': round(final_score, 2),
             'evidence': evidence,
             'details': {
-                'total_voters': len(current_voters),
-                'name_entropy': round(norm_name_entropy, 3),
-                'age_entropy': round(norm_age_entropy, 3),
-                'date_entropy': round(norm_date_entropy, 3),
-                'address_entropy': round(norm_address_entropy, 3),
+                'total_voters': total_voters,
+                'field_metrics': {k: round(v['normalized'], 3) for k, v in field_entropies.items()},
                 'anomalies_detected': anomalies
             }
         }

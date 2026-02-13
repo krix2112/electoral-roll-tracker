@@ -195,27 +195,31 @@ def process_single_file(file):
             
             df['constituency_extracted'] = df['address'].apply(extract_ward)
 
-        # Explicitly reorder columns to ensure consistent hashing
-        # We process row hash WITHOUT constituency to maintain compatibility if constituency changes but voter details don't
-        # OR we can include it. Let's include it to be precise - if you move constituency, that's a change or re-registration.
-        # However, to check for duplicates purely by identity, maybe not?
-        # Let's include it in hash for data integrity.
+        # Vectorized hashing for speed
+        import hashlib
+        # Concat columns into a single string series
+        hash_source = (
+            df['voter_id'].astype(str) + "|" +
+            df['name'].astype(str) + "|" +
+            df['age'].astype(str) + "|" +
+            df['address'].astype(str) + "|" +
+            df['registration_date'].astype(str) + "|" +
+            df['constituency_extracted'].astype(str)
+        )
+        # Apply MD5 (this is faster than axis=1 apply)
+        df['row_hash'] = hash_source.apply(lambda x: hashlib.md5(x.encode('utf-8')).hexdigest())
         
-        df = df[REQUIRED_COLUMNS + ['constituency_extracted']]
+        # Calculate dataset hash on core columns
+        dataset_source = (
+            df['voter_id'].astype(str) + "|" +
+            df['name'].astype(str) + "|" +
+            df['age'].astype(str) + "|" +
+            df['address'].astype(str) + "|" +
+            df['registration_date'].astype(str)
+        ).sort_values()
+        dataset_hash = hashlib.md5("".join(dataset_source).encode('utf-8')).hexdigest()
         
         upload_id = str(uuid.uuid4())
-        
-        # Calculate row hashes
-        df['row_hash'] = df.apply(lambda row: calculate_row_hash({
-            'voter_id': row['voter_id'],
-            'name': row['name'],
-            'age': row['age'],
-            'address': row['address'],
-            'registration_date': row['registration_date'],
-            'constituency': row['constituency_extracted']
-        }), axis=1)
-        
-        dataset_hash = calculate_dataset_hash(df[REQUIRED_COLUMNS]) # Keep dataset hash on core columns for now or include all? Let's keep core.
         
         electoral_roll = ElectoralRoll(
             upload_id=upload_id,
@@ -226,35 +230,22 @@ def process_single_file(file):
         )
         db.session.add(electoral_roll)
         
-        # Edge Case 11: Handle large files with batch processing
-        batch_size = 1000
-        total_batches = (len(df) + batch_size - 1) // batch_size
+        # Prepare records for bulk insert (dictionaries are faster than objects)
+        records_to_insert = []
+        for _, row in df.iterrows():
+            records_to_insert.append({
+                'upload_id': upload_id,
+                'voter_id': str(row['voter_id']),
+                'name': str(row['name']),
+                'age': int(row['age']),
+                'address': str(row['address']),
+                'registration_date': str(row['registration_date']),
+                'constituency': str(row['constituency_extracted']),
+                'row_hash': row['row_hash']
+            })
         
-        voter_records_all = []
-        for i in range(0, len(df), batch_size):
-            batch = df.iloc[i:i+batch_size]
-            for _, row in batch.iterrows():
-                try:
-                    voter_records_all.append(
-                        VoterRecord(
-                            upload_id=upload_id,
-                            voter_id=str(row['voter_id']),
-                            name=str(row['name']),
-                            age=int(row['age']),
-                            address=str(row['address']),
-                            registration_date=str(row['registration_date']),
-                            constituency=str(row['constituency_extracted']),
-                            row_hash=row['row_hash']
-                        )
-                    )
-                except Exception as row_error:
-                    return {
-                        'error': f'Error processing row: {str(row_error)}',
-                        'filename': file.filename,
-                        'row_index': i + len(voter_records_all)
-                    }
-        
-        db.session.bulk_save_objects(voter_records_all)
+        # Fast bulk insert using SQLAlchemy Core
+        db.session.execute(VoterRecord.__table__.insert(), records_to_insert)
         
         # Create success notification
         success_notification = Notification(

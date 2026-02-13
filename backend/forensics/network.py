@@ -33,120 +33,83 @@ class NetworkAnalysisEngine:
         normalized = re.sub(r'\s+', ' ', address.lower().strip())
         return normalized
     
-    def analyze(self, current_voters: List[Dict], previous_voters: List[Dict]) -> Dict[str, Any]:
+    def analyze(self, current_df: Any, previous_df: Any = None) -> Dict[str, Any]:
         """
-        Analyze network patterns in voter data
+        Analyze network patterns using DataFrames
         
         Args:
-            current_voters: List of current voter records
-            previous_voters: List of previous voter records
+            current_df: DataFrame of current voter records
+            previous_df: Optional DataFrame of previous voter records
             
         Returns:
             Dict with network_score (0-100) and evidence
         """
-        if not current_voters:
-            return {
-                'network_score': 0,
-                'evidence': [],
-                'details': 'No voter data to analyze'
-            }
+        if current_df is None or current_df.empty:
+            return {'network_score': 0, 'evidence': [], 'details': 'No voter data'}
         
-        # Build address clusters
-        address_clusters = defaultdict(list)
-        surname_address_clusters = defaultdict(list)
+        total_voters = len(current_df)
         
-        for voter in current_voters:
-            address = self._normalize_address(voter.get('address', ''))
-            surname = self._extract_surname(voter.get('name', ''))
-            voter_id = voter.get('voter_id')
+        # Normalize addresses (vectorized)
+        current_df['norm_addr'] = current_df['address'].str.lower().str.strip().str.replace(r'\s+', ' ', regex=True)
+        current_df['surname'] = current_df['name'].str.strip().str.split().str[-1]
+        
+        # 1. IDENTIFY STAR CLUSTERS (High voter concentration per address)
+        addr_counts = current_df['norm_addr'].value_counts()
+        REALISTIC_MAX_PER_ADDRESS = 8
+        star_clusters_mask = addr_counts > REALISTIC_MAX_PER_ADDRESS
+        star_clusters = addr_counts[star_clusters_mask]
+        
+        # 2. IDENTIFY ISLAND NODES (Isolated new voters)
+        # A voter is isolated if they are NEW and have NO shared address/surname connections
+        if previous_df is not None and not previous_df.empty:
+            prev_ids = set(previous_df['voter_id'])
+            new_voters = current_df[~current_df['voter_id'].isin(prev_ids)]
+        else:
+            new_voters = current_df
             
-            if address:
-                address_clusters[address].append(voter_id)
-            
-            if address and surname:
-                key = f"{surname}_{address}"
-                surname_address_clusters[key].append(voter_id)
+        # Check for connections (find how many people at same address or same surname+address)
+        # Use transform to get counts back to the original index
+        addr_conn_counts = current_df.groupby('norm_addr')['voter_id'].transform('count')
+        family_conn_counts = current_df.groupby(['norm_addr', 'surname'])['voter_id'].transform('count')
         
-        # Analyze patterns
-        island_nodes = 0  # Voters with no connections
-        star_clusters = []  # Addresses with too many voters
-        family_clusters = []  # Realistic family units
+        current_df['has_connection'] = (addr_conn_counts > 1) | (family_conn_counts > 1)
         
-        # Check for island nodes (new voters with unique addresses and surnames)
-        prev_lookup = {v['voter_id']: v for v in previous_voters} if previous_voters else {}
+        # Island nodes: new voters who have no connection
+        # Use re-indexed series to avoid Alignment issues
+        island_nodes_mask = (~current_df['voter_id'].isin(prev_ids if previous_df is not None else [])) & (~current_df['has_connection'])
+        island_nodes_count = island_nodes_mask.sum()
         
-        for voter in current_voters:
-            voter_id = voter.get('voter_id')
-            address = self._normalize_address(voter.get('address', ''))
-            surname = self._extract_surname(voter.get('name', ''))
-            
-            # New voter (not in previous roll)
-            if voter_id not in prev_lookup:
-                # Check if they have connections
-                has_address_connection = len(address_clusters.get(address, [])) > 1
-                has_family_connection = len(surname_address_clusters.get(f"{surname}_{address}", [])) > 1
-                
-                if not has_address_connection and not has_family_connection:
-                    island_nodes += 1
+        # 3. FAMILY STRUCTURE
+        family_ratio = (addr_conn_counts >= 2).sum() / total_voters
         
-        # Check for star clusters (too many voters at one address)
-        REALISTIC_MAX_PER_ADDRESS = 8  # Typical max for a household
-        
-        for address, voters in address_clusters.items():
-            cluster_size = len(voters)
-            if cluster_size > REALISTIC_MAX_PER_ADDRESS:
-                star_clusters.append({
-                    'address': address[:50] + '...' if len(address) > 50 else address,
-                    'voter_count': cluster_size
-                })
-            elif 2 <= cluster_size <= REALISTIC_MAX_PER_ADDRESS:
-                family_clusters.append(cluster_size)
-        
-        # Calculate network score (0-100, higher = more anomalous)
-        total_voters = len(current_voters)
-        
-        # Island node ratio (isolated voters are suspicious)
-        island_ratio = island_nodes / total_voters if total_voters > 0 else 0
-        island_score = min(100, island_ratio * 150)  # Scale to 0-100
-        
-        # Star cluster score (unrealistic concentrations)
+        # SCORE CALCULATION
+        island_ratio = island_nodes_count / total_voters
+        island_score = min(100, island_ratio * 150)
         star_score = min(100, len(star_clusters) * 20)
-        
-        # Lack of family structure (if <30% of voters are in family units)
-        family_ratio = len(family_clusters) / (len(address_clusters) or 1)
         family_score = max(0, (0.3 - family_ratio) * 200) if family_ratio < 0.3 else 0
         
-        # Combined network score
         network_score = (island_score * 0.4) + (star_score * 0.4) + (family_score * 0.2)
         
-        # Build evidence
+        # EVIDENCE
         evidence = []
+        if island_nodes_count > total_voters * 0.2:
+            evidence.append(f"🏝️ **Network Isolation Alert**: {island_nodes_count} voters ({(island_ratio*100):.1f}%) show zero connections")
         
-        if island_nodes > total_voters * 0.2:
-            evidence.append(
-                f"🏝️ **Network Isolation Alert**: {island_nodes} voters ({(island_ratio*100):.1f}%) show zero familial or residential connections to existing rolls"
-            )
-        
-        if star_clusters:
-            top_clusters = sorted(star_clusters, key=lambda x: x['voter_count'], reverse=True)[:3]
-            cluster_desc = ', '.join([f"{c['voter_count']} at one address" for c in top_clusters])
-            evidence.append(
-                f"⭐ **Unrealistic Clusters**: {len(star_clusters)} addresses with excessive voter concentration ({cluster_desc})"
-            )
-        
+        if not star_clusters.empty:
+            top_3 = star_clusters.head(3)
+            desc = ', '.join([f"{count} at one address" for count in top_3])
+            evidence.append(f"⭐ **Unrealistic Clusters**: {len(star_clusters)} addresses with excessive concentration ({desc})")
+            
         if family_ratio < 0.3:
-            evidence.append(
-                f"👨‍👩‍👧‍👦 **Weak Family Structure**: Only {(family_ratio*100):.1f}% of addresses show typical family patterns"
-            )
-        
+            evidence.append(f"👨‍👩‍👧‍👦 **Weak Family Structure**: Only {(family_ratio*100):.1f}% of voters show typical family patterns")
+            
         return {
             'network_score': round(network_score, 2),
             'evidence': evidence,
             'details': {
                 'total_voters': total_voters,
-                'island_nodes': island_nodes,
+                'island_nodes': int(island_nodes_count),
                 'star_clusters': len(star_clusters),
-                'family_clusters': len(family_clusters),
-                'top_star_clusters': star_clusters[:5]
+                'family_ratio': round(family_ratio, 3)
             }
         }

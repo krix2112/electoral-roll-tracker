@@ -31,18 +31,18 @@ class MultiSignalFusionEngine:
             'other': 0.15  # Reserved for future modules
         }
     
-    def analyze(self, current_voters: List[Dict], previous_voters: List[Dict] = None) -> Dict[str, Any]:
+    def analyze(self, current_df: Any, previous_df: Any = None) -> Dict[str, Any]:
         """
-        Run all detection modules and fuse results
+        Run all detection modules and fuse results using DataFrames
         
         Args:
-            current_voters: List of current voter records
-            previous_voters: Optional list of previous voter records
+            current_df: DataFrame of current voter records
+            previous_df: Optional DataFrame of previous voter records
             
         Returns:
             Comprehensive analysis with final_anomaly_score and module breakdowns
         """
-        if not current_voters:
+        if current_df is None or current_df.empty:
             return {
                 'final_anomaly_score': 0,
                 'verdict': 'No Data',
@@ -52,10 +52,10 @@ class MultiSignalFusionEngine:
                 'summary': 'Insufficient data for analysis'
             }
         
-        # Run all detection modules
-        behavioral_result = self.behavioral_engine.analyze(current_voters, previous_voters or [])
-        network_result = self.network_engine.analyze(current_voters, previous_voters or [])
-        entropy_result = self.entropy_engine.analyze(current_voters, previous_voters or [])
+        # Run all detection modules with DataFrames
+        behavioral_result = self.behavioral_engine.analyze(current_df, previous_df)
+        network_result = self.network_engine.analyze(current_df, previous_df)
+        entropy_result = self.entropy_engine.analyze(current_df, previous_df)
         
         # Extract individual scores
         behavior_score = behavioral_result.get('behavior_score', 0)

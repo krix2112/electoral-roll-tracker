@@ -173,6 +173,7 @@ export default function DiffViewer() {
 
       const fetchVisuals = async (oldId, newId) => {
         try {
+          // Sequentialize calls to avoid overloading the server on Render
           const timeline = await getDiffTimeline(oldId, newId);
           setTimelineData(timeline || []);
           console.log('✅ Real timeline data loaded:', timeline);
@@ -184,9 +185,14 @@ export default function DiffViewer() {
           console.error("Failed to load diff visuals", e);
         }
       };
-      fetchVisuals(oldUploadId, newUploadId);
+
+      // Only fetch visuals AFTER the main comparison data is loaded
+      if (!loading && comparisonStats) {
+        fetchVisuals(oldUploadId, newUploadId);
+      }
     }
-  }, [uploads]);
+  }, [uploads, loading, comparisonStats]);
+
 
   // 🔥 GSAP NUMBER COUNTER ANIMATION
   useEffect(() => {
